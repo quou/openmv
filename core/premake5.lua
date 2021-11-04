@@ -1,0 +1,76 @@
+project "core"
+	kind "SharedLib"
+	language "C"
+	cdialect "gnu99"
+
+	targetdir "../bin"
+	objdir "obj"
+
+	staticruntime "on"
+
+	files {
+		"src/common.h",
+		"src/core.c",
+		"src/core.h",
+		"src/coresys.c",
+		"src/coresys.h",
+		"src/entity.c",
+		"src/entity.h",
+		"src/keytable.c",
+		"src/keytable.h",
+		"src/maths.h",
+		"src/platform.c",
+		"src/platform.h",
+		"src/platform_linux.c",
+		"src/platform_x11.c",
+		"src/renderer.c",
+		"src/res.c",
+		"src/res.h",
+		"src/table.c",
+		"src/table.h",
+		"src/ui.c",
+		"src/ui.h",
+		"src/util",
+		"src/video.h",
+		"src/video_gl.c",
+		"src/util/gl.h",
+		"src/util/stb_rect_pack.h",
+		"src/util/stb_truetype.h",
+		"src/util/util.c"
+	}
+
+	includedirs {
+		"src"
+	}
+
+	links {
+		"X11",
+		"GL",
+		"m",
+		"dl"
+	}
+
+	defines {
+		"EXPORT_SYMBOLS"
+	}
+
+	filter "configurations:debug"
+		defines { "DEBUG" }
+		symbols "on"
+		runtime "debug"
+
+	filter "configurations:release"
+		defines { "RELEASE" }
+		optimize "on"
+		runtime "release"
+
+	filter "system:linux"
+		files {
+			"src/platform_linux.c",
+			"src/platform_x11.c"
+		}
+	
+	filter "system:windows"
+		files {
+			"src/platform_windows.c"
+		}
