@@ -4,7 +4,7 @@ project "bootstrapper"
 	cdialect "C99"
 
 	targetdir "../bin"
-	targetname "rustborne"
+	targetname "openmv"
 	objdir "obj"
 
 	staticruntime "on"

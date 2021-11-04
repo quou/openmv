@@ -1,4 +1,4 @@
-workspace "rustborne"
+workspace "openmv"
 	configurations { "debug", "release" }
 
 include "core"
