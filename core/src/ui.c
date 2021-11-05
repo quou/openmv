@@ -540,7 +540,8 @@ bool ui_button(struct ui_context* ui, const char* text) {
 
 	ui->cursor_pos.y += text_height(ui->font) + ui->padding * 3;
 
-	if (ui->top_window == ui->current_window) {
+	if (ui->top_window == ui->current_window &&
+			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(r)) {
 			ui->hovered = e;
 
@@ -580,7 +581,8 @@ void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 
 	ui->input_filter = text_input_filter;
 
-	if (ui->top_window == ui->current_window) {
+	if (ui->top_window == ui->current_window &&
+			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(r)) {
 			ui->hovered = e;
 
@@ -612,7 +614,8 @@ bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 
 	ui->cursor_pos.y += e->as.image.dimentions.y + ui->padding;
 
-	if (ui->top_window == ui->current_window) {
+	if (ui->top_window == ui->current_window &&
+			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(r)) {
 			ui->hovered = e;
 

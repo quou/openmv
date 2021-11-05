@@ -6,7 +6,7 @@ entity new_player_entity(struct world* world) {
 	struct texture* tex = load_texture("res/bmp/char.bmp");
 
 	entity e = new_entity(world);
-	add_componentv(world, e, struct transform, .dimentions = { 100, 100 });
+	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
 	add_componentv(world, e, struct player, 0);
 	add_componentv(world, e, struct animated_sprite,
 		.texture = tex,
