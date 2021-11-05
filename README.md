@@ -11,6 +11,7 @@ make it a good engine. It is designed with open-world platform games in mind.
  - [x] Basic Rendering.
  - [x] Resource management.
  - [x] Code hot-reloading for game logic.
+ - [ ] Windows support.
  - [ ] Physics.
  - [ ] Audio.
  - [ ] In-game GUI.
@@ -20,3 +21,14 @@ make it a good engine. It is designed with open-world platform games in mind.
  - [ ] Tilemap system.
  - [ ] Advanced Rendering (Post processing fx, etc.).
  - [ ] Actually make a damn game.
+
+## Building
+Generate a Makefile using Premake. Requires a C99 compatible compiler that
+supports variadic macros and the ability to cast a void pointer to a function
+pointer. GCC is what I use.
+
+Dependencies:
+	- `libdl`
+	- `libGL`
+	- `libm`
+	- `libX11`
