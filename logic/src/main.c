@@ -62,7 +62,7 @@ API void CALL on_update(double ts) {
 
 	player_system(world, ts);
 
-	render_system(world, renderer);
+	render_system(world, renderer, ts);
 	renderer_flush(renderer);
 
 	ui_begin_frame(ui);
