@@ -426,12 +426,15 @@ void ui_end_window(struct ui_context* ui) {
 			window->position.x, window->position.y,
 			window->dimentions.x, window->dimentions.y);
 
-		if (mouse_over_rect(window_rect) && mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+		if (
+				!ui->hovered && 
+				mouse_over_rect(window_rect) &&
+				mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
 			ui->dragging = window;
 			ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
 		}
 
-		if (window = ui->dragging) {
+		if (window == ui->dragging) {
 			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
 		}
 	}
