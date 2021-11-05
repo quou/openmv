@@ -82,6 +82,8 @@ struct ui_window {
 	v2i position;
 	v2i dimentions;
 
+	i32 z;
+
 	struct ui_element* elements;
 	u32 element_count;
 	u32 element_capacity;
@@ -100,9 +102,11 @@ static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_elem
 	return &w->elements[w->element_count++];
 }
 
+/* For persistent data. */
 struct window_meta {
 	v2i position;
 	i32 scroll;
+	i32 z;
 };
 
 struct ui_context {
@@ -232,6 +236,10 @@ void ui_begin_frame(struct ui_context* ui) {
 	ui->renderer->dimentions = make_v2i(w, h);
 }
 
+static i32 cmp_window_z(const struct ui_window* a, const struct ui_window* b) {
+	return a->z < b->z;
+}
+
 void ui_end_frame(struct ui_context* ui) {
 	if (ui->input_buf && key_just_released(main_window, KEY_BACKSPACE) && strlen(ui->input_buf) > 0) {
 		ui->input_buf[strlen(ui->input_buf) - 1] = '\0';
@@ -245,6 +253,31 @@ void ui_end_frame(struct ui_context* ui) {
 	if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
 		ui->dragging = null;
 	}
+
+	for (u32 i = 0; i < ui->window_count; i++) {
+		struct ui_window* window = ui->windows + i;
+
+		struct window_meta* meta = table_get(ui->window_meta, window->title);
+
+		if (mouse_over_rect(make_rect(window->position.x, window->position.y, window->dimentions.x, window->dimentions.y)) &&
+				mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+			meta->z = 0;
+
+			for (u32 ii = 0; ii < ui->window_count; ii++) {
+				struct ui_window* w = ui->windows + ii;
+				if (w == window) { continue; }
+
+				struct window_meta* m = table_get(ui->window_meta, w->title);
+				if (m) {
+					m->z++;
+				}
+			}
+
+			break;
+		}
+	}
+
+	qsort(ui->windows, ui->window_count, sizeof(struct ui_window), cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = ui->windows + i;
@@ -408,12 +441,13 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
 	if (!meta) {
-		struct window_meta new_meta = { position, 0 };
+		struct window_meta new_meta = { position, 0, 0 };
 		table_set(ui->window_meta, name, &new_meta);
 
 		meta = table_get(ui->window_meta, name);
 	} else {
 		window->position = meta->position;
+		window->z = meta->z;
 	}
 
 	window->dimentions = make_v2i(300, ui->window_max_height);
@@ -446,7 +480,7 @@ void ui_end_window(struct ui_context* ui) {
 
 			if (meta->scroll > 0) {
 				meta->scroll = 0;
-			}
+			}	
 		}
 
 		if (window == ui->dragging) {
