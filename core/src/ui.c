@@ -259,7 +259,8 @@ void ui_end_frame(struct ui_context* ui) {
 
 		struct window_meta* meta = table_get(ui->window_meta, window->title);
 
-		if (mouse_over_rect(make_rect(window->position.x, window->position.y, window->dimentions.x, window->dimentions.y)) &&
+		if (mouse_over_rect(make_rect(window->position.x, window->position.y,
+					window->dimentions.x, window->dimentions.y)) &&
 				mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 			meta->z = 0;
 
@@ -277,7 +278,8 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	}
 
-	qsort(ui->windows, ui->window_count, sizeof(struct ui_window), cmp_window_z);
+	qsort(ui->windows, ui->window_count, sizeof(struct ui_window),
+		(int(*)(const void*, const void*))cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = ui->windows + i;
