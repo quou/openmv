@@ -27,6 +27,8 @@ API bool key_pressed(struct window* window, i32 key);
 API bool key_just_pressed(struct window* window, i32 key);
 API bool key_just_released(struct window* window, i32 key);
 
+API i32 get_scroll(struct window* window);
+
 API bool mouse_btn_pressed(struct window* window, i32 key);
 API bool mouse_btn_just_pressed(struct window* window, i32 key);
 API bool mouse_btn_just_released(struct window* window, i32 key);

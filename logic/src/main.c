@@ -83,6 +83,12 @@ API void CALL on_update(double ts) {
 		ui_end_window(ui);
 	}
 
+	if (ui_begin_window(ui, "Another Window", make_v2i(400, 30))) {
+		ui_text(ui, "Hello, world!");
+
+		ui_end_window(ui);
+	}
+
 	ui_end_frame(ui);
 }
 

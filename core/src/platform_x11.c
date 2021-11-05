@@ -38,6 +38,8 @@ struct window {
 	bool pressed_btns[MOUSE_BTN_COUNT];
 	bool released_btns[MOUSE_BTN_COUNT];
 
+	i32 scroll;
+
 	void* uptr;
 
 	on_text_input_func on_text_input;
@@ -249,7 +251,13 @@ void swap_window(struct window* window) {
 	memset(window->pressed_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
 	memset(window->released_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
 
+	window->scroll = 0;
+
 	glXSwapBuffers(window->display, window->window);
+}
+
+i32 get_scroll(struct window* window) {
+	return window->scroll;
 }
 
 void update_events(struct window* window) {
@@ -308,13 +316,31 @@ void update_events(struct window* window) {
 				break;
 			}
 			case ButtonPress: {
-				window->held_btns[e.xbutton.button - 1] = true;
-				window->pressed_btns[e.xbutton.button - 1] = true;
+				switch (e.xbutton.button) {
+					case 1:
+					case 2:
+					case 3:
+						window->held_btns[e.xbutton.button - 1] = true;
+						window->pressed_btns[e.xbutton.button - 1] = true;
+						break;
+					case 4:
+						window->scroll++;
+						break;
+					case 5:
+						window->scroll--;
+						break;
+				}
 				break;
 			}
 			case ButtonRelease: {
-				window->held_btns[e.xbutton.button - 1] = false;
-				window->released_btns[e.xbutton.button - 1] = true;
+				switch (e.xbutton.button) {
+					case 1:
+					case 2:
+					case 3:
+						window->held_btns[e.xbutton.button - 1] = false;
+						window->released_btns[e.xbutton.button - 1] = true;
+						break;
+				}
 				break;
 			}
 		}

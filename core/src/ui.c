@@ -102,6 +102,7 @@ static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_elem
 
 struct window_meta {
 	v2i position;
+	i32 scroll;
 };
 
 struct ui_context {
@@ -258,12 +259,22 @@ void ui_end_frame(struct ui_context* ui) {
 			ui_col_window_background);
 
 		i32 title_w = text_width(ui->font, window->title);
+		i32 title_h = text_height(ui->font) + ui->padding * 2;
 		render_text(ui->renderer, ui->font, window->title,
 			window->position.x + ((window->dimentions.x / 2) - (title_w / 2)),
 			window->position.y + ui->padding, ui->style_colors[ui_col_text]);
 
+		struct rect clip_rect = make_rect(window_rect.x, window_rect.y + title_h,
+			window_rect.w, window_rect.h - title_h);
+
+		renderer_clip(ui->renderer, clip_rect);
+
 		for (u32 i = 0; i < window->element_count; i++) {
 			struct ui_element* el = window->elements + i;
+
+			if (el->position.y > window->position.y + window->dimentions.y) {
+				break;
+			}
 
 			switch (el->type) {
 				case ui_el_text:
@@ -315,7 +326,8 @@ void ui_end_frame(struct ui_context* ui) {
 					if (w > el->as.text_input.input_dimentions.x - ui->padding - h) {
 						renderer_clip(ui->renderer, make_rect(
 							el->as.text_input.input_pos.x + ui->padding,
-							el->as.text_input.input_pos.y + ui->padding,
+							el->as.text_input.input_pos.y + ui->padding > clip_rect.y ? 
+								el->as.text_input.input_pos.y + ui->padding : clip_rect.y,
 							el->as.text_input.input_dimentions.x - ui->padding * 2,
 							el->as.text_input.input_dimentions.y - ui->padding * 2));
 						want_reset = true;
@@ -331,7 +343,7 @@ void ui_end_frame(struct ui_context* ui) {
 						ui->style_colors[ui_col_text]);
 
 					if (want_reset) {
-						renderer_clip(ui->renderer, window_rect);
+						renderer_clip(ui->renderer, clip_rect);
 					}
 
 					render_text(ui->renderer, ui->font, el->as.text_input.label,
@@ -396,17 +408,19 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
 	if (!meta) {
-		struct window_meta new_meta = { position };
+		struct window_meta new_meta = { position, 0 };
 		table_set(ui->window_meta, name, &new_meta);
+
+		meta = table_get(ui->window_meta, name);
 	} else {
 		window->position = meta->position;
 	}
 
-	window->dimentions = make_v2i(300, ui->padding);
+	window->dimentions = make_v2i(300, ui->window_max_height);
 
 	ui->cursor_pos = make_v2i(
 		window->position.x + ui->padding,
-		window->position.y + text_height(ui->font) + ui->padding * 2);
+		window->position.y + meta->scroll + text_height(ui->font) + ui->padding * 2);
 
 	return true;
 }
@@ -414,24 +428,25 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 void ui_end_window(struct ui_context* ui) {
 	struct ui_window* window = ui->current_window;
 
-	window->dimentions.y = ui->cursor_pos.y - window->position.y;
-
-	if (window->dimentions.y > ui->window_max_height) {
-		window->dimentions.y = ui->window_max_height;
-	}
-
 	struct window_meta* meta = table_get(ui->window_meta, window->title);
 	if (meta) {
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
-			window->dimentions.x, window->dimentions.y);
+			window->dimentions.x, window->dimentions.y);	
 
-		if (
+		if (mouse_over_rect(window_rect)) {
+			if (
 				!ui->hovered && 
-				mouse_over_rect(window_rect) &&
 				mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
-			ui->dragging = window;
-			ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
+				ui->dragging = window;
+				ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
+			}
+
+			meta->scroll += get_scroll(main_window) * (text_height(ui->font) + ui->padding);
+
+			if (meta->scroll > 0) {
+				meta->scroll = 0;
+			}
 		}
 
 		if (window == ui->dragging) {
