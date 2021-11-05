@@ -76,6 +76,10 @@ API void CALL on_update(double ts) {
 		static char buf2[256] = "Hello, another input";
 		ui_text_input(ui, "Test Input 2", buf2, 256);
 
+		for (u32 i = 0; i < 10; i++) {
+			ui_button(ui, "Button");
+		}
+
 		ui_end_window(ui);
 	}
 

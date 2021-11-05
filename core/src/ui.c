@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ui.h"
 #include "core.h"
+#include "table.h"
+#include "ui.h"
 
 typedef bool (*input_filter_func)(char c);
 
@@ -84,6 +85,8 @@ struct ui_window {
 	struct ui_element* elements;
 	u32 element_count;
 	u32 element_capacity;
+
+	const char* title;
 };
 
 static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_element el) {
@@ -97,10 +100,16 @@ static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_elem
 	return &w->elements[w->element_count++];
 }
 
+struct window_meta {
+	v2i position;
+};
+
 struct ui_context {
 	struct ui_window* windows;
 	u32 window_count;
 	u32 window_capacity;
+
+	struct table* window_meta;
 
 	struct ui_element* hovered;
 	struct ui_element* hot;
@@ -110,6 +119,9 @@ struct ui_context {
 	u32 input_buf_size;
 
 	struct ui_window* current_window;
+
+	struct ui_window* dragging;
+	v2i drag_offset;
 
 	struct window* window;
 	struct font* font;
@@ -165,6 +177,8 @@ struct ui_context* new_ui_context(struct shader* shader, struct window* window, 
 	ui->column_size = 150;
 	ui->window_max_height = 300;
 
+	ui->window_meta = new_table(sizeof(struct window_meta));
+
 	return ui;
 }
 
@@ -180,6 +194,8 @@ void free_ui_context(struct ui_context* ui) {
 	}
 
 	free_renderer(ui->renderer);
+
+	free_table(ui->window_meta);
 
 	free(ui);
 }
@@ -225,6 +241,10 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->active = null;
 	}
 
+	if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+		ui->dragging = null;
+	}
+
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = ui->windows + i;
 
@@ -237,12 +257,13 @@ void ui_end_frame(struct ui_context* ui) {
 		ui_draw_rect(ui, window_rect,
 			ui_col_window_background);
 
+		i32 title_w = text_width(ui->font, window->title);
+		render_text(ui->renderer, ui->font, window->title,
+			window->position.x + ((window->dimentions.x / 2) - (title_w / 2)),
+			window->position.y + ui->padding, ui->style_colors[ui_col_text]);
+
 		for (u32 i = 0; i < window->element_count; i++) {
 			struct ui_element* el = window->elements + i;
-
-			if (el->position.y > window_rect.x + window_rect.h) {
-				break;
-			}
 
 			switch (el->type) {
 				case ui_el_text:
@@ -363,27 +384,56 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 		for (u32 i = ui->window_count; i < ui->window_capacity; i++) {
 			ui->windows[i] = (struct ui_window) { 0 };
 		}
-	}
+	}	
 
 	struct ui_window* window = &ui->windows[ui->window_count++];
 
 	ui->current_window = window;
 
 	window->element_count = 0;
+	window->title = name;
 
 	window->position = position;
+	struct window_meta* meta = table_get(ui->window_meta, name);
+	if (!meta) {
+		struct window_meta new_meta = { position };
+		table_set(ui->window_meta, name, &new_meta);
+	} else {
+		window->position = meta->position;
+	}
+
 	window->dimentions = make_v2i(300, ui->padding);
 
-	ui->cursor_pos = make_v2i(window->position.x + ui->padding, window->position.y + ui->padding);
+	ui->cursor_pos = make_v2i(
+		window->position.x + ui->padding,
+		window->position.y + text_height(ui->font) + ui->padding * 2);
 
 	return true;
 }
 
 void ui_end_window(struct ui_context* ui) {
-	ui->current_window->dimentions.y = ui->cursor_pos.y - ui->current_window->position.y;
+	struct ui_window* window = ui->current_window;
 
-	if (ui->current_window->dimentions.y > ui->window_max_height) {
-		ui->current_window->dimentions.y = ui->window_max_height;
+	window->dimentions.y = ui->cursor_pos.y - window->position.y;
+
+	if (window->dimentions.y > ui->window_max_height) {
+		window->dimentions.y = ui->window_max_height;
+	}
+
+	struct window_meta* meta = table_get(ui->window_meta, window->title);
+	if (meta) {
+		struct rect window_rect = make_rect(
+			window->position.x, window->position.y,
+			window->dimentions.x, window->dimentions.y);
+
+		if (mouse_over_rect(window_rect) && mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+			ui->dragging = window;
+			ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
+		}
+
+		if (window = ui->dragging) {
+			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
+		}
 	}
 
 	ui->current_window = null;
