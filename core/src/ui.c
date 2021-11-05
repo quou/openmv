@@ -170,7 +170,7 @@ struct ui_context* new_ui_context(struct shader* shader, struct window* window, 
 	ui->renderer = new_renderer(shader, make_v2i(800, 600));
 	ui->renderer->clip_enable = true;
 
-	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 200);
+	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 250);
 	ui->style_colors[ui_col_background] = make_color(0x212121, 255);
 	ui->style_colors[ui_col_hovered] = make_color(0x242533, 255);
 	ui->style_colors[ui_col_hot] = make_color(0x393d5b, 255);
@@ -255,9 +255,17 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->dragging = null;
 	}
 
-	if ((ui->top_window && !mouse_over_rect(make_rect(
+	ui->top_window = ui->windows;
+	for (u32 i = 0; i < ui->window_count; i++) {
+		if (ui->windows[i].z == 0) {
+			ui->top_window = ui->windows + i;
+			break;
+		}
+	}
+
+	if (ui->top_window && !mouse_over_rect(make_rect(
 			ui->top_window->position.x, ui->top_window->position.y,
-			ui->top_window->dimentions.x, ui->top_window->dimentions.y))) || !ui->top_window) {
+			ui->top_window->dimentions.x, ui->top_window->dimentions.y))) {
 		for (u32 i = 0; i < ui->window_count; i++) {
 			struct ui_window* window = ui->windows + i;
 
@@ -267,7 +275,6 @@ void ui_end_frame(struct ui_context* ui) {
 						window->dimentions.x, window->dimentions.y)) &&
 					mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 				meta->z = 0;
-				ui->top_window = window;
 
 				for (u32 ii = 0; ii < ui->window_count; ii++) {
 					struct ui_window* w = ui->windows + ii;
@@ -284,11 +291,14 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	}
 
-	qsort(ui->windows, ui->window_count, sizeof(struct ui_window),
+	struct ui_window* sorted_windows = malloc(ui->window_count * sizeof(struct ui_window));
+	memcpy(sorted_windows, ui->windows, ui->window_count * sizeof(struct ui_window));
+
+	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window),
 		(int(*)(const void*, const void*))cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
-		struct ui_window* window = ui->windows + i;
+		struct ui_window* window = sorted_windows + i;
 
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
@@ -381,7 +391,7 @@ void ui_end_frame(struct ui_context* ui) {
 					render_text(ui->renderer, ui->font, el->as.text_input.buf,
 						(el->as.text_input.input_pos.x + ui->padding) + input_scroll,
 						el->as.text_input.input_pos.y + ui->padding,
-						ui->style_colors[ui_col_text]);
+						ui->style_colors[ui_col_text]);	
 
 					if (want_reset) {
 						renderer_clip(ui->renderer, clip_rect);
@@ -397,7 +407,7 @@ void ui_end_frame(struct ui_context* ui) {
 							el->as.text_input.input_pos.y + ui->padding,
 							1, h
 						), ui_col_text);
-					}
+					}	
 
 					break;
 				}
@@ -425,6 +435,8 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		}
 	}
+
+	free(sorted_windows);
 
 	renderer_flush(ui->renderer);
 }
@@ -479,7 +491,8 @@ void ui_end_window(struct ui_context* ui) {
 		if (mouse_over_rect(window_rect)) {
 			if (
 				!ui->hovered && 
-				mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+				mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT) &&
+				ui->top_window == window) {
 				ui->dragging = window;
 				ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
 			}
