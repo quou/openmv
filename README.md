@@ -28,7 +28,7 @@ supports variadic macros and the ability to cast a void pointer to a function
 pointer. GCC is what I use.
 
 Dependencies:
-	- `libdl`
-	- `libGL`
-	- `libm`
-	- `libX11`
+ - `libdl`
+ - `libGL`
+ - `libm`
+ - `libX11`
