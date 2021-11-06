@@ -3,6 +3,7 @@
 #include "core.h"
 #include "coresys.h"
 #include "entity.h"
+#include "keymap.h"
 #include "player.h"
 #include "res.h"
 #include "sprites.h"
@@ -35,6 +36,10 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 }
 
 API void CALL on_init() {
+	keymap_init();
+	default_keymap();
+	load_keymap();
+
 	struct shader* sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
@@ -100,4 +105,6 @@ API void CALL on_deinit() {
 	free_renderer(logic_store->renderer);
 	free_ui_context(logic_store->ui);
 	free_world(logic_store->world);
+
+	keymap_deinit();
 }

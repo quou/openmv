@@ -31,3 +31,7 @@ struct table_iter {
 
 API struct table_iter new_table_iter(struct table* table);
 API bool table_iter_next(struct table_iter* iter);
+
+#define table_iter(t_, n_) \
+	struct table_iter n_ = new_table_iter((t_));\
+	table_iter_next(&(n_));
