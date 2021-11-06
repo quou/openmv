@@ -13,7 +13,6 @@ int main() {
 	video_init();
 	res_init();
 
-			printf("hi\n");
 	init_time();
 
 #if defined(PLATFORM_LINUX)

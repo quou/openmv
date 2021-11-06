@@ -16,7 +16,9 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
-
+*.dll
+*.lib
+*.so
 bin
 obj
 tags

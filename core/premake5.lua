@@ -61,8 +61,7 @@ project "core"
 			"gdi32",
 			"user32",
 			"kernel32",
-			"winmm",
-			"ssp"
+			"winmm"
 		}
 
 		defines {

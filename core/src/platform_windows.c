@@ -75,6 +75,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			window->open = false;
 			return 0;
 		case WM_SIZE: {
+			if (!window) { break; }
 			i32 nw = lparam & 0xFFFF;
 			i32 nh = (lparam >> 16) & 0xFFFF;
 
@@ -117,7 +118,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 				fprintf(stderr, "Failed to load OpenGL.\n");
 			}
 			return 0;
-		};
+		}
 		default: break;
 	};
 

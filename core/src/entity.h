@@ -50,8 +50,8 @@ typedef u64 entity;
 typedef u32 entity_version;
 typedef u32 entity_id;
 
-extern const entity null_entity;
-extern const entity_id null_entity_id;
+API extern const entity null_entity;
+API extern const entity_id null_entity_id;
 
 API entity_version get_entity_version(entity e);
 API entity_id      get_entity_id(entity e);

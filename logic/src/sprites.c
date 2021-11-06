@@ -6,7 +6,7 @@ static const char* texture_paths[] = {
 };
 
 struct sprite sprites[] = {
-
+	{ 0 }
 };
 
 struct animated_sprite anim_sprites[] = {

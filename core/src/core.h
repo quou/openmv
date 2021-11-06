@@ -3,7 +3,7 @@
 #include "common.h"
 
 struct window;
-extern struct window* main_window;
+API extern struct window* main_window;
 
 #define prop_offset(t_, e_) ((u64)(&(((t_*)(0))->e_)))
 

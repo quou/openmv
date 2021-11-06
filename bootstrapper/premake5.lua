@@ -23,8 +23,7 @@ project "bootstrapper"
 	}
 
 	links {
-		"core",
-		"dl"
+		"core"
 	}
 
 	defines {
@@ -44,6 +43,10 @@ project "bootstrapper"
 	filter "system:linux"
 		files {
 			"src/dynlib_linux.c"
+		}
+
+		links {
+			"dl"
 		}
 	
 	filter "system:windows"
