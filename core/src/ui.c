@@ -630,5 +630,4 @@ bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 	}
 
 	return false;
-
 }

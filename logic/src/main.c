@@ -3,10 +3,10 @@
 #include "core.h"
 #include "coresys.h"
 #include "entity.h"
-#include "res.h"
-#include "ui.h"
-
 #include "player.h"
+#include "res.h"
+#include "sprites.h"
+#include "ui.h"
 
 struct logic_store {
 	double fps_timer;
@@ -45,6 +45,8 @@ API void CALL on_init() {
 
 	struct world* world = new_world();
 	logic_store->world = world;
+
+	preload_sprites();
 
 	entity player = new_player_entity(world);
 }
