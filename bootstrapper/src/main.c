@@ -13,9 +13,16 @@ int main() {
 	video_init();
 	res_init();
 
+			printf("hi\n");
 	init_time();
 
-	struct script_context* scripts = new_script_context("./liblogic.so");
+#if defined(PLATFORM_LINUX)
+	const char* lib_path = "./liblogic.so";
+#else
+	const char* lib_path = "logic.dll";
+#endif
+
+	struct script_context* scripts = new_script_context(lib_path);
 	call_on_init(scripts);
 
 	u64 now = get_time(), last = now; 

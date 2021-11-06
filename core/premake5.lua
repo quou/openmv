@@ -23,8 +23,6 @@ project "core"
 		"src/maths.h",
 		"src/platform.c",
 		"src/platform.h",
-		"src/platform_linux.c",
-		"src/platform_x11.c",
 		"src/renderer.c",
 		"src/res.c",
 		"src/res.h",
@@ -45,16 +43,31 @@ project "core"
 		"src"
 	}
 
-	links {
-		"X11",
-		"GL",
-		"m",
-		"dl"
-	}
-
 	defines {
 		"EXPORT_SYMBOLS"
 	}
+
+	filter "system:linux"
+		links {
+			"X11",
+			"GL",
+			"m",
+			"dl"
+		}
+
+	filter "system:windows"
+		links {
+			"opengl32",
+			"gdi32",
+			"user32",
+			"kernel32",
+			"winmm",
+			"ssp"
+		}
+
+		defines {
+			"_CRT_SECURE_NO_WARNINGS"
+		}
 
 	filter "configurations:debug"
 		defines { "DEBUG" }

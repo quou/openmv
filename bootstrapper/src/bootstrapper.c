@@ -4,9 +4,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <dlfcn.h>
-
 #include "bootstrapper.h"
+#include "dynlib.h"
 
 static const char* working_script_name = "./workasm";
 
@@ -37,32 +36,33 @@ struct script_context {
 };
 
 static void open_funcs(struct script_context* ctx) {
-	ctx->handle = dlopen(working_script_name, RTLD_NOW);
+	ctx->handle = open_dynlib(working_script_name);
 	if (!ctx->handle) {
-		fprintf(stderr, "Failed to load script assembly: `%s': %s.\n", working_script_name, dlerror());
+		fprintf(stderr, "Failed to load script assembly: `%s': %s.\n",
+			working_script_name, dynlib_get_error());
 	}
 	
-	ctx->on_reload = (script_on_reload_func)dlsym(ctx->handle, "on_reload");
+	ctx->on_reload = (script_on_reload_func)dynlib_get_sym(ctx->handle, "on_reload");
 	if (!ctx->on_reload) {
 		fprintf(stderr, "Failed to locate function `on_reload'.\n");
 	}
 
-	ctx->get_storage_size = (script_get_storage_size_func)dlsym(ctx->handle, "get_storage_size");
+	ctx->get_storage_size = (script_get_storage_size_func)dynlib_get_sym(ctx->handle, "get_storage_size");
 	if (!ctx->get_storage_size) {
 		fprintf(stderr, "Failed to locate function `get_storage_size'.\n");
 	}
 
-	ctx->on_init = (script_on_init_func)dlsym(ctx->handle, "on_init");
+	ctx->on_init = (script_on_init_func)dynlib_get_sym(ctx->handle, "on_init");
 	if (!ctx->on_init) {
 		fprintf(stderr, "Failed to locate function `on_init'.\n");
 	}
 
-	ctx->on_update = (script_on_update_func)dlsym(ctx->handle, "on_update");
+	ctx->on_update = (script_on_update_func)dynlib_get_sym(ctx->handle, "on_update");
 	if (!ctx->on_update) {
 		fprintf(stderr, "Failed to locate function `on_update'.\n");
 	}
 	
-	ctx->on_deinit = (script_on_deinit_func)dlsym(ctx->handle, "on_deinit");
+	ctx->on_deinit = (script_on_deinit_func)dynlib_get_sym(ctx->handle, "on_deinit");
 	if (!ctx->on_deinit) {
 		fprintf(stderr, "Failed to locate function `on_deinit'.\n");
 	}
@@ -129,7 +129,7 @@ void free_script_context(struct script_context* ctx) {
 		free(ctx->instance);
 	}
 
-	dlclose(ctx->handle);
+	close_dynlib(ctx->handle);
 
 	free(ctx);
 }
@@ -152,7 +152,7 @@ void script_context_update(struct script_context* ctx, double ts) {
 			if (s.st_mtime > ctx->lib_mod_time) {
 				ctx->lib_mod_time = s.st_mtime;
 
-				dlclose(ctx->handle);
+				close_dynlib(ctx->handle);
 				copy_asm(ctx->lib_path);
 				open_funcs(ctx);
 

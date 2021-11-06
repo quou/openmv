@@ -3,8 +3,8 @@
 
 #include "entity.h"
 
-const entity null_entity = (UINT64_MAX);
-const entity_id null_entity_id = (UINT32_MAX);
+API const entity null_entity = (UINT64_MAX);
+API const entity_id null_entity_id = (UINT32_MAX);
 
 entity_version get_entity_version(entity e) {
 	return e >> 32;

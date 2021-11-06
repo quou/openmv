@@ -1,3 +1,3 @@
 #include "platform.h"
 
-struct window* main_window;
+API struct window* main_window;

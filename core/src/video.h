@@ -5,8 +5,8 @@
 
 /* Basic renderer; Graphics API abstraction. */
 
-void video_init();
-void video_clear();
+API void video_init();
+API void video_clear();
 
 struct shader {
 	bool panic;
@@ -53,7 +53,7 @@ API void push_indices(struct vertex_buffer* vb, u32* indices, u32 count);
 API void update_vertices(const struct vertex_buffer* vb, float* vertices, u32 offset, u32 count);
 API void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count);
 API void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count,
-API 	u32 stride, u32 offset);
+ 	u32 stride, u32 offset);
 API void draw_vb(const struct vertex_buffer* vb);
 API void draw_vb_n(const struct vertex_buffer* vb, u32 count);
  
@@ -118,7 +118,7 @@ API void renderer_clip(struct renderer* renderer, struct rect clip);
 
 struct font;
 
-i32 render_text(struct renderer* renderer, struct font* font,
+API i32 render_text(struct renderer* renderer, struct font* font,
 		const char* text, i32 x, i32 y, struct color color);
 
 API struct font* load_font_from_memory(void* data, i32 filesize, float size);

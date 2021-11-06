@@ -1,12 +1,10 @@
 #pragma once
 
-#ifndef pi
-#define pi 3.14159265358f
-#endif
-
 #include "common.h"
 
 #include <stdint.h>
+
+#define pie 3.14159265358f
 
 double todeg(double rad);
 double torad(double deg);
@@ -345,11 +343,11 @@ API m3f m3f_mul(m3f a, m3f b);
 #include <math.h>
 
 double todeg(double rad) {
-	return rad * (180.0 / pi);
+	return rad * (180.0 / pie);
 }
 
 double torad(double deg) {
-	return deg * (pi / 180.0);
+	return deg * (pie / 180.0);
 }
 
 u32 v4u_magnitude(v4u v) {
