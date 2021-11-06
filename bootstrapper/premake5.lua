@@ -7,6 +7,7 @@ project "bootstrapper"
 	targetname "openmv"
 	objdir "obj"
 
+	architecture "x64"
 	staticruntime "on"
 
 	files {

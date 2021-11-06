@@ -6,6 +6,8 @@ project "core"
 	targetdir "../bin"
 	objdir "obj"
 
+	architecture "x64"
+
 	staticruntime "on"
 
 	files {

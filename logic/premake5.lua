@@ -6,6 +6,8 @@ project "logic"
 	targetdir "../"
 	objdir "obj"
 
+	architecture "x64"
+
 	staticruntime "on"
 
 	files {
