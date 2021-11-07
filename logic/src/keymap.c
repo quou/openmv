@@ -30,7 +30,7 @@ void default_keymap() {
 }
 
 void save_keymap() {
-	FILE* file = fopen("keymap", "w");
+	FILE* file = fopen("keymap", "wb");
 	if (!file) {
 		fprintf(stderr, "Failed to open `keymap' for writing.\n");
 		return;
@@ -48,7 +48,7 @@ void save_keymap() {
 }
 
 void load_keymap() {
-	FILE* file = fopen("keymap", "r");
+	FILE* file = fopen("keymap", "rb");
 	if (!file) {
 		default_keymap();
 		save_keymap();
