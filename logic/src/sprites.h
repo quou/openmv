@@ -10,7 +10,8 @@ enum {
 
 /* Sprite IDs  */
 enum {
-	animsprid_player_run = 0
+	animsprid_player_run_right = 0,
+	animsprid_player_run_left,
 };
 
 void preload_sprites();

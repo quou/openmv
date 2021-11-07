@@ -4,6 +4,7 @@
 #include "maths.h"
 
 struct player {
+	v2f position;
 	v2f velocity;
 };
 

@@ -24,7 +24,9 @@ void keymap_deinit() {
 }
 
 void default_keymap() {
-	key_table_set("jump", KEY_Z);
+	key_table_set("jump",  KEY_Z);
+	key_table_set("left",  KEY_LEFT);
+	key_table_set("right", KEY_RIGHT);
 }
 
 void save_keymap() {
