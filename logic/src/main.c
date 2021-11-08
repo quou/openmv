@@ -4,20 +4,11 @@
 #include "coresys.h"
 #include "entity.h"
 #include "keymap.h"
+#include "logic_store.h"
 #include "player.h"
 #include "res.h"
 #include "sprites.h"
 #include "ui.h"
-
-struct logic_store {
-	double fps_timer;
-	char fps_buf[256];
-
-	struct renderer* renderer;
-	struct ui_context* ui;
-
-	struct world* world;
-};
 
 struct logic_store* logic_store;
 
@@ -54,6 +45,20 @@ API void CALL on_init() {
 	preload_sprites();
 
 	entity player = new_player_entity(world);
+
+	logic_store->room = new_room(16, 16);
+	logic_store->room->tile_set = get_tile_set(tilesetid_blue);
+	struct tile_layer* l = new_tile_layer(logic_store->room);
+
+	set_tile(logic_store->room, l, 4, 4, tsbluetile_centre);
+	set_tile(logic_store->room, l, 3, 3, tsbluetile_corner_top_left);
+	set_tile(logic_store->room, l, 4, 3, tsbluetile_top);
+	set_tile(logic_store->room, l, 5, 3, tsbluetile_corner_top_right);
+	set_tile(logic_store->room, l, 3, 4, tsbluetile_wall_left);
+	set_tile(logic_store->room, l, 5, 4, tsbluetile_wall_right);
+	set_tile(logic_store->room, l, 3, 5, tsbluetile_corner_bot_left);
+	set_tile(logic_store->room, l, 4, 5, tsbluetile_bot);
+	set_tile(logic_store->room, l, 5, 5, tsbluetile_corner_bot_right);
 }
 
 API void CALL on_update(double ts) {
@@ -66,6 +71,8 @@ API void CALL on_update(double ts) {
 		sprintf(logic_store->fps_buf, "FPS: %g", 1.0 / ts);
 		logic_store->fps_timer = 0.0;
 	}
+
+	draw_room(logic_store->room, renderer);
 
 	player_system(world, ts);
 
@@ -102,6 +109,8 @@ API void CALL on_update(double ts) {
 }
 
 API void CALL on_deinit() {
+	free_room(logic_store->room);
+
 	free_renderer(logic_store->renderer);
 	free_ui_context(logic_store->ui);
 	free_world(logic_store->world);

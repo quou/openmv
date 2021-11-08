@@ -6,6 +6,7 @@
 #include "keymap.h"
 #include "platform.h"
 #include "table.h"
+#include "logic_store.h"
 
 #define key_table_set(n_, k_) \
 	do { \
@@ -13,23 +14,31 @@
 		table_set(keymap, (n_), &k); \
 	} while (0) \
 
-struct table* keymap;
+extern struct logic_store* logic_store;
 
 void keymap_init() {
-	keymap = new_table(sizeof(i32));
+	struct table** keymap = (struct table**)&logic_store->keymap;
+
+	*keymap = new_table(sizeof(i32));
 }
 
 void keymap_deinit() {
+	struct table* keymap = (struct table*)logic_store->keymap;
+
 	free_table(keymap);
 }
 
 void default_keymap() {
+	struct table* keymap = (struct table*)logic_store->keymap;
+
 	key_table_set("jump",  KEY_Z);
 	key_table_set("left",  KEY_LEFT);
 	key_table_set("right", KEY_RIGHT);
 }
 
 void save_keymap() {
+	struct table* keymap = (struct table*)logic_store->keymap;
+
 	FILE* file = fopen("keymap", "wb");
 	if (!file) {
 		fprintf(stderr, "Failed to open `keymap' for writing.\n");
@@ -48,6 +57,8 @@ void save_keymap() {
 }
 
 void load_keymap() {
+	struct table* keymap = (struct table*)logic_store->keymap;
+
 	FILE* file = fopen("keymap", "rb");
 	if (!file) {
 		default_keymap();
@@ -71,6 +82,8 @@ void load_keymap() {
 }
 
 i32 mapped_key(const char* name) {
+	struct table* keymap = (struct table*)logic_store->keymap;
+
 	i32* k = table_get(keymap, name);
 
 	return k ? *k : 0;
