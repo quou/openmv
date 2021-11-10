@@ -23,3 +23,5 @@ struct type_info {
 };
 
 #define type_info(t_) ((struct type_info) { str_id(#t_), sizeof(t_) })
+
+char* copy_string(const char* src);

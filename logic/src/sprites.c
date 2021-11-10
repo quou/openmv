@@ -42,7 +42,8 @@ struct tile_set tile_sets[] = {
 			[tsbluetile_wall_left]           = { 0,  16, 16, 16 },
 			[tsbluetile_wall_right]          = { 32, 16, 16, 16 },
 			[tsbluetile_top]                 = { 16, 0,  16, 16 },
-			[tsbluetile_bot]                 = { 16, 32, 16, 16 }
+			[tsbluetile_bot]                 = { 16, 32, 16, 16 },
+			{ 0, 0, 0, 0 }
 		}
 	}
 };

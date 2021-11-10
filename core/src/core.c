@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "core.h"
@@ -26,4 +27,14 @@ u32 str_id(const char* str) {
 	}
 
 	return r;
+}
+
+char* copy_string(const char* src) {
+	const u32 len = (u32)strlen(src);
+
+	char* s = malloc(len + 1);
+	memcpy(s, src, len);
+	s[len] = 0;
+
+	return s;
 }

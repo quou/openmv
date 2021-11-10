@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "consts.h"
 #include "core.h"
 #include "coresys.h"
 #include "entity.h"
@@ -47,18 +48,19 @@ API void CALL on_init() {
 	entity player = new_player_entity(world);
 
 	logic_store->room = new_room(16, 16);
+	logic_store->selected_tile = tile_empty;
 	logic_store->room->tile_set = get_tile_set(tilesetid_blue);
-	struct tile_layer* l = new_tile_layer(logic_store->room);
+	logic_store->selected_layer = new_tile_layer(logic_store->room);
 
-	set_tile(logic_store->room, l, 4, 4, tsbluetile_centre);
-	set_tile(logic_store->room, l, 3, 3, tsbluetile_corner_top_left);
-	set_tile(logic_store->room, l, 4, 3, tsbluetile_top);
-	set_tile(logic_store->room, l, 5, 3, tsbluetile_corner_top_right);
-	set_tile(logic_store->room, l, 3, 4, tsbluetile_wall_left);
-	set_tile(logic_store->room, l, 5, 4, tsbluetile_wall_right);
-	set_tile(logic_store->room, l, 3, 5, tsbluetile_corner_bot_left);
-	set_tile(logic_store->room, l, 4, 5, tsbluetile_bot);
-	set_tile(logic_store->room, l, 5, 5, tsbluetile_corner_bot_right);
+	set_tile(logic_store->room, logic_store->selected_layer, 4, 4, tsbluetile_centre);
+	set_tile(logic_store->room, logic_store->selected_layer, 3, 3, tsbluetile_corner_top_left);
+	set_tile(logic_store->room, logic_store->selected_layer, 4, 3, tsbluetile_top);
+	set_tile(logic_store->room, logic_store->selected_layer, 5, 3, tsbluetile_corner_top_right);
+	set_tile(logic_store->room, logic_store->selected_layer, 3, 4, tsbluetile_wall_left);
+	set_tile(logic_store->room, logic_store->selected_layer, 5, 4, tsbluetile_wall_right);
+	set_tile(logic_store->room, logic_store->selected_layer, 3, 5, tsbluetile_corner_bot_left);
+	set_tile(logic_store->room, logic_store->selected_layer, 4, 5, tsbluetile_bot);
+	set_tile(logic_store->room, logic_store->selected_layer, 5, 5, tsbluetile_corner_bot_right);
 }
 
 API void CALL on_update(double ts) {
@@ -81,26 +83,48 @@ API void CALL on_update(double ts) {
 
 	ui_begin_frame(ui);
 	
-	if (ui_begin_window(ui, "Test Window", make_v2i(100, 30))) {
-		ui_text(ui, logic_store->fps_buf);
+	if (ui_begin_window(ui, "Tilemap", make_v2i(0, 0))) {
+		struct room* room = logic_store->room;
 
-		static char buf[256] = "Hello, world!";
-		ui_text_input(ui, "Test Input", buf, 256);
+		if (ui_button(ui, "New Layer")) {
+			new_tile_layer(logic_store->room);
+		}
 
-		static char buf2[256] = "Hello, another input";
-		ui_text_input(ui, "Test Input 2", buf2, 256);
-
-		for (u32 i = 0; i < 25; i++) {
-			if (ui_button(ui, "Button")) {
-				printf("hi\n");
+		for (u32 i = 0; i < room->layer_count; i++) {
+			char name[64];
+			sprintf(name, "Layer %d", i);
+			if (ui_button(ui, name)) {
+				logic_store->selected_layer = &room->layers[i];
 			}
 		}
 
-		ui_end_window(ui);
-	}
+		if (ui_button(ui, "Eraser")) {
+			logic_store->selected_tile = tile_empty;
+		}
 
-	if (ui_begin_window(ui, "Another Window", make_v2i(400, 30))) {
-		ui_text(ui, "Hello, world!");
+		for (u32 i = tile_empty + 1; i < sizeof(room->tile_set.tiles) / sizeof(*room->tile_set.tiles); i++) {
+			if (room->tile_set.tiles[i].w == 0 && room->tile_set.tiles[i].h == 0) {
+				break;
+			}
+
+			if (ui_image(ui, room->tile_set.texture, room->tile_set.tiles[i])) {
+				logic_store->selected_tile = i;
+			}
+		}
+
+		struct tile_layer* layer = logic_store->selected_layer;
+
+		if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+			v2i mp = get_mouse_position(main_window);
+			v2i mprs = v2i_div(make_v2i((i32)mp.x, (i32)mp.y), make_v2i(
+				sprite_scale * room->tile_set.tile_size,
+				sprite_scale * room->tile_set.tile_size
+			));
+			
+			if (mprs.x < room->width && mprs.y < room->height) {
+				set_tile(logic_store->room, logic_store->selected_layer, mprs.x, mprs.y, logic_store->selected_tile);
+			}
+		}
 
 		ui_end_window(ui);
 	}

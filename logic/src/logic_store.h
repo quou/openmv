@@ -16,4 +16,6 @@ struct logic_store {
 	struct room* room;
 
 	void* keymap;
+	void* selected_layer;
+	u8 selected_tile;
 };

@@ -142,6 +142,8 @@ void* table_set(struct table* table, const char* key, const void* val) {
 	if (!el->key) { /* New key. */
 		table->count++;
 		el->val_idx = table_data_add(table);
+	} else {
+		free(el->key);
 	}
 
 	const u32 key_len = (u32)strlen(key);

@@ -54,16 +54,16 @@ struct ui_element {
 
 	union {
 		struct {
-			const char* text;
+			char* text;
 		} text;
 
 		struct {
-			const char* text;
+			char* text;
 			v2i dimentions;
 		} button;
 
 		struct {
-			const char* label;
+			char* label;
 			char* buf;
 			u32 buf_size;
 			v2i input_dimentions;
@@ -88,7 +88,7 @@ struct ui_window {
 	u32 element_count;
 	u32 element_capacity;
 
-	const char* title;
+	char* title;
 };
 
 static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_element el) {
@@ -349,6 +349,8 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						ui->style_colors[ui_col_text]);
+
+					free(el->as.button.text);
 					break;
 				}
 				case ui_el_text_input: {
@@ -407,7 +409,9 @@ void ui_end_frame(struct ui_context* ui) {
 							el->as.text_input.input_pos.y + ui->padding,
 							1, h
 						), ui_col_text);
-					}	
+					}
+
+					free(el->as.text_input.label);
 
 					break;
 				}
@@ -434,6 +438,8 @@ void ui_end_frame(struct ui_context* ui) {
 				}
 			}
 		}
+
+		free(window->title);
 	}
 
 	free(sorted_windows);
@@ -456,7 +462,7 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	ui->current_window = window;
 
 	window->element_count = 0;
-	window->title = name;
+	window->title = copy_string(name);
 
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
@@ -517,7 +523,7 @@ void ui_text(struct ui_context* ui, const char* text) {
 		.type = ui_el_text,
 		.position = ui->cursor_pos,
 		.as.text = {
-			.text = text
+			.text = copy_string(text)
 		}
 	});
 
@@ -533,7 +539,7 @@ bool ui_button(struct ui_context* ui, const char* text) {
 		.type = ui_el_button,
 		.position = ui->cursor_pos,
 		.as.button = {
-			.text = text,
+			.text = copy_string(text),
 			.dimentions = make_v2i(r.w, r.h)
 		}
 	});
@@ -569,7 +575,7 @@ void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 		.type = ui_el_text_input,
 		.position = ui->cursor_pos,
 		.as.text_input = {
-			.label = label,
+			.label = copy_string(label),
 			.buf = buf,
 			.buf_size = buf_size,
 			.input_dimentions = make_v2i(r.w, r.h),
