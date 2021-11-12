@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "consts.h"
 #include "res.h"
@@ -40,6 +41,9 @@ struct room {
 
 	struct tileset* tilesets;
 	u32 tileset_count;
+
+	struct rect* box_colliders;
+	u32 box_collider_count;
 };
 
 struct room* load_room(const char* path) {
@@ -132,6 +136,18 @@ struct room* load_room(const char* path) {
 					}
 				}
 			} break;
+			case layer_objects: {
+				u32 object_count;
+				fread(&object_count, sizeof(object_count), 1, file);
+
+				if (strcmp(layer->name, "collisions") == 0) {
+					room->box_collider_count = object_count;
+					room->box_colliders = malloc(sizeof(*room->box_colliders) * object_count);
+					for (u32 ii = 0; ii < object_count; ii++) {
+						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
+					}
+				}
+			} break;
 			default: break;
 		}
 	}
@@ -163,6 +179,10 @@ void free_room(struct room* room) {
 		}
 
 		free(room->layers);
+	}
+
+	if (room->box_colliders) {
+		free(room->box_colliders);
 	}
 
 	free(room);
