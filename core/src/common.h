@@ -43,3 +43,4 @@ typedef uint64_t u64;
 	#define CALL
 #endif
 
+#define lambda(c_) ({ c_ _;})

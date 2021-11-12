@@ -25,13 +25,13 @@ entity new_player_entity(struct world* world) {
 
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
-	add_componentv(world, e, struct player, 0);
+	add_componentv(world, e, struct player, .collider = { 4*4, 1*4, 9*4, 16*4 });
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
 }
 
-void player_system(struct world* world, double ts) {
+void player_system(struct world* world, struct room* room, double ts) {
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
@@ -63,6 +63,8 @@ void player_system(struct world* world, double ts) {
 		}
 
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
+
+		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
 
 		transform->position = make_v2i((i32)player->position.x, (i32)player->position.y);
 	}

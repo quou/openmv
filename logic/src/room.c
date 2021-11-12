@@ -219,3 +219,73 @@ void draw_room(struct room* room, struct renderer* renderer) {
 		}
 	}
 }
+
+static bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
+	if (!(
+		a.x + a.w > b.x &&
+		a.y + a.h > b.y &&
+		a.x < b.x + b.w &&
+		a.y < b.y + b.h)) {
+		*normal = make_v2i(0, 0);
+		return false;
+	}
+
+	i32 right  = (a.x + a.w) - b.x;
+	i32 left   = (b.x + b.w) - a.x;
+	i32 top    = (b.y + b.h) - a.y;
+	i32 bottom = (a.y + a.h) - b.y;
+
+	i32 overlap[] = { right, left, top, bottom };
+
+	qsort(overlap, sizeof(overlap) / sizeof(*overlap), sizeof(i32),
+		lambda(i32 _(const void* a, const void* b) {
+			return *(i32*)a > *(i32*)b;
+		}));
+
+	*normal = make_v2i(0, 0);
+	if (overlap[0]        == abs(right)) {
+		normal->x =  1;
+	} else if (overlap[0] == abs(left)) {
+		normal->x = -1;
+	} else if (overlap[0] == abs(bottom)) {
+		normal->y =  1;
+	} else if (overlap[0] == abs(top)) {
+		normal->y = -1;
+	}
+
+	return true;
+}
+
+void handle_body_collisions(struct room* room, struct rect collider, v2f* position, v2f* velocity) {
+	struct rect body_rect = {
+		.x = collider.x + position->x,
+		.y = collider.y + position->y,
+		.w = collider.w, .h = collider.h
+	};
+
+	for (u32 i = 0; i < room->box_collider_count; i++) {
+		struct rect rect = {
+			.x = room->box_colliders[i].x * sprite_scale,
+			.y = room->box_colliders[i].y * sprite_scale,
+			.w = room->box_colliders[i].w * sprite_scale,
+			.h = room->box_colliders[i].h * sprite_scale,
+		};
+
+		v2i normal;
+		if (rect_overlap(body_rect, rect, &normal)) {
+			if (normal.x == 1) {
+				position->x = ((float)rect.x - body_rect.w) - collider.x;
+				velocity->x = 0.0f;
+			} else if (normal.x == -1) {
+				position->x = ((float)rect.x + rect.w) - collider.x;
+				velocity->x = 0.0f;
+			} else if (normal.y == 1) {
+				position->y = ((float)rect.y - body_rect.h) - collider.y;
+				velocity->y = 0.0f;
+			} else if (normal.y == -1) {
+				position->y = ((float)rect.y + rect.h) - collider.y;
+				velocity->y = 0.0f;
+			}
+		}
+	}
+}

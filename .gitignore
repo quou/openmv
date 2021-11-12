@@ -38,3 +38,5 @@ tags
 *.user
 *.userosscache
 *.sln.docstates
+
+*.tiled-session

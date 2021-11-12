@@ -63,7 +63,7 @@ API void CALL on_update(double ts) {
 
 	draw_room(logic_store->room, renderer);
 
-	player_system(world, ts);
+	player_system(world, logic_store->room, ts);
 
 	render_system(world, renderer, ts);
 	renderer_flush(renderer);
