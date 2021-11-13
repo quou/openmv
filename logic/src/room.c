@@ -3,8 +3,10 @@
 #include <string.h>
 
 #include "consts.h"
+#include "core.h"
 #include "res.h"
 #include "room.h"
+#include "table.h"
 
 struct tile {
 	i32 id;
@@ -35,6 +37,12 @@ struct layer {
 	} as;
 };
 
+struct transition_trigger {
+	struct rect rect;
+	char* change_to;
+	char* entrance;
+};
+
 struct room {
 	struct layer* layers;
 	u32 layer_count;
@@ -44,6 +52,11 @@ struct room {
 
 	struct rect* box_colliders;
 	u32 box_collider_count;
+
+	struct table* entrances;
+
+	struct transition_trigger* transition_triggers;
+	u32 transition_trigger_count;
 };
 
 struct room* load_room(const char* path) {
@@ -54,6 +67,8 @@ struct room* load_room(const char* path) {
 		fprintf(stderr, "Failed to fopen file `%s'.", path);
 		return null;
 	}
+
+	room->entrances = new_table(sizeof(v2i));
 
 	/* Load the tilesets. */
 	fread(&room->tileset_count, sizeof(room->tileset_count), 1, file);
@@ -146,6 +161,47 @@ struct room* load_room(const char* path) {
 					for (u32 ii = 0; ii < object_count; ii++) {
 						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
 					}
+				} else if (strcmp(layer->name, "entrances") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						fread(&r, sizeof(r), 1, file);
+
+						u32 obj_name_len;
+						fread(&obj_name_len, sizeof(obj_name_len), 1, file);
+						char* obj_name = malloc(obj_name_len + 1);
+						obj_name[obj_name_len] = '\0';
+						fread(obj_name, 1, obj_name_len, file);
+
+						table_set(room->entrances, obj_name, &r);
+
+						free(obj_name);
+					}
+				} else if (strcmp(layer->name, "transition_triggers") == 0) {
+					room->transition_triggers = malloc(sizeof(struct transition_trigger) * object_count);
+					room->transition_trigger_count = object_count;
+
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						fread(&r, sizeof(r), 1, file);
+
+						u32 change_to_len;
+						fread(&change_to_len, sizeof(change_to_len), 1, file);
+						char* change_to = malloc(change_to_len + 1);
+						change_to[change_to_len] = '\0';
+						fread(change_to, 1, change_to_len, file);
+
+						u32 entrance_len;
+						fread(&entrance_len, sizeof(entrance_len), 1, file);
+						char* entrance = malloc(entrance_len + 1);
+						entrance[entrance_len] = '\0';
+						fread(entrance, 1, entrance_len, file);
+
+						room->transition_triggers[ii] = (struct transition_trigger) {
+							.rect = r,
+							.change_to = change_to,
+							.entrance = entrance
+						};
+					}
 				}
 			} break;
 			default: break;
@@ -184,6 +240,17 @@ void free_room(struct room* room) {
 	if (room->box_colliders) {
 		free(room->box_colliders);
 	}
+
+	if (room->transition_triggers) {
+		for (u32 i = 0; i < room->transition_trigger_count; i++) {
+			free(room->transition_triggers[i].change_to);
+			free(room->transition_triggers[i].entrance);
+		}
+
+		free(room->transition_triggers);
+	}
+
+	free_table(room->entrances);
 
 	free(room);
 }
@@ -256,7 +323,9 @@ static bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 	return true;
 }
 
-void handle_body_collisions(struct room* room, struct rect collider, v2f* position, v2f* velocity) {
+void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {
+	struct room* room = *room_ptr;
+
 	struct rect body_rect = {
 		.x = collider.x + position->x,
 		.y = collider.y + position->y,
@@ -287,5 +356,41 @@ void handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 				velocity->y = 0.0f;
 			}
 		}
+	}
+
+	struct transition_trigger* transition = null;
+	for (u32 i = 0; i < room->transition_trigger_count; i++) {
+		struct rect rect = {
+			.x = room->transition_triggers[i].rect.x * sprite_scale,
+			.y = room->transition_triggers[i].rect.y * sprite_scale,
+			.w = room->transition_triggers[i].rect.w * sprite_scale,
+			.h = room->transition_triggers[i].rect.h * sprite_scale,
+		};
+
+		v2i normal;
+		if (rect_overlap(body_rect, rect, &normal)) {
+			transition = room->transition_triggers + i;
+			break;
+		}
+	}
+
+	if (transition) {
+		char* change_to = copy_string(transition->change_to);
+		char* entrance = copy_string(transition->entrance);
+
+		free_room(room);
+		*room_ptr = load_room(change_to);
+		room = *room_ptr;
+
+		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
+		if (entrance_pos) {
+			position->x = entrance_pos->x * sprite_scale - collider.w;
+			position->y = entrance_pos->y * sprite_scale - collider.h;
+		} else {
+			fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
+		}
+
+		free(change_to);
+		free(entrance);
 	}
 }

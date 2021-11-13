@@ -17,8 +17,8 @@ make it a good engine. It is designed with open-world platform games in mind.
  - [ ] In-game GUI.
  - [ ] Debug IMGUI.
  - [ ] Save-game system.
- - [ ] Room system.
- - [ ] Tilemap system.
+ - [x] Room system.
+ - [x] Tilemap system.
  - [ ] Advanced Rendering (Post processing fx, etc.).
  - [ ] Actually make a damn game.
 

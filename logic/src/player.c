@@ -16,7 +16,7 @@ struct player_constants {
 
 const struct player_constants player_constants = {
 	.move_speed = 300,
-	.jump_force = -500,
+	.jump_force = -550,
 	.gravity = 1000
 };
 
@@ -25,13 +25,13 @@ entity new_player_entity(struct world* world) {
 
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
-	add_componentv(world, e, struct player, .collider = { 4*4, 1*4, 9*4, 16*4 });
+	add_componentv(world, e, struct player, .position = { 128, 128 }, .collider = { 4*4, 1*4, 9*4, 15*4 });
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
 }
 
-void player_system(struct world* world, struct room* room, double ts) {
+void player_system(struct world* world, struct room** room, double ts) {
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),

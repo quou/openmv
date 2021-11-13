@@ -63,16 +63,16 @@ API void CALL on_update(double ts) {
 
 	draw_room(logic_store->room, renderer);
 
-	player_system(world, logic_store->room, ts);
+	player_system(world, &logic_store->room, ts);
 
 	render_system(world, renderer, ts);
 	renderer_flush(renderer);
 
 	ui_begin_frame(ui);
 	
-	if (ui_begin_window(ui, "Test Window", make_v2i(0, 0))) {
+	/*if (ui_begin_window(ui, "Test Window", make_v2i(0, 0))) {
 		ui_end_window(ui);
-	}
+	}*/
 
 	ui_end_frame(ui);
 }

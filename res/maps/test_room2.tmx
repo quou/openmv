@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="25">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="23">
  <editorsettings>
-  <export target="test_room.dat" format="dat"/>
+  <export target="test_room2.dat" format="dat"/>
  </editorsettings>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
- <layer id="1" name="Tile Layer 1" width="32" height="32" locked="1">
+ <layer id="1" name="Tile Layer 1" width="32" height="32">
   <data encoding="csv">
 5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,0,0,0,0,0,0,0,0,0,0,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-5,2,2,2,2,2,2,2,2,2,2,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+5,5,5,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+5,5,5,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+2,2,2,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+5,5,5,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+5,5,5,5,2,2,2,2,2,2,2,2,2,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -41,22 +41,22 @@
 </data>
  </layer>
  <objectgroup color="#00aa00" id="2" name="collisions" locked="1">
-  <object id="11" x="176" y="80" width="48" height="32"/>
-  <object id="12" x="176" y="16" width="48" height="32"/>
   <object id="13" x="0" y="112" width="224" height="16"/>
-  <object id="14" x="0" y="16" width="16" height="96"/>
   <object id="15" x="0" y="0" width="224" height="16"/>
+  <object id="19" x="0" y="16" width="64" height="32"/>
+  <object id="20" x="0" y="80" width="64" height="32"/>
+  <object id="21" x="208" y="16" width="16" height="96"/>
  </objectgroup>
  <objectgroup color="#ff0000" id="3" name="transition_triggers" locked="1">
-  <object id="17" x="208" y="48" width="16" height="32">
+  <object id="17" x="0" y="48" width="16" height="32">
    <properties>
-    <property name="change_to" value="res/maps/test_room2.dat"/>
-    <property name="entrance" value="left"/>
+    <property name="change_to" value="res/maps/test_room.dat"/>
+    <property name="entrance" value="right"/>
    </properties>
   </object>
  </objectgroup>
  <objectgroup color="#0000ff" id="4" name="entrances">
-  <object id="22" name="right" x="192" y="80">
+  <object id="22" name="left" x="32" y="80">
    <point/>
   </object>
  </objectgroup>
