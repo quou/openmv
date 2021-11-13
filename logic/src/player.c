@@ -42,22 +42,16 @@ void player_system(struct world* world, struct room** room, double ts) {
 
 		player->velocity.y += player_constants.gravity * ts;
 
-		if (key_just_pressed(main_window, mapped_key("jump"))) {
+		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
 			player->velocity.y = player_constants.jump_force;
 		}
 
 		if (key_pressed(main_window, mapped_key("right"))) {
 			player->velocity.x = player_constants.move_speed;
-
-			struct animated_sprite new_sprite = get_animated_sprite(animsprid_player_run_right);
-			memcpy(sprite->frames, new_sprite.frames,
-				new_sprite.frame_count * sizeof(*new_sprite.frames));
+			player->face = player_face_right;
 		} else if (key_pressed(main_window, mapped_key("left"))) {
 			player->velocity.x = -player_constants.move_speed;
-
-			struct animated_sprite new_sprite = get_animated_sprite(animsprid_player_run_left);
-			memcpy(sprite->frames, new_sprite.frames,
-				new_sprite.frame_count * sizeof(*new_sprite.frames));
+			player->face = player_face_left;
 		} else {
 			player->velocity.x = 0.0f;
 		}
@@ -65,6 +59,56 @@ void player_system(struct world* world, struct room** room, double ts) {
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
 		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
+
+		{
+			struct rect ground_test_rect = {
+				player->position.x + player->collider.x + player->collider.w,
+				player->position.y + player->collider.y + player->collider.h,
+				player->collider.w,
+				3
+			};
+
+			v2i normal;
+			if (rect_room_overlap(*room, ground_test_rect, &normal)) {
+				player->on_ground = normal.y == 1;
+			} else {
+				player->on_ground = false;
+			}
+		}
+
+		if (player->on_ground) {
+			if (player->velocity.x != 0.0f) {
+				if (player->face == player_face_left) {
+					if (sprite->id != animsprid_player_run_left) {
+						*sprite = get_animated_sprite(animsprid_player_run_left);
+					}
+				} else {
+					if (sprite->id != animsprid_player_run_right) {
+						*sprite = get_animated_sprite(animsprid_player_run_right);
+					}
+				}
+			} else {
+				if (player->face == player_face_left) {
+					*sprite = get_animated_sprite(animsprid_player_idle_left);
+				} else {
+					*sprite = get_animated_sprite(animsprid_player_idle_right);
+				}
+			}
+		} else {
+			if (player->velocity.y < 0.0f) {
+				if (player->face == player_face_left) {
+					*sprite = get_animated_sprite(animsprid_player_jump_left);
+				} else {
+					*sprite = get_animated_sprite(animsprid_player_jump_right);
+				}
+			} else {
+				if (player->face == player_face_left) {
+					*sprite = get_animated_sprite(animsprid_player_fall_left);
+				} else {
+					*sprite = get_animated_sprite(animsprid_player_fall_right);
+				}
+			}
+		}
 
 		transform->position = make_v2i((i32)player->position.x, (i32)player->position.y);
 	}

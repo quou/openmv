@@ -21,6 +21,7 @@ struct sprite {
 #define animated_sprite_max_frames 16
 
 struct animated_sprite {
+	u32 id;
 	struct texture* texture;
 	struct rect frames[animated_sprite_max_frames];
 	u32 frame_count;

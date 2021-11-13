@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="23">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="26">
  <editorsettings>
   <export target="test_room2.dat" format="dat"/>
  </editorsettings>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
- <layer id="1" name="Tile Layer 1" width="32" height="32">
+ <layer id="1" name="Tile Layer 1" width="32" height="32" locked="1">
   <data encoding="csv">
 5,5,5,5,5,5,5,5,5,5,5,5,5,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 5,5,5,5,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -55,7 +55,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup color="#0000ff" id="4" name="entrances">
+ <objectgroup color="#0000ff" id="4" name="entrances" locked="1">
   <object id="22" name="left" x="32" y="80">
    <point/>
   </object>

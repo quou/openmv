@@ -14,6 +14,12 @@ enum {
 enum {
 	animsprid_player_run_right = 0,
 	animsprid_player_run_left,
+	animsprid_player_jump_right,
+	animsprid_player_jump_left,
+	animsprid_player_fall_right,
+	animsprid_player_fall_left,
+	animsprid_player_idle_right,
+	animsprid_player_idle_left,
 };
 
 void preload_sprites();

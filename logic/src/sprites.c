@@ -12,6 +12,7 @@ struct sprite sprites[] = {
 
 struct animated_sprite anim_sprites[] = {
 	[animsprid_player_run_right] = {
+		.id = animsprid_player_run_right,
 		.texture = texid_player,
 		.frames = { { 0, 0, 16, 16 }, { 16, 0, 16, 16 }, { 32, 0, 16, 16 } },
 		.speed = 8.9,
@@ -20,9 +21,64 @@ struct animated_sprite anim_sprites[] = {
 		.color = { 255, 255, 255, 255 }
 	},
 	[animsprid_player_run_left] = {
+		.id = animsprid_player_run_left,
 		.texture = texid_player,
 		.frames = { { 0, 16, 16, 16 }, { 16, 16, 16, 16 }, { 32, 16, 16, 16 } },
 		.speed = 8.9,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_jump_right] = {
+		.id = animsprid_player_jump_right,
+		.texture = texid_player,
+		.frames = { { 32, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_jump_left] = {
+		.id = animsprid_player_jump_left,
+		.texture = texid_player,
+		.frames = { { 32, 16, 16, 16 } },
+		.speed = 0,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_fall_right] = {
+		.id = animsprid_player_fall_right,
+		.texture = texid_player,
+		.frames = { { 16, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_fall_left] = {
+		.id = animsprid_player_fall_left,
+		.texture = texid_player,
+		.frames = { { 16, 16, 16, 16 } },
+		.speed = 0,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_idle_right] = {
+		.id = animsprid_player_idle_right,
+		.texture = texid_player,
+		.frames = { { 0, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_player_idle_left] = {
+		.id = animsprid_player_idle_left,
+		.texture = texid_player,
+		.frames = { { 0, 16, 16, 16 } },
+		.speed = 0,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }

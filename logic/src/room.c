@@ -384,7 +384,7 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 
 		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
 		if (entrance_pos) {
-			position->x = entrance_pos->x * sprite_scale - collider.w;
+			position->x = entrance_pos->x * sprite_scale - (collider.w / 2);
 			position->y = entrance_pos->y * sprite_scale - collider.h;
 		} else {
 			fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
@@ -393,4 +393,21 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 		free(change_to);
 		free(entrance);
 	}
+}
+
+bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
+	for (u32 i = 0; i < room->box_collider_count; i++) {
+		struct rect r = {
+			.x = room->box_colliders[i].x * sprite_scale,
+			.y = room->box_colliders[i].y * sprite_scale,
+			.w = room->box_colliders[i].w * sprite_scale,
+			.h = room->box_colliders[i].h * sprite_scale,
+		};
+
+		if (rect_overlap(rect, r, normal)) {
+			return true;
+		}
+	}
+
+	return false;
 }
