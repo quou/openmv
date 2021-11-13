@@ -15,7 +15,7 @@ make it a good engine. It is designed with open-world platform games in mind.
  - [ ] Physics.
  - [ ] Audio.
  - [ ] In-game GUI.
- - [ ] Debug IMGUI.
+ - [x] Debug IMGUI.
  - [ ] Save-game system.
  - [x] Room system.
  - [x] Tilemap system.
