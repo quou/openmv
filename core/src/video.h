@@ -100,6 +100,7 @@ struct renderer {
 	u32 texture_count;
 
 	bool clip_enable;
+	bool camera_enable;
 
 	struct rect clip;
 	v2i dimentions;

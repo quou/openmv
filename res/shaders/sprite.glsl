@@ -24,7 +24,7 @@ void main() {
 	vs_out.uv = uv;
 	vs_out.texture_id = texture_id;
 
-	gl_Position = camera * view  * transforms[int(transform_id)] * vec4(position, 0.0, 1.0);
+	gl_Position = camera * view * transforms[int(transform_id)] * vec4(position, 0.0, 1.0);
 }
 
 #end VERTEX

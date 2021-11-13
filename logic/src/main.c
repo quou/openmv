@@ -34,6 +34,7 @@ API void CALL on_init() {
 
 	struct shader* sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
+	logic_store->renderer->camera_enable = true;
 
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
 
@@ -70,9 +71,11 @@ API void CALL on_update(double ts) {
 
 	ui_begin_frame(ui);
 	
-	/*if (ui_begin_window(ui, "Test Window", make_v2i(0, 0))) {
+	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
+		ui_text(ui, logic_store->fps_buf);
+
 		ui_end_window(ui);
-	}*/
+	}
 
 	ui_end_frame(ui);
 }

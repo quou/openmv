@@ -58,7 +58,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		{
 			struct rect ground_test_rect = {
-				player->position.x + player->collider.x + player->collider.w,
+				player->position.x + player->collider.x,
 				player->position.y + player->collider.y + player->collider.h,
 				player->collider.w,
 				3

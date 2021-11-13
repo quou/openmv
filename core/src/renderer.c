@@ -42,6 +42,7 @@ struct renderer* new_renderer(const struct shader* shader, v2i dimentions) {
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
+	renderer->camera_enable = false;
 
 	renderer->shader = shader;
 	bind_shader(renderer->shader);
@@ -92,11 +93,15 @@ void renderer_flush(struct renderer* renderer) {
 
 	shader_set_m4f(renderer->shader, "camera", renderer->camera);
 
-	m4f view = m4f_translate(m4f_identity(), make_v3f(
-		-(renderer->camera_pos.x) + (renderer->dimentions.x / 2),
-		-(renderer->camera_pos.y) + (renderer->dimentions.y / 2),
-		0.0f));
-	shader_set_m4f(renderer->shader, "view", view);
+	if (renderer->camera_enable) {
+		m4f view = m4f_translate(m4f_identity(), make_v3f(
+			-(renderer->camera_pos.x) + (renderer->dimentions.x / 2),
+			-(renderer->camera_pos.y) + (renderer->dimentions.y / 2),
+			0.0f));
+		shader_set_m4f(renderer->shader, "view", view);
+	} else {
+		shader_set_m4f(renderer->shader, "view", m4f_identity());
+	}
 
 	bind_vb_for_draw(&renderer->vb);
 	draw_vb_n(&renderer->vb, renderer->quad_count * indices_per_quad);
