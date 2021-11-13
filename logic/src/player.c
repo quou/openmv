@@ -12,12 +12,16 @@ struct player_constants {
 	float move_speed;
 	float jump_force;
 	float gravity;
+	float accel;
+	float friction;
 };
 
 const struct player_constants player_constants = {
 	.move_speed = 300,
 	.jump_force = -550,
-	.gravity = 1000
+	.gravity = 1000,
+	.accel = 1000,
+	.friction = 3000
 };
 
 entity new_player_entity(struct world* world) {
@@ -43,13 +47,23 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		player->velocity.y += player_constants.gravity * ts;
 
 		if (key_pressed(main_window, mapped_key("right"))) {
-			player->velocity.x = player_constants.move_speed;
+			if (player->velocity.x < player_constants.move_speed) {
+				player->velocity.x += player_constants.accel * ts;
+			}
+			
 			player->face = player_face_right;
 		} else if (key_pressed(main_window, mapped_key("left"))) {
-			player->velocity.x = -player_constants.move_speed;
+			if (player->velocity.x > -player_constants.move_speed) {
+				player->velocity.x -= player_constants.accel * ts;
+			}
+
 			player->face = player_face_left;
 		} else {
-			player->velocity.x = 0.0f;
+			if (player->velocity.x > 0.0f) {
+				player->velocity.x -= player_constants.friction * ts;
+			} else {
+				player->velocity.x += player_constants.friction * ts;
+			}
 		}
 
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
@@ -77,7 +91,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		if (player->on_ground) {
-			if (player->velocity.x != 0.0f) {
+			if (player->velocity.x > 0.5f || player->velocity.x < -0.5f) {
 				if (player->face == player_face_left) {
 					if (sprite->id != animsprid_player_run_left) {
 						*sprite = get_animated_sprite(animsprid_player_run_left);
