@@ -104,6 +104,7 @@ struct renderer {
 	struct rect clip;
 	v2i dimentions;
 
+	v2i camera_pos;
 	m4f camera;
 
 	m4f transforms[100];

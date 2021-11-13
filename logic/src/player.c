@@ -31,7 +31,7 @@ entity new_player_entity(struct world* world) {
 	return e;
 }
 
-void player_system(struct world* world, struct room** room, double ts) {
+void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts) {
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
@@ -41,10 +41,6 @@ void player_system(struct world* world, struct room** room, double ts) {
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
 
 		player->velocity.y += player_constants.gravity * ts;
-
-		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
-			player->velocity.y = player_constants.jump_force;
-		}
 
 		if (key_pressed(main_window, mapped_key("right"))) {
 			player->velocity.x = player_constants.move_speed;
@@ -74,6 +70,10 @@ void player_system(struct world* world, struct room** room, double ts) {
 			} else {
 				player->on_ground = false;
 			}
+		}
+
+		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
+			player->velocity.y = player_constants.jump_force;
 		}
 
 		if (player->on_ground) {
@@ -111,5 +111,6 @@ void player_system(struct world* world, struct room** room, double ts) {
 		}
 
 		transform->position = make_v2i((i32)player->position.x, (i32)player->position.y);
+		renderer->camera_pos = transform->position;
 	}
 }
