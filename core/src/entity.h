@@ -16,7 +16,7 @@
 	} while (0)
 
 #define get_component(w_, e_, t_) \
-	(t_*)_get_component((w_), (e_), type_info(t_))
+	((t_*)_get_component((w_), (e_), type_info(t_)))
 
 #define remove_component(w_, e_, t_) \
 	_remove_component((w_), (e_), type_info(t_))

@@ -47,9 +47,12 @@ API void CALL on_init() {
 
 	preload_sprites();
 
-	entity player = new_player_entity(world);
-
 	logic_store->room = load_room("res/maps/test_room.dat");
+
+	entity player = new_player_entity(world);
+	v2i spawn = get_spawn(logic_store->room);
+	struct player* pc = get_component(world, player, struct player);
+	pc->position = make_v2f(spawn.x - pc->collider.w, spawn.y - pc->collider.h);
 }
 
 API void CALL on_update(double ts) {

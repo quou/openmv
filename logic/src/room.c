@@ -424,3 +424,12 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 
 	return false;
 }
+
+v2i get_spawn(struct room* room) {
+	v2i* entrance_pos = (v2i*)table_get(room->entrances, "spawn");
+	if (entrance_pos) {
+		return make_v2i(entrance_pos->x * sprite_scale, entrance_pos->y * sprite_scale);
+	}
+
+	return make_v2i(0, 0);
+}
