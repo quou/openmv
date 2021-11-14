@@ -40,7 +40,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup color="#00aa00" id="2" name="collisions">
+ <objectgroup color="#00aa00" id="2" name="collisions" locked="1">
   <object id="13" x="0" y="112" width="224" height="16"/>
   <object id="15" x="0" y="0" width="224" height="16"/>
   <object id="21" x="208" y="16" width="16" height="96"/>

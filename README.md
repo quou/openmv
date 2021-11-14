@@ -5,7 +5,7 @@ Created from the ground up in C99.
 
 I'm creating this project to build the foundations for many games to come.
 It is designed as an engine that *I* want to use - which doesn't necessarily
-make it a good engine. It is designed with open-world platform games in mind.
+make it a good engine. It is designed with non-linear platform games in mind.
 
 ## Features
  - [x] Basic Rendering.
