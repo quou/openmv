@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="29">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="30">
  <editorsettings>
   <export target="test_room2.dat" format="dat"/>
  </editorsettings>
@@ -11,7 +11,7 @@
 5,5,5,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-2,2,2,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+2,2,2,0,0,0,0,0,2,2,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 5,5,5,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 5,5,5,2,2,2,2,2,2,2,2,2,2,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -40,12 +40,13 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup color="#00aa00" id="2" name="collisions" locked="1">
+ <objectgroup color="#00aa00" id="2" name="collisions">
   <object id="13" x="0" y="112" width="224" height="16"/>
   <object id="15" x="0" y="0" width="224" height="16"/>
   <object id="21" x="208" y="16" width="16" height="96"/>
   <object id="26" x="0" y="16" width="48" height="32"/>
   <object id="27" x="0" y="80" width="48" height="32"/>
+  <object id="29" x="128" y="80" width="32" height="16"/>
  </objectgroup>
  <objectgroup color="#ff0000" id="3" name="transition_triggers" locked="1">
   <object id="17" template="../templates/transition_trigger.tx" x="0" y="48">

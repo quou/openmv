@@ -2,7 +2,7 @@
     "automappingRulesFile": "",
     "commands": [
     ],
-    "extensionsPath": "extensions",
+    "extensionsPath": "../tiledext",
     "folders": [
         ".",
         "templates"

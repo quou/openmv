@@ -23,7 +23,7 @@ const struct player_constants player_constants = {
 	.jump_force = -550,
 	.gravity = 1000,
 	.accel = 1000,
-	.friction = 3000
+	.friction = 1300
 };
 
 entity new_player_entity(struct world* world) {
