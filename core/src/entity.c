@@ -61,13 +61,13 @@ static void deinit_pool(struct pool* pool) {
 	}
 
 	if (pool->sparse) {
-		free(pool->sparse);
+		core_free(pool->sparse);
 	}
 	if (pool->dense) {
-		free(pool->dense);
+		core_free(pool->dense);
 	}
 	if (pool->data) {
-		free(pool->data);
+		core_free(pool->data);
 	}
 }
 
@@ -83,7 +83,7 @@ static i32 pool_sparse_idx(struct pool* pool, entity e) {
 static void* pool_add(struct pool* pool, entity e, void* init) {
 	if (pool->count >= pool->capacity) {
 		pool->capacity = pool->capacity < 8 ? 8 : pool->capacity * 2;
-		pool->data = realloc(pool->data, pool->capacity * pool->element_size);
+		pool->data = core_realloc(pool->data, pool->capacity * pool->element_size);
 	}
 
 	void* ptr = &((u8*)pool->data)[(pool->count++) * pool->element_size];
@@ -91,7 +91,7 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 	const entity eid = get_entity_id(e);
 	if (eid >= pool->sparse_capacity) {
 		const u32 new_cap = pool->sparse_capacity < 8 ? 8 : pool->capacity * 2;
-		pool->sparse = realloc(pool->sparse, new_cap * sizeof(i32));
+		pool->sparse = core_realloc(pool->sparse, new_cap * sizeof(i32));
 		for (u32 i = pool->sparse_capacity; i < new_cap; i++) {
 			pool->sparse[i] = -1;
 		}
@@ -102,7 +102,7 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 
 	if (pool->dense_count >= pool->dense_capacity) {
 		pool->dense_capacity = pool->dense_capacity < 8 ? 8 : pool->dense_capacity * 2;
-		pool->dense = realloc(pool->dense, pool->dense_capacity * sizeof(entity));
+		pool->dense = core_realloc(pool->dense, pool->dense_capacity * sizeof(entity));
 	}
 
 	pool->dense[pool->dense_count++] = e;
@@ -163,7 +163,7 @@ struct world {
 static entity generate_entity(struct world* world) {
 	if (world->entity_count >= world->entity_capacity) {
 		world->entity_capacity = world->entity_capacity < 8 ? 8 : world->entity_capacity * 2;
-		world->entities = realloc(world->entities, world->entity_capacity * sizeof(entity));
+		world->entities = core_realloc(world->entities, world->entity_capacity * sizeof(entity));
 	}
 
 	const entity e = make_handle(world->entity_count, 0);
@@ -201,7 +201,7 @@ static struct pool* get_pool(struct world* world, struct type_info type) {
 	} else {
 		if (world->pool_count >= world->pool_capacity) {
 			world->pool_capacity = world->pool_capacity < 8 ? 8 : world->pool_capacity * 2;
-			world->pools = realloc(world->pools, world->pool_capacity * sizeof(struct pool));
+			world->pools = core_realloc(world->pools, world->pool_capacity * sizeof(struct pool));
 		}
 
 		struct pool* new = &world->pools[world->pool_count++];
@@ -211,7 +211,7 @@ static struct pool* get_pool(struct world* world, struct type_info type) {
 }
 
 struct world* new_world() {
-	struct world* w = calloc(1, sizeof(struct world));
+	struct world* w = core_calloc(1, sizeof(struct world));
 
 	w->avail_id = null_entity_id;
 
@@ -224,14 +224,14 @@ void free_world(struct world* world) {
 			deinit_pool(&world->pools[i]);
 		}
 
-		free(world->pools);
+		core_free(world->pools);
 	}
 
 	if (world->entities) {
-		free(world->entities);
+		core_free(world->entities);
 	}
 
-	free(world);
+	core_free(world);
 }
 
 entity new_entity(struct world* world) {

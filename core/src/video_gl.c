@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core.h"
 #include "res.h"
 #include "util/gl.h"
 #include "video.h"
@@ -36,9 +37,9 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 
 	const u32 source_len = (u32)strlen(source);
 
-	char* vertex_source = malloc(source_len);
-	char* fragment_source = malloc(source_len);
-	char* geometry_source = malloc(source_len);
+	char* vertex_source = core_alloc(source_len);
+	char* fragment_source = core_alloc(source_len);
+	char* geometry_source = core_alloc(source_len);
 	memset(vertex_source, 0, source_len);
 	memset(fragment_source, 0, source_len);
 	memset(geometry_source, 0, source_len);
@@ -53,7 +54,7 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 
 			current++;
 
-			char* line = malloc(count + 1);
+			char* line = core_alloc(count + 1);
 			memcpy(line, current - count - minus, count);
 			line[count] = '\0';
 
@@ -85,7 +86,7 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 				strcat(geometry_source, "\n");
 			}
 
-			free(line);
+			core_free(line);
 
 			count = 0;
 		}
@@ -161,9 +162,9 @@ void init_shader(struct shader* shader, const char* source, const char* name) {
 		glDeleteShader(g);
 	}
 
-	free(vertex_source);
-	free(fragment_source);
-	free(geometry_source);
+	core_free(vertex_source);
+	core_free(fragment_source);
+	core_free(geometry_source);
 
 	shader->id = id;
 }
@@ -344,7 +345,7 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	struct color* colors = (struct color*)src;
-	struct color* dst = malloc(w * h * sizeof(struct color));
+	struct color* dst = core_alloc(w * h * sizeof(struct color));
 	if (flip) {
 		for (u32 y = 0; y < h; y++) {
 			for (u32 x = 0; x < w; x++) {
@@ -366,7 +367,7 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 			w, h, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, dst);
 
-	free(dst);
+	core_free(dst);
 }
 
 void deinit_texture(struct texture* texture) {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdlib.h>
+
 #include "common.h"
 
 struct window;
@@ -24,4 +26,18 @@ struct type_info {
 
 #define type_info(t_) ((struct type_info) { str_id(#t_), sizeof(t_) })
 
-char* copy_string(const char* src);
+API char* copy_string(const char* src);
+
+#ifdef DEBUG
+API void* core_alloc(u64 size);
+API void* core_calloc(u64 count, u64 size);
+API void* core_realloc(void* ptr, u64 size);
+API void core_free(void* ptr);
+#else
+#define core_alloc malloc
+#define core_calloc calloc
+#define core_realloc realloc
+#define core_free free
+#endif
+
+API u64 core_get_memory_usage();

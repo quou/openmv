@@ -8,6 +8,7 @@
 #include <GL/glx.h>
 
 #include "common.h"
+#include "core.h"
 #include "platform.h"
 #include "keytable.h"
 
@@ -46,7 +47,7 @@ struct window {
 };
 
 struct window* new_window(i32 width, i32 height, const char* title) {
-	struct window* window = malloc(sizeof(struct window));
+	struct window* window = core_alloc(sizeof(struct window));
 
 	window->uptr = null;
 	window->open = false;
@@ -242,7 +243,7 @@ void free_window(struct window* window) {
 	XDestroyWindow(window->display, window->window);
 	XCloseDisplay(window->display);
 
-	free(window);
+	core_free(window);
 }
 
 void swap_window(struct window* window) {

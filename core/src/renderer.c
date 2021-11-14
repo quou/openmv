@@ -2,11 +2,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "video.h"
+#include "core.h"
 #include "res.h"
+#include "util/gl.h"
 #include "util/stb_rect_pack.h"
 #include "util/stb_truetype.h"
-#include "util/gl.h"
+#include "video.h"
 
 #define batch_size 100
 #define els_per_vert 10
@@ -24,7 +25,7 @@ struct rect make_rect(i32 x, i32 y, i32 w, i32 h) {
 }
 
 struct renderer* new_renderer(const struct shader* shader, v2i dimentions) {
-	struct renderer* renderer = calloc(1, sizeof(struct renderer));
+	struct renderer* renderer = core_calloc(1, sizeof(struct renderer));
 
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
@@ -59,7 +60,7 @@ struct renderer* new_renderer(const struct shader* shader, v2i dimentions) {
 void free_renderer(struct renderer* renderer) {
 	deinit_vb(&renderer->vb);
 
-	free(renderer);
+	core_free(renderer);
 }
 
 void renderer_flush(struct renderer* renderer) {
@@ -231,7 +232,7 @@ static struct glyph_set* load_glyph_set(struct font* font, i32 idx) {
 	float scale, s;
 	struct glyph_set* set;
 
-	set = calloc(1, sizeof(struct glyph_set));
+	set = core_calloc(1, sizeof(struct glyph_set));
 
 	width = 128;
 	height = 128;
@@ -239,7 +240,7 @@ static struct glyph_set* load_glyph_set(struct font* font, i32 idx) {
 	struct color* pixels;
 
 retry:
-	pixels = malloc(width * height * 4);
+	pixels = core_alloc(width * height * 4);
 
 	s = stbtt_ScaleForMappingEmToPixels(&font->info, 1) /
 		stbtt_ScaleForPixelHeight(&font->info, 1);
@@ -249,7 +250,7 @@ retry:
 	if (r <= 0) {
 		width *= 2;
 		height *= 2;
-		free(pixels);
+		core_free(pixels);
 		goto retry;
 	}
 
@@ -268,7 +269,7 @@ retry:
 
 	init_texture_no_bmp(&set->atlas, (u8*)pixels, width, height, false);
 
-	free(pixels);
+	core_free(pixels);
 
 	return set;
 }
@@ -288,7 +289,7 @@ struct font* load_font_from_memory(void* data, i32 filesize, float size) {
 	i32 r, ascent, descent, linegap;
 	float scale;
 
-	font = calloc(1, sizeof(struct font));
+	font = core_calloc(1, sizeof(struct font));
 	font->data = data;
 
 	font->size = size;
@@ -311,8 +312,8 @@ struct font* load_font_from_memory(void* data, i32 filesize, float size) {
 	return font;
 
 fail:
-	if (font->data) { free(font->data); }
-	if (font) { free(font); }
+	if (font->data) { core_free(font->data); }
+	if (font) { core_free(font); }
 	return NULL;
 }
 
@@ -324,12 +325,12 @@ void free_font(struct font* font) {
 		set = font->sets[i];
 		if (set) {
 			deinit_texture(&set->atlas);
-			free(set);
+			core_free(set);
 		}
 	}
 
-	free(font->data);
-	free(font);
+	core_free(font->data);
+	core_free(font);
 }
 
 void set_font_tab_size(struct font* font, i32 n) {

@@ -32,9 +32,71 @@ u32 str_id(const char* str) {
 char* copy_string(const char* src) {
 	const u32 len = (u32)strlen(src);
 
-	char* s = malloc(len + 1);
+	char* s = core_alloc(len + 1);
 	memcpy(s, src, len);
 	s[len] = 0;
 
 	return s;
 }
+
+#ifdef DEBUG
+u64 memory_usage = 0;
+
+void* core_alloc(u64 size) {
+	u8* ptr = malloc(sizeof(u64) + size);
+
+	memcpy(ptr, &size, sizeof(u64));
+
+	memory_usage += size;
+
+	return ptr + sizeof(u64);
+}
+
+void* core_calloc(u64 count, u64 size) {
+	u64 alloc_size = count * size;
+
+	u8* ptr = malloc(sizeof(u64) + alloc_size);
+
+	memset(ptr + sizeof(u64), 0, alloc_size);
+
+	memcpy(ptr, &alloc_size, sizeof(u64));
+
+	memory_usage += size;
+
+	return ptr + sizeof(u64);
+}
+
+void* core_realloc(void* p, u64 size) {
+	u8* ptr = p;
+
+	if (ptr) {
+		u64* old_size = (u64*)(ptr - sizeof(u64));
+		memory_usage -= *old_size;
+	}
+
+	void* new_ptr = realloc(ptr ? ptr - sizeof(u64) : null, sizeof(u64) + size);
+
+	memcpy(new_ptr, &size, sizeof(u64));
+
+	memory_usage += size;
+
+	return new_ptr + sizeof(u64);
+}
+
+void core_free(void* p) {
+	u8* ptr = p;
+
+	u64* old_size = (u64*)(ptr - sizeof(u64));
+	memory_usage -= *old_size;
+
+	free(old_size);
+}
+
+u64 core_get_memory_usage() {
+	return memory_usage;
+}
+#else
+u64 core_get_memory_usage() {
+	return 0;
+}
+#endif

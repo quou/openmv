@@ -96,7 +96,7 @@ static void copy_asm(const char* lib_path) {
 }
 
 struct script_context* new_script_context(const char* lib_path) {
-	struct script_context* ctx = calloc(1, sizeof(struct script_context));
+	struct script_context* ctx = core_calloc(1, sizeof(struct script_context));
 
 	ctx->lib_path = lib_path;
 
@@ -112,7 +112,7 @@ struct script_context* new_script_context(const char* lib_path) {
 	if (ctx->get_storage_size) {
 		u64 size = ctx->get_storage_size();
 
-		ctx->instance = calloc(1, size);
+		ctx->instance = core_calloc(1, size);
 
 		ctx->instance_size = size;
 
@@ -126,12 +126,12 @@ struct script_context* new_script_context(const char* lib_path) {
 
 void free_script_context(struct script_context* ctx) {
 	if (ctx->instance) {
-		free(ctx->instance);
+		core_free(ctx->instance);
 	}
 
 	close_dynlib(ctx->handle);
 
-	free(ctx);
+	core_free(ctx);
 }
 
 void script_context_update(struct script_context* ctx, double ts) {
@@ -160,7 +160,7 @@ void script_context_update(struct script_context* ctx, double ts) {
 					u64 size = ctx->get_storage_size();
 
 					if (size != ctx->instance_size) {
-						ctx->instance = realloc(ctx->instance, size);
+						ctx->instance = core_realloc(ctx->instance, size);
 						if (size > ctx->instance_size) {
 						memset((u8*)ctx->instance + ctx->instance_size, 0, size - ctx->instance_size);
 						}

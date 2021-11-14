@@ -61,7 +61,7 @@ struct room {
 };
 
 struct room* load_room(const char* path) {
-	struct room* room = calloc(1, sizeof(struct room));
+	struct room* room = core_calloc(1, sizeof(struct room));
 
 	FILE* file = fopen(path, "rb");
 	if (!file) {
@@ -73,7 +73,7 @@ struct room* load_room(const char* path) {
 
 	/* Load the tilesets. */
 	fread(&room->tileset_count, sizeof(room->tileset_count), 1, file);
-	room->tilesets = calloc(room->tileset_count, sizeof(struct tileset));
+	room->tilesets = core_calloc(room->tileset_count, sizeof(struct tileset));
 
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		struct tileset* current = room->tilesets + i;
@@ -81,18 +81,18 @@ struct room* load_room(const char* path) {
 		/* Read the name. */
 		u32 name_len;
 		fread(&name_len, sizeof(name_len), 1, file);
-		current->name = malloc(name_len + 1);
+		current->name = core_alloc(name_len + 1);
 		current->name[name_len] = '\0';
 		fread(current->name, 1, name_len, file);
 
 		/* Read the tileset image. */
 		u32 path_len;
 		fread(&path_len, sizeof(path_len), 1, file);
-		char* path = malloc(path_len + 1);
+		char* path = core_alloc(path_len + 1);
 		path[path_len] = '\0';
 		fread(path, 1, path_len, file);
 		current->image = load_texture(path);
-		free(path);
+		core_free(path);
 
 		/* Read the tile width and height */
 		fread(&current->tile_w, sizeof(current->tile_w), 1, file);
@@ -101,7 +101,7 @@ struct room* load_room(const char* path) {
 
 	/* Load the tile layers */	
 	fread(&room->layer_count, sizeof(room->layer_count), 1, file);
-	room->layers = calloc(room->layer_count, sizeof(struct layer));
+	room->layers = core_calloc(room->layer_count, sizeof(struct layer));
 
 	for (u32 i = 0; i < room->layer_count; i++) {
 		struct layer* layer = room->layers + i;
@@ -109,7 +109,7 @@ struct room* load_room(const char* path) {
 		/* Read the name. */
 		u32 name_len;
 		fread(&name_len, sizeof(name_len), 1, file);
-		layer->name = malloc(name_len + 1);
+		layer->name = core_alloc(name_len + 1);
 		layer->name[name_len] = '\0';
 		fread(layer->name, 1, name_len, file);
 
@@ -120,7 +120,7 @@ struct room* load_room(const char* path) {
 				fread(&layer->as.tile_layer.w, sizeof(layer->as.tile_layer.w), 1, file);
 				fread(&layer->as.tile_layer.h, sizeof(layer->as.tile_layer.h), 1, file);
 
-				layer->as.tile_layer.tiles = malloc(sizeof(struct tile) * layer->as.tile_layer.w * layer->as.tile_layer.h);
+				layer->as.tile_layer.tiles = core_alloc(sizeof(struct tile) * layer->as.tile_layer.w * layer->as.tile_layer.h);
 
 				u32 w = layer->as.tile_layer.w;
 				u32 h = layer->as.tile_layer.h;
@@ -158,7 +158,7 @@ struct room* load_room(const char* path) {
 
 				if (strcmp(layer->name, "collisions") == 0) {
 					room->box_collider_count = object_count;
-					room->box_colliders = malloc(sizeof(*room->box_colliders) * object_count);
+					room->box_colliders = core_alloc(sizeof(*room->box_colliders) * object_count);
 					for (u32 ii = 0; ii < object_count; ii++) {
 						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
 					}
@@ -169,16 +169,16 @@ struct room* load_room(const char* path) {
 
 						u32 obj_name_len;
 						fread(&obj_name_len, sizeof(obj_name_len), 1, file);
-						char* obj_name = malloc(obj_name_len + 1);
+						char* obj_name = core_alloc(obj_name_len + 1);
 						obj_name[obj_name_len] = '\0';
 						fread(obj_name, 1, obj_name_len, file);
 
 						table_set(room->entrances, obj_name, &r);
 
-						free(obj_name);
+						core_free(obj_name);
 					}
 				} else if (strcmp(layer->name, "transition_triggers") == 0) {
-					room->transition_triggers = malloc(sizeof(struct transition_trigger) * object_count);
+					room->transition_triggers = core_alloc(sizeof(struct transition_trigger) * object_count);
 					room->transition_trigger_count = object_count;
 
 					struct rect r;
@@ -187,13 +187,13 @@ struct room* load_room(const char* path) {
 
 						u32 change_to_len;
 						fread(&change_to_len, sizeof(change_to_len), 1, file);
-						char* change_to = malloc(change_to_len + 1);
+						char* change_to = core_alloc(change_to_len + 1);
 						change_to[change_to_len] = '\0';
 						fread(change_to, 1, change_to_len, file);
 
 						u32 entrance_len;
 						fread(&entrance_len, sizeof(entrance_len), 1, file);
-						char* entrance = malloc(entrance_len + 1);
+						char* entrance = core_alloc(entrance_len + 1);
 						entrance[entrance_len] = '\0';
 						fread(entrance, 1, entrance_len, file);
 
@@ -217,43 +217,43 @@ struct room* load_room(const char* path) {
 void free_room(struct room* room) {
 	if (room->tilesets) {
 		for (u32 i = 0; i < room->tileset_count; i++) {
-			free(room->tilesets[i].name);
+			core_free(room->tilesets[i].name);
 		}
 
-		free(room->tilesets);
+		core_free(room->tilesets);
 	}
 
 	if (room->layers) {
 		for (u32 i = 0; i < room->layer_count; i++) {
-			free(room->layers[i].name);
+			core_free(room->layers[i].name);
 
 			switch (room->layers[i].type) {
 				case layer_tiles:
-					free(room->layers[i].as.tile_layer.tiles);
+					core_free(room->layers[i].as.tile_layer.tiles);
 					break;
 				default: break;
 			}
 		}
 
-		free(room->layers);
+		core_free(room->layers);
 	}
 
 	if (room->box_colliders) {
-		free(room->box_colliders);
+		core_free(room->box_colliders);
 	}
 
 	if (room->transition_triggers) {
 		for (u32 i = 0; i < room->transition_trigger_count; i++) {
-			free(room->transition_triggers[i].change_to);
-			free(room->transition_triggers[i].entrance);
+			core_free(room->transition_triggers[i].change_to);
+			core_free(room->transition_triggers[i].entrance);
 		}
 
-		free(room->transition_triggers);
+		core_free(room->transition_triggers);
 	}
 
 	free_table(room->entrances);
 
-	free(room);
+	core_free(room);
 }
 
 void draw_room(struct room* room, struct renderer* renderer) {
@@ -403,8 +403,8 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 			fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
 		}
 
-		free(change_to);
-		free(entrance);
+		core_free(change_to);
+		core_free(entrance);
 	}
 }
 

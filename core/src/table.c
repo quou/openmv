@@ -45,7 +45,7 @@ static struct table_el* find_el(struct table_el* els, u32 capacity, const char* 
 }
 
 static void table_resize(struct table* table, u32 capacity) {
-	struct table_el* els = malloc(capacity * sizeof(struct table_el));
+	struct table_el* els = core_alloc(capacity * sizeof(struct table_el));
 	for (u32 i = 0; i < capacity; i++) {
 		els[i].key = null;
 		els[i].val_idx = -1;
@@ -60,7 +60,7 @@ static void table_resize(struct table* table, u32 capacity) {
 		dst->val_idx = el->val_idx;
 	}
 
-	if (table->els) { free(table->els); }
+	if (table->els) { core_free(table->els); }
 
 	table->els = els;
 	table->capacity = capacity;
@@ -69,7 +69,7 @@ static void table_resize(struct table* table, u32 capacity) {
 static i32 table_data_add(struct table* table) {
 	if (table->data_count >= table->data_capacity) {
 		table->data_capacity = table->data_capacity < 8 ? 8 : table->data_capacity * 2;
-		table->data = realloc(table->data, table->data_capacity * table->element_size);
+		table->data = core_realloc(table->data, table->data_capacity * table->element_size);
 	}
 
 	return table->data_count++;
@@ -84,7 +84,7 @@ static void* table_data_get(struct table* table, i32 idx) {
 }
 
 struct table* new_table(u32 element_size) {
-	struct table* table = malloc(sizeof(struct table));
+	struct table* table = core_alloc(sizeof(struct table));
 
 	*table = (struct table) {
 		.element_size = element_size,
@@ -104,14 +104,14 @@ struct table* new_table(u32 element_size) {
 void free_table(struct table* table) {
 	for (u32 i = 0; i < table->capacity; i++) {
 		if (table->els[i].key) {
-			free(table->els[i].key);
+			core_free(table->els[i].key);
 		}
 	}
 
-	if (table->data) { free(table->data); }
-	if (table->els)  { free(table->els); }
+	if (table->data) { core_free(table->data); }
+	if (table->els)  { core_free(table->els); }
 
-	free(table);
+	core_free(table);
 }
 
 void* table_get(struct table* table, const char* key) {
@@ -143,12 +143,12 @@ void* table_set(struct table* table, const char* key, const void* val) {
 		table->count++;
 		el->val_idx = table_data_add(table);
 	} else {
-		free(el->key);
+		core_free(el->key);
 	}
 
 	const u32 key_len = (u32)strlen(key);
 
-	el->key = malloc(key_len + 1);
+	el->key = core_alloc(key_len + 1);
 	strcpy(el->key, key);
 	el->key[key_len] = '\0';
 
@@ -163,7 +163,7 @@ void table_delete(struct table* table, const char* key) {
 	struct table_el* el = find_el(table->els, table->capacity, key);
 	if (!el->key) { return; }
 
-	free(el->key);
+	core_free(el->key);
 
 	/* -2 marks a key/value pair as a tombstone;
 	 * Gone but not deleted. */

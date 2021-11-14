@@ -101,14 +101,14 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			i32 pf;
 			if (!(pf = ChoosePixelFormat(g_device_context, &pfd))) {
 				printf("Error choosing pixel format\n");
-				free(window);
+				core_free(window);
 				return 0;
 			}
 			SetPixelFormat(g_device_context, pf, &pfd);
 
 			if (!(g_render_context = wglCreateContext(g_device_context))) {
 				fprintf(stderr, "Failed to create OpenGL context.\n");
-				free(window);
+				core_free(window);
 				return 0;
 			}
 
@@ -127,7 +127,7 @@ end:
 }
 
 struct window* new_window(i32 width, i32 height, const char* title) {
-	struct window* window = malloc(sizeof(struct window));
+	struct window* window = core_alloc(sizeof(struct window));
 
 	window->uptr = null;
 	window->open = false;
@@ -170,7 +170,7 @@ void free_window(struct window* window) {
 	DestroyWindow(window->hwnd);
 	wglDeleteContext(window->render_context);
 
-	free(window);
+	core_free(window);
 }
 
 void swap_window(struct window* window) {

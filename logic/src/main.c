@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 
 #include "consts.h"
@@ -73,6 +74,10 @@ API void CALL on_update(double ts) {
 	
 	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
 		ui_text(ui, logic_store->fps_buf);
+		
+		char mem_buf[256];
+		sprintf(mem_buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
+		ui_text(ui, mem_buf);
 
 		ui_end_window(ui);
 	}

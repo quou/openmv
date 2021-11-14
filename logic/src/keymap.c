@@ -69,13 +69,13 @@ void load_keymap() {
 	while (!feof(file)) {
 		u32 len;
 		fread(&len, sizeof(len), 1, file);
-		char* name = malloc(len + 1);
+		char* name = core_alloc(len + 1);
 		name[len] = '\0';
 		fread(name, 1, len, file);
 		i32 key;
 		fread(&key, sizeof(key), 1, file);
 		key_table_set(name, key);
-		free(name);
+		core_free(name);
 	}
 
 	fclose(file);

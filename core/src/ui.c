@@ -94,7 +94,7 @@ struct ui_window {
 static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_element el) {
 	if (w->element_count >= w->element_capacity) {
 		w->element_capacity = w->element_capacity < 8 ? 8 : w->element_capacity * 2;
-		w->elements = realloc(w->elements, w->element_capacity * sizeof(struct ui_element));
+		w->elements = core_realloc(w->elements, w->element_capacity * sizeof(struct ui_element));
 	}
 
 	w->elements[w->element_count] = el;
@@ -163,7 +163,7 @@ static void ui_draw_rect(struct ui_context* ui, struct rect rect, u32 col_idx) {
 }
 
 struct ui_context* new_ui_context(struct shader* shader, struct window* window, struct font* font) {
-	struct ui_context* ui = calloc(1, sizeof(struct ui_context));
+	struct ui_context* ui = core_calloc(1, sizeof(struct ui_context));
 
 	ui->font = font;
 	ui->window = window;
@@ -192,18 +192,18 @@ void free_ui_context(struct ui_context* ui) {
 	if (ui->windows) {
 		for (u32 i = 0; i < ui->window_count; i++) {
 			if (ui->windows[i].elements) {
-				free(ui->windows[i].elements);
+				core_free(ui->windows[i].elements);
 			}
 		}
 
-		free(ui->windows);
+		core_free(ui->windows);
 	}
 
 	free_renderer(ui->renderer);
 
 	free_table(ui->window_meta);
 
-	free(ui);
+	core_free(ui);
 }
 
 void ui_text_input_event(struct ui_context* ui, const char* text) {
@@ -291,7 +291,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	}
 
-	struct ui_window* sorted_windows = malloc(ui->window_count * sizeof(struct ui_window));
+	struct ui_window* sorted_windows = core_alloc(ui->window_count * sizeof(struct ui_window));
 	memcpy(sorted_windows, ui->windows, ui->window_count * sizeof(struct ui_window));
 
 	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window),
@@ -330,6 +330,8 @@ void ui_end_frame(struct ui_context* ui) {
 			switch (el->type) {
 				case ui_el_text:
 					render_text(ui->renderer, ui->font, el->as.text.text, el->position.x, el->position.y, ui->style_colors[ui_col_text]);
+
+					core_free(el->as.text.text);
 					break;
 				case ui_el_button: {
 					u32 c = ui_col_background;
@@ -350,7 +352,7 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.y + ui->padding,
 						ui->style_colors[ui_col_text]);
 
-					free(el->as.button.text);
+					core_free(el->as.button.text);
 					break;
 				}
 				case ui_el_text_input: {
@@ -411,7 +413,7 @@ void ui_end_frame(struct ui_context* ui) {
 						), ui_col_text);
 					}
 
-					free(el->as.text_input.label);
+					core_free(el->as.text_input.label);
 
 					break;
 				}
@@ -439,10 +441,10 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		}
 
-		free(window->title);
+		core_free(window->title);
 	}
 
-	free(sorted_windows);
+	core_free(sorted_windows);
 
 	renderer_flush(ui->renderer);
 }
@@ -450,7 +452,7 @@ void ui_end_frame(struct ui_context* ui) {
 bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	if (ui->window_count >= ui->window_capacity) {
 		ui->window_capacity = ui->window_capacity < 8 ? 8 : ui->window_capacity * 2;
-		ui->windows = realloc(ui->windows, ui->window_capacity * sizeof(struct ui_window));
+		ui->windows = core_realloc(ui->windows, ui->window_capacity * sizeof(struct ui_window));
 		
 		for (u32 i = ui->window_count; i < ui->window_capacity; i++) {
 			ui->windows[i] = (struct ui_window) { 0 };

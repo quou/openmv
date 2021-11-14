@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "core.h"
 #include "res.h"
 #include "table.h"
 
@@ -18,7 +19,7 @@ bool read_raw(const char* path, u8** buf, u32* size, bool term) {
 	const u32 file_size = ftell(file);
 	rewind(file);
 
-	*buf = malloc(file_size + (term ? 1 : 0));
+	*buf = core_alloc(file_size + (term ? 1 : 0));
 	const u32 bytes_read = (u32)fread(*buf, sizeof(char), file_size, file);
 	if (bytes_read < file_size) {
 		printf("Failed to read file: %s\n", path);
@@ -72,11 +73,11 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	switch (new_res.type) {
 		case res_shader:
 			init_shader(&new_res.as.shader, raw, path);
-			free(raw);
+			core_free(raw);
 			break;
 		case res_texture:
 			init_texture(&new_res.as.texture, raw, raw_size);
-			free(raw);
+			core_free(raw);
 			break;
 		case res_font:
 			new_res.as.font = load_font_from_memory(raw, raw_size, *(float*)udata);
@@ -88,7 +89,7 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	return table_get(res_table, path);
 }
 
-static void res_free(struct res* res) {
+static void res_core_free(struct res* res) {
 	switch (res->type) {
 		case res_shader:
 			deinit_shader(&res->as.shader);
@@ -108,7 +109,7 @@ void res_init() {
 
 void res_deinit() {
 	for (struct table_iter i = new_table_iter(res_table); table_iter_next(&i);) {
-		res_free(i.value);
+		res_core_free(i.value);
 	}
 
 	free_table(res_table);
@@ -120,7 +121,7 @@ void res_unload(const char* path) {
 		return;
 	}
 
-	res_free(res);
+	res_core_free(res);
 
 	table_delete(res_table, path);
 }
