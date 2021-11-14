@@ -4,7 +4,8 @@
     ],
     "extensionsPath": "extensions",
     "folders": [
-        "."
+        ".",
+        "templates"
     ],
     "objectTypesFile": ""
 }

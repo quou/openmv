@@ -16,4 +16,8 @@ struct logic_store {
 	struct room* room;
 
 	void* keymap;
+
+	v2f camera_position;
 };
+
+extern struct logic_store* logic_store;

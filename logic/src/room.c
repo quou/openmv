@@ -4,6 +4,7 @@
 
 #include "consts.h"
 #include "core.h"
+#include "logic_store.h"
 #include "res.h"
 #include "room.h"
 #include "table.h"
@@ -357,6 +358,16 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 			}
 		}
 	}
+}
+
+void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* position) {
+	struct room* room = *room_ptr;
+
+	struct rect body_rect = {
+		.x = collider.x + position->x,
+		.y = collider.y + position->y,
+		.w = collider.w, .h = collider.h
+	};
 
 	struct transition_trigger* transition = null;
 	for (u32 i = 0; i < room->transition_trigger_count; i++) {
@@ -386,6 +397,8 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 		if (entrance_pos) {
 			position->x = entrance_pos->x * sprite_scale - (collider.w / 2);
 			position->y = entrance_pos->y * sprite_scale - collider.h;
+
+			logic_store->camera_position = *position;
 		} else {
 			fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
 		}
