@@ -17,6 +17,8 @@ struct player {
 
 	bool on_ground;
 
+	double jump_time;
+
 	i32 face;
 };
 

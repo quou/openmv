@@ -16,14 +16,24 @@ struct player_constants {
 	float gravity;
 	float accel;
 	float friction;
+	i32 ground_hit_range;
+	double max_jump;
+
+	struct rect left_collider;
+	struct rect right_collider;
 };
 
 const struct player_constants player_constants = {
 	.move_speed = 300,
-	.jump_force = -550,
+	.jump_force = -350,
 	.gravity = 1000,
 	.accel = 1000,
-	.friction = 1300
+	.friction = 1300,
+	.ground_hit_range = 12,
+	.max_jump = 0.2,
+
+	.right_collider = { 4*4, 1*4, 9*4, 15*4 },
+	.left_collider = { 3*4, 1*4, 9*4, 15*4 }
 };
 
 entity new_player_entity(struct world* world) {
@@ -31,7 +41,7 @@ entity new_player_entity(struct world* world) {
 
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
-	add_componentv(world, e, struct player, .position = { 128, 128 }, .collider = { 4*4, 1*4, 9*4, 15*4 });
+	add_componentv(world, e, struct player, .position = { 128, 128 }, .collider = player_constants.left_collider);
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
@@ -68,6 +78,12 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		if (player->face == player_face_left) {
+			player->collider = player_constants.left_collider;
+		} else {
+			player->collider = player_constants.right_collider;
+		}
+
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
 		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
@@ -75,22 +91,42 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		{
 			struct rect ground_test_rect = {
-				player->position.x + player->collider.x,
+				player->position.x + player->collider.x + 1,
 				player->position.y + player->collider.y + player->collider.h,
-				player->collider.w,
-				3
+				player->collider.w - 2,
+				player_constants.ground_hit_range
 			};
 
 			v2i normal;
-			if (rect_room_overlap(*room, ground_test_rect, &normal)) {
-				player->on_ground = normal.y == 1;
-			} else {
-				player->on_ground = false;
-			}
+			player->on_ground = rect_room_overlap(*room, ground_test_rect, &normal);	
+
+			struct textured_quad q = {
+				.texture = null,
+				.position = make_v2i(ground_test_rect.x, ground_test_rect.y),
+				.dimentions = make_v2i(ground_test_rect.w, ground_test_rect.h),
+				.color = { 255, 255, 0, 128 }
+			};
+
+			renderer_push(renderer, &q);
+
+			q = (struct textured_quad) {
+				.texture = null,
+				.position = make_v2i(player->position.x + player->collider.x, player->position.y + player->collider.y),
+				.dimentions = make_v2i(player->collider.w, player->collider.h),
+				.color = { 0, 255, 0, 128 }
+			};
+
+			renderer_push(renderer, &q);
 		}
 
 		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
 			player->velocity.y = player_constants.jump_force;
+			player->jump_time = 0.0;
+		}
+
+		player->jump_time += ts;
+		if (!player->on_ground && key_pressed(main_window, mapped_key("jump")) && player->jump_time < player_constants.max_jump) {
+			player->velocity.y += player_constants.jump_force * 5 * ts;
 		}
 
 		if (player->on_ground) {
