@@ -98,25 +98,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			};
 
 			v2i normal;
-			player->on_ground = rect_room_overlap(*room, ground_test_rect, &normal);	
-
-			struct textured_quad q = {
-				.texture = null,
-				.position = make_v2i(ground_test_rect.x, ground_test_rect.y),
-				.dimentions = make_v2i(ground_test_rect.w, ground_test_rect.h),
-				.color = { 255, 255, 0, 128 }
-			};
-
-			renderer_push(renderer, &q);
-
-			q = (struct textured_quad) {
-				.texture = null,
-				.position = make_v2i(player->position.x + player->collider.x, player->position.y + player->collider.y),
-				.dimentions = make_v2i(player->collider.w, player->collider.h),
-				.color = { 0, 255, 0, 128 }
-			};
-
-			renderer_push(renderer, &q);
+			player->on_ground = rect_room_overlap(*room, ground_test_rect, &normal);
 		}
 
 		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
