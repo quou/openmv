@@ -80,7 +80,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup color="#0000ff" id="4" name="entrances">
+ <objectgroup color="#0000ff" id="4" name="entrances" locked="1">
   <object id="22" name="right" x="256" y="80">
    <point/>
   </object>

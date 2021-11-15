@@ -30,7 +30,7 @@ const struct player_constants player_constants = {
 	.accel = 1000,
 	.friction = 1300,
 	.ground_hit_range = 12,
-	.max_jump = 0.2,
+	.max_jump = 0.23,
 
 	.right_collider = { 4*4, 1*4, 9*4, 15*4 },
 	.left_collider = { 3*4, 1*4, 9*4, 15*4 }
