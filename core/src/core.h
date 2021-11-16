@@ -22,9 +22,10 @@ API u32 str_id(const char* str);
 struct type_info {
 	u32 id;
 	u32 size;
+	const char* name;
 };
 
-#define type_info(t_) ((struct type_info) { str_id(#t_), sizeof(t_) })
+#define type_info(t_) ((struct type_info) { str_id(#t_), sizeof(t_), (#t_) })
 
 API char* copy_string(const char* src);
 

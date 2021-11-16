@@ -24,3 +24,12 @@ struct player {
 
 entity new_player_entity(struct world* world);
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts);
+
+enum {
+	upgrade_jetpack = 0
+};
+
+struct upgrade {
+	u32 id;
+	struct rect collider;
+};

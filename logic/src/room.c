@@ -1,12 +1,15 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "consts.h"
 #include "core.h"
+#include "coresys.h"
 #include "logic_store.h"
 #include "res.h"
 #include "room.h"
+#include "sprites.h"
 #include "table.h"
 
 struct tile {
@@ -58,10 +61,13 @@ struct room {
 
 	struct transition_trigger* transition_triggers;
 	u32 transition_trigger_count;
+
+	struct world* world;
 };
 
-struct room* load_room(const char* path) {
+struct room* load_room(struct world* world, const char* path) {
 	struct room* room = core_calloc(1, sizeof(struct room));
+	room->world = world;
 
 	FILE* file = fopen(path, "rb");
 	if (!file) {
@@ -203,6 +209,20 @@ struct room* load_room(const char* path) {
 							.entrance = entrance
 						};
 					}
+				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						fread(&r, sizeof(r), 1, file);
+
+						struct sprite sprite = get_sprite(sprid_upgrade_jetpack);
+
+						entity pickup = new_entity(world);
+						add_componentv(world, pickup, struct room_child, .parent = room);
+						add_componentv(world, pickup, struct transform,
+							.position = { r.x * sprite_scale, r.y * sprite_scale },
+							.dimentions = { 16 * sprite_scale, 16 * sprite_scale });
+						add_component(world, pickup, struct sprite, sprite);
+					}
 				}
 			} break;
 			default: break;
@@ -215,6 +235,31 @@ struct room* load_room(const char* path) {
 }
 
 void free_room(struct room* room) {
+	entity* to_delete = null;
+	u32 to_delete_capacity = 0;
+	u32 to_delete_count = 0;
+	for (single_view(room->world, view, struct room_child)) {
+		struct room_child* rc = single_view_get(&view);
+		
+		if (rc->parent == room) {
+			if (to_delete_count >= to_delete_capacity) {
+				to_delete_capacity = to_delete_capacity < 8 ? 8 : to_delete_capacity * 2;
+				to_delete = core_realloc(to_delete, sizeof(entity) * to_delete_capacity);
+			}
+
+			to_delete[to_delete_count++] = view.e;
+		}
+	}
+	if (to_delete) {
+		for (u32 i = 0; i < to_delete_count; i++) {
+			assert(entity_valid(room->world, to_delete[i]));
+
+			destroy_entity(room->world, to_delete[i]);
+		}
+
+		core_free(to_delete);
+	}
+
 	if (room->tilesets) {
 		for (u32 i = 0; i < room->tileset_count; i++) {
 			core_free(room->tilesets[i].name);
@@ -388,9 +433,10 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 	if (transition) {
 		char* change_to = copy_string(transition->change_to);
 		char* entrance = copy_string(transition->entrance);
+		struct world* world = room->world;
 
 		free_room(room);
-		*room_ptr = load_room(change_to);
+		*room_ptr = load_room(world, change_to);
 		room = *room_ptr;
 
 		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);

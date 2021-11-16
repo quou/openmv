@@ -26,12 +26,11 @@ struct pool {
 	u32 dense_count;
 	u32 dense_capacity;
 
-	u32 element_size;
 	void* data;
 	u32 count;
 	u32 capacity;
 
-	u32 type_id;
+	struct type_info type;
 
 	struct world* world;
 
@@ -42,8 +41,7 @@ struct pool {
 static void init_pool(struct pool* pool, struct world* world, struct type_info t) {
 	*pool = (struct pool) { 0 };
 
-	pool->type_id = t.id;
-	pool->element_size = t.size;
+	pool->type = t;
 
 	pool->world = world;
 }
@@ -83,10 +81,10 @@ static i32 pool_sparse_idx(struct pool* pool, entity e) {
 static void* pool_add(struct pool* pool, entity e, void* init) {
 	if (pool->count >= pool->capacity) {
 		pool->capacity = pool->capacity < 8 ? 8 : pool->capacity * 2;
-		pool->data = core_realloc(pool->data, pool->capacity * pool->element_size);
+		pool->data = core_realloc(pool->data, pool->capacity * pool->type.size);
 	}
 
-	void* ptr = &((u8*)pool->data)[(pool->count++) * pool->element_size];
+	void* ptr = &((u8*)pool->data)[(pool->count++) * pool->type.size];
 
 	const entity eid = get_entity_id(e);
 	if (eid >= pool->sparse_capacity) {
@@ -107,7 +105,7 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 
 	pool->dense[pool->dense_count++] = e;
 
-	memcpy(ptr, init, pool->element_size);
+	memcpy(ptr, init, pool->type.size);
 
 	if (pool->on_create) {
 		pool->on_create(pool->world, e, ptr);
@@ -120,7 +118,7 @@ static void pool_remove(struct pool* pool, entity e) {
 	const i32 pos = pool->sparse[get_entity_id(e)];
 
 	if (pool->on_destroy) {
-		void* ptr = &((char*)pool->data)[pos * pool->element_size];
+		void* ptr = &((char*)pool->data)[pos * pool->type.size];
 		pool->on_destroy(pool->world, e, ptr);
 	}
 
@@ -128,20 +126,20 @@ static void pool_remove(struct pool* pool, entity e) {
 
 	pool->sparse[get_entity_id(other)] = pos;
 	pool->dense[pos] = other;
-	pool->sparse[pos] = -1;
+	pool->sparse[get_entity_id(e)] = -1;
 
 	pool->dense_count--;
 
 	memmove(
-		&((char*)pool->data)[pos * pool->element_size],
-		&((char*)pool->data)[(pool->count - 1) * pool->element_size],
-		pool->element_size);
+		&((char*)pool->data)[pos * pool->type.size],
+		&((char*)pool->data)[(pool->count - 1) * pool->type.size],
+		pool->type.size);
 
 	pool->count--;
 }
 
 static void* pool_get_by_idx(struct pool* pool, i32 idx) {
-	return &((char*)pool->data)[idx * pool->element_size];
+	return &((char*)pool->data)[idx * pool->type.size];
 }
 
 static void* pool_get(struct pool* pool, entity e) {
@@ -175,9 +173,13 @@ static entity generate_entity(struct world* world) {
 static entity recycle_entity(struct world* world) {
 	const entity_id cur_id = world->avail_id;
 	const entity_version cur_ver = get_entity_version(world->entities[cur_id]);
+
 	world->avail_id = get_entity_id(world->entities[cur_id]);
+
 	const entity recycled = make_handle(cur_id, cur_ver);
+
 	world->entities[cur_id] = recycled;
+
 	return recycled;
 }
 
@@ -191,7 +193,7 @@ static struct pool* get_pool(struct world* world, struct type_info type) {
 	struct pool* r = null;
 
 	for (u32 i = 0; i < world->pool_count; i++) {
-		if (world->pools[i].type_id == type.id) {
+		if (world->pools[i].type.id == type.id) {
 			r = &world->pools[i];
 		}
 	}

@@ -3,11 +3,17 @@
 
 static const char* texture_paths[] = {
 	[texid_player] = "res/bmp/char.bmp",
+	[texid_upgrades] = "res/bmp/item.bmp",
 	[texid_tsblue] = "res/bmp/tsblue.bmp"
 };
 
 struct sprite sprites[] = {
-	{ 0 }
+	[sprid_upgrade_jetpack] = {
+		.texture = texid_upgrades,
+		.rect = { 0, 0, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	}
 };
 
 struct animated_sprite anim_sprites[] = {

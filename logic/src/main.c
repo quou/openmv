@@ -47,7 +47,7 @@ API void CALL on_init() {
 
 	preload_sprites();
 
-	logic_store->room = load_room("res/maps/test_room.dat");
+	logic_store->room = load_room(world, "res/maps/test_room.dat");
 
 	entity player = new_player_entity(world);
 	v2i spawn = get_spawn(logic_store->room);
