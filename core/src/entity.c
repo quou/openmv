@@ -88,9 +88,9 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 
 	const u32 eid = get_entity_id(e);
 	if (eid >= pool->sparse_capacity) {
-		const u32 new_cap = eid * 2;
+		const u32 new_cap = eid + 1;
 		pool->sparse = core_realloc(pool->sparse, new_cap * sizeof(i32));
-		for (u32 i = pool->sparse_capacity + 1; i < new_cap; i++) {
+		for (u32 i = pool->sparse_capacity; i < new_cap; i++) {
 			pool->sparse[i] = -1;
 		}
 		pool->sparse_capacity = new_cap;

@@ -252,8 +252,6 @@ void free_room(struct room* room) {
 	}
 	if (to_delete) {
 		for (u32 i = 0; i < to_delete_count; i++) {
-			assert(entity_valid(room->world, to_delete[i]));
-
 			destroy_entity(room->world, to_delete[i]);
 		}
 
