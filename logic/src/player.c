@@ -89,6 +89,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
 		handle_body_transitions(room, player->collider, &player->position);
 
+		/* Update pointers because the pools might have been reallocated. */
 		transform = view_get(&view, struct transform);
 		player = view_get(&view, struct player);
 		sprite = view_get(&view, struct animated_sprite);

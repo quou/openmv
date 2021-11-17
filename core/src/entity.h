@@ -105,3 +105,25 @@ API struct view new_view(struct world* world, u32 type_count, struct type_info* 
 API bool view_valid(struct view* view);
 API void* _view_get(struct view* view, struct type_info type);
 API void view_next(struct view* view);
+
+#define entity_buffer_default_alloc 64
+
+/* Only starts heap allocating once the count overflows the
+ * initial allocation capacity. This is to try to avoid two
+ * heap allocations if they aren't necessary. */
+struct entity_buffer {
+	entity initial_allocation[entity_buffer_default_alloc];
+	entity* heap_allocation;
+
+	entity* elements;
+	u32 count;
+	u32 capacity;
+};
+
+API struct entity_buffer* new_entity_buffer();
+API void free_entity_buffer(struct entity_buffer* buf);
+API void entity_buffer_push(struct entity_buffer* buf, entity e);
+API void entity_buffer_clear(struct entity_buffer* buf, struct world* world);
+
+#define entity_buffer_iter(b_, n_) \
+	u32 n_ = 0; n_ < (b_)->count; n_++

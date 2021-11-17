@@ -235,28 +235,15 @@ struct room* load_room(struct world* world, const char* path) {
 }
 
 void free_room(struct room* room) {
-	entity* to_delete = null;
-	u32 to_delete_capacity = 0;
-	u32 to_delete_count = 0;
+	struct entity_buffer* to_delete = new_entity_buffer();
 	for (single_view(room->world, view, struct room_child)) {
 		struct room_child* rc = single_view_get(&view);
 		
 		if (rc->parent == room) {
-			if (to_delete_count >= to_delete_capacity) {
-				to_delete_capacity = to_delete_capacity < 8 ? 8 : to_delete_capacity * 2;
-				to_delete = core_realloc(to_delete, sizeof(entity) * to_delete_capacity);
-			}
-
-			to_delete[to_delete_count++] = view.e;
+			entity_buffer_push(to_delete, view.e);
 		}
 	}
-	if (to_delete) {
-		for (u32 i = 0; i < to_delete_count; i++) {
-			destroy_entity(room->world, to_delete[i]);
-		}
-
-		core_free(to_delete);
-	}
+	entity_buffer_clear(to_delete, room->world);
 
 	if (room->tilesets) {
 		for (u32 i = 0; i < room->tileset_count; i++) {

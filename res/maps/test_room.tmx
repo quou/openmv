@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="115">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="6" nextobjectid="120">
  <editorsettings>
   <export target="test_room.dat" format="dat"/>
  </editorsettings>
@@ -81,15 +81,7 @@
   </object>
  </objectgroup>
  <objectgroup id="5" name="upgrade_pickups">
-  <object id="79" name="jetpack" x="192" y="64" width="16" height="16"/>
-  <object id="81" name="jetpack" x="176" y="64" width="16" height="16"/>
-  <object id="92" name="jetpack" x="208" y="64" width="16" height="16"/>
-  <object id="93" name="jetpack" x="224" y="64" width="16" height="16"/>
-  <object id="94" name="jetpack" x="240" y="64" width="16" height="16"/>
-  <object id="110" name="jetpack" x="160" y="64" width="16" height="16"/>
-  <object id="111" name="jetpack" x="160" y="80" width="16" height="16"/>
-  <object id="113" name="jetpack" x="144" y="80" width="16" height="16"/>
-  <object id="114" name="jetpack" x="144" y="64" width="16" height="16"/>
+  <object id="116" name="jetpack" x="176" y="64" width="16" height="16"/>
  </objectgroup>
  <objectgroup color="#0000ff" id="4" name="entrances" locked="1">
   <object id="22" name="right" x="256" y="80">

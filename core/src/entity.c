@@ -389,3 +389,48 @@ void view_next(struct view* view) {
 		}
 	} while ((view->e != null_entity) && !view_contains(view, view->e));
 }
+
+struct entity_buffer* new_entity_buffer() {
+	struct entity_buffer* buf = core_calloc(1, sizeof(struct entity_buffer));
+	buf->capacity = entity_buffer_default_alloc;
+	buf->elements = buf->initial_allocation;
+
+	return buf;
+}
+
+void free_entity_buffer(struct entity_buffer* buf) {
+	if (buf->heap_allocation) {
+		core_free(buf->heap_allocation);
+	}
+	
+	*buf = (struct entity_buffer) { 0 };
+	buf->capacity = entity_buffer_default_alloc;
+	buf->elements = buf->initial_allocation;
+
+	core_free(buf);
+}
+
+void entity_buffer_push(struct entity_buffer* buf, entity e) {
+	if (buf->count >= buf->capacity) {
+		buf->capacity = buf->capacity < entity_buffer_default_alloc ?
+			entity_buffer_default_alloc * 2 : buf->capacity * 2;
+		buf->heap_allocation = core_realloc(buf->heap_allocation, buf->capacity * sizeof(entity));
+
+		if (buf->elements == buf->initial_allocation) {
+			memcpy(buf->heap_allocation, buf->initial_allocation,
+				entity_buffer_default_alloc * sizeof(entity));
+		}
+
+		buf->elements = buf->heap_allocation;
+	}
+
+	buf->elements[buf->count++] = e;
+}
+
+void entity_buffer_clear(struct entity_buffer* buf, struct world* world) {
+	for (entity_buffer_iter(buf, i)) {
+		destroy_entity(world, buf->elements[i]);
+	}
+
+	free_entity_buffer(buf);
+}
