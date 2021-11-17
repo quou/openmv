@@ -38,7 +38,7 @@
 	view_next(&(v_))
 
 #define view_get(v_, t_) \
-	_view_get((v_), type_info(t_))
+	((t_*)_view_get((v_), type_info(t_)))
 
 #define set_component_create_func(w_, t_, f_) \
 	_set_component_create_func((w_), type_info(t_), (f_))

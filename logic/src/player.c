@@ -89,6 +89,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
 		handle_body_transitions(room, player->collider, &player->position);
 
+		transform = view_get(&view, struct transform);
+		player = view_get(&view, struct player);
+		sprite = view_get(&view, struct animated_sprite);
+
 		{
 			struct rect ground_test_rect = {
 				player->position.x + player->collider.x + 1,
