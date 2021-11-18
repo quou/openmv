@@ -2,9 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "consts.h"
 #include "coresys.h"
 #include "keymap.h"
 #include "logic_store.h"
+#include "physics.h"
 #include "platform.h"
 #include "player.h"
 #include "res.h"
@@ -48,6 +50,8 @@ entity new_player_entity(struct world* world) {
 }
 
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts) {
+	struct entity_buffer* to_destroy = new_entity_buffer();
+
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
@@ -88,6 +92,26 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
 		handle_body_transitions(room, player->collider, &player->position);
+
+		struct rect player_rect = {
+			(i32)player->position.x + player->collider.x,
+			(i32)player->position.y + player->collider.y,
+			player->collider.w, player->collider.h
+		};
+		for (single_view(world, up_view, struct upgrade)) {
+			struct upgrade* upgrade = single_view_get(&up_view);
+
+			struct rect up_rect = {
+				upgrade->collider.x * sprite_scale,
+				upgrade->collider.y * sprite_scale,
+				upgrade->collider.w * sprite_scale,
+				upgrade->collider.h * sprite_scale,
+			};
+
+			if (rect_overlap(player_rect, up_rect, null)) {
+				entity_buffer_push(to_destroy, up_view.e);
+			}
+		}
 
 		/* Update pointers because the pools might have been reallocated. */
 		transform = view_get(&view, struct transform);
@@ -162,4 +186,6 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		renderer->camera_pos = make_v2i((i32)logic_store->camera_position.x, (i32)logic_store->camera_position.y);
 	}
+
+	entity_buffer_clear(to_destroy, world);
 }

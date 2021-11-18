@@ -7,6 +7,8 @@
 #include "core.h"
 #include "coresys.h"
 #include "logic_store.h"
+#include "physics.h"
+#include "player.h"
 #include "res.h"
 #include "room.h"
 #include "sprites.h"
@@ -222,6 +224,7 @@ struct room* load_room(struct world* world, const char* path) {
 							.position = { r.x * sprite_scale, r.y * sprite_scale },
 							.dimentions = { 16 * sprite_scale, 16 * sprite_scale });
 						add_component(world, pickup, struct sprite, sprite);
+						add_componentv(world, pickup, struct upgrade, .id = upgrade_jetpack, .collider = r);
 					}
 				}
 			} break;
@@ -316,42 +319,6 @@ void draw_room(struct room* room, struct renderer* renderer) {
 			}
 		}
 	}
-}
-
-static bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
-	if (!(
-		a.x + a.w > b.x &&
-		a.y + a.h > b.y &&
-		a.x < b.x + b.w &&
-		a.y < b.y + b.h)) {
-		*normal = make_v2i(0, 0);
-		return false;
-	}
-
-	i32 right  = (a.x + a.w) - b.x;
-	i32 left   = (b.x + b.w) - a.x;
-	i32 top    = (b.y + b.h) - a.y;
-	i32 bottom = (a.y + a.h) - b.y;
-
-	i32 overlap[] = { right, left, top, bottom };
-
-	qsort(overlap, sizeof(overlap) / sizeof(*overlap), sizeof(i32),
-		lambda(i32 _(const void* a, const void* b) {
-			return *(i32*)a > *(i32*)b;
-		}));
-
-	*normal = make_v2i(0, 0);
-	if (overlap[0]        == abs(right)) {
-		normal->x =  1;
-	} else if (overlap[0] == abs(left)) {
-		normal->x = -1;
-	} else if (overlap[0] == abs(bottom)) {
-		normal->y =  1;
-	} else if (overlap[0] == abs(top)) {
-		normal->y = -1;
-	}
-
-	return true;
 }
 
 void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {

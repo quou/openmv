@@ -21,6 +21,8 @@ project "core"
 		"src/keytable.c",
 		"src/keytable.h",
 		"src/maths.h",
+		"src/physics.c",
+		"src/physics.h",
 		"src/platform.c",
 		"src/platform.h",
 		"src/renderer.c",
