@@ -4,6 +4,7 @@
 
 #include "consts.h"
 #include "coresys.h"
+#include "fx.h"
 #include "keymap.h"
 #include "logic_store.h"
 #include "physics.h"
@@ -22,6 +23,7 @@ struct player_constants {
 	i32 ground_hit_range;
 	double max_jump;
 	double max_dash;
+	double dash_fx_interval;
 
 	i32 max_air_dash;
 
@@ -39,11 +41,12 @@ const struct player_constants player_constants = {
 	.ground_hit_range = 12,
 	.max_jump = 0.23,
 	.max_dash = 0.15,
+	.dash_fx_interval = 0.045,
 
 	.max_air_dash = 3,
 
-	.right_collider = { 4*4, 1*4, 9*4, 15*4 },
-	.left_collider = { 3*4, 1*4, 9*4, 15*4 }
+	.right_collider = { 4 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale },
+	.left_collider =  { 3 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale }
 };
 
 entity new_player_entity(struct world* world) {
@@ -124,17 +127,27 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		player->dash_time += ts;
-		if (player->dashing && player->dash_time >= player_constants.max_dash) {
-			player->dashing = false;
-			if (player->dash_dir.x > 0) {
-				player->velocity.x = 0;
-			} else if (player->dash_dir.x < 0) {
-				player->velocity.x = 0;
-			} else if (player->dash_dir.y > 0) {
-				player->velocity.y = 0;
-			} else if (player->dash_dir.y < 0) {
-				player->velocity.y = 0;
-			}  
+		if (player->dashing) {
+			player->dash_fx_time += ts;
+			if (player->dash_fx_time >= player_constants.dash_fx_interval) {
+				player->dash_fx_time = 0.0;
+				new_jetpack_particle(world, make_v2i(
+					transform->position.x + transform->dimentions.x / 2,
+					transform->position.y + transform->dimentions.y / 2));
+			}
+
+			if (player->dash_time >= player_constants.max_dash) {
+				player->dashing = false;
+				if (player->dash_dir.x > 0) {
+					player->velocity.x = 0;
+				} else if (player->dash_dir.x < 0) {
+					player->velocity.x = 0;
+				} else if (player->dash_dir.y > 0) {
+					player->velocity.y = 0;
+				} else if (player->dash_dir.y < 0) {
+					player->velocity.y = 0;
+				}
+			}
 		}
 
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));

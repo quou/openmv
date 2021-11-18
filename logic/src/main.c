@@ -5,6 +5,7 @@
 #include "core.h"
 #include "coresys.h"
 #include "entity.h"
+#include "fx.h"
 #include "keymap.h"
 #include "logic_store.h"
 #include "player.h"
@@ -69,6 +70,7 @@ API void CALL on_update(double ts) {
 	draw_room(logic_store->room, renderer);
 
 	player_system(world, renderer, &logic_store->room, ts);
+	fx_system(world, ts);
 
 	render_system(world, renderer, ts);
 	renderer_flush(renderer);

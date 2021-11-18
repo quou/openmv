@@ -155,9 +155,8 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 
 	transform = m4f_translate(transform, make_v3f(quad->origin.x, quad->origin.y, 0.0f));
 	transform = m4f_rotate(transform, (float)torad(quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
-	transform = m4f_translate(transform, make_v3f(-quad->origin.x, -quad->origin.y, 0.0f));
-
 	transform = m4f_scale(transform, make_v3f(quad->dimentions.x, quad->dimentions.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f(-quad->origin.x, -quad->origin.y, 0.0f));
 
 	float verts[] = {
 		0.0f, 0.0f, tx, ty,           r, g, b, a, (float)tidx, (float)renderer->transform_count,

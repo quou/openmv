@@ -2,15 +2,22 @@
 #include "sprites.h"
 
 static const char* texture_paths[] = {
-	[texid_player] = "res/bmp/char.bmp",
+	[texid_player]   = "res/bmp/char.bmp",
 	[texid_upgrades] = "res/bmp/item.bmp",
-	[texid_tsblue] = "res/bmp/tsblue.bmp"
+	[texid_tsblue]   = "res/bmp/tsblue.bmp",
+	[texid_fx]       = "res/bmp/fx.bmp"
 };
 
 struct sprite sprites[] = {
 	[sprid_upgrade_jetpack] = {
 		.texture = texid_upgrades,
 		.rect = { 0, 0, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_fx_jetpack] = {
+		.texture = texid_fx,
+		.rect = { 0, 0, 8, 8 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	}
