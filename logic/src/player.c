@@ -18,8 +18,12 @@ struct player_constants {
 	float gravity;
 	float accel;
 	float friction;
+	float dash_force;
 	i32 ground_hit_range;
 	double max_jump;
+	double max_dash;
+
+	i32 max_air_dash;
 
 	struct rect left_collider;
 	struct rect right_collider;
@@ -31,8 +35,12 @@ const struct player_constants player_constants = {
 	.gravity = 1000,
 	.accel = 1000,
 	.friction = 1300,
+	.dash_force = 1000,
 	.ground_hit_range = 12,
 	.max_jump = 0.23,
+	.max_dash = 0.15,
+
+	.max_air_dash = 3,
 
 	.right_collider = { 4*4, 1*4, 9*4, 15*4 },
 	.left_collider = { 3*4, 1*4, 9*4, 15*4 }
@@ -60,7 +68,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		struct player* player = view_get(&view, struct player);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
 
-		player->velocity.y += player_constants.gravity * ts;
+		if (!player->dashing) {
+			player->velocity.y += player_constants.gravity * ts;
+		}
 
 		if (key_pressed(main_window, mapped_key("right"))) {
 			if (player->velocity.x < player_constants.move_speed) {
@@ -82,10 +92,49 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		if (player->items & upgrade_jetpack &&
+			!player->dashing && player->dash_count < player_constants.max_air_dash && key_just_pressed(main_window, mapped_key("dash"))) {
+			player->dashing = true;
+			player->dash_time = 0.0;
+			player->dash_count++;
+
+			if (key_pressed(main_window, mapped_key("up"))) {
+				player->velocity.y = -player_constants.dash_force;
+				player->velocity.x = 0;
+				player->dash_dir = make_v2i(0, -1);
+			} else if (key_pressed(main_window, mapped_key("down"))) {
+				player->velocity.y = player_constants.dash_force;
+				player->velocity.x = 0;
+				player->dash_dir = make_v2i(0, 1);
+			} else if (player->face == player_face_left) {
+				player->velocity.x = -player_constants.dash_force;
+				player->velocity.y = 0;
+				player->dash_dir = make_v2i(-1, 0);
+			} else if (player->face == player_face_right) {
+				player->velocity.x = player_constants.dash_force;
+				player->velocity.y = 0;
+				player->dash_dir = make_v2i(1, 0);
+			}
+		}
+
 		if (player->face == player_face_left) {
 			player->collider = player_constants.left_collider;
 		} else {
 			player->collider = player_constants.right_collider;
+		}
+
+		player->dash_time += ts;
+		if (player->dashing && player->dash_time >= player_constants.max_dash) {
+			player->dashing = false;
+			if (player->dash_dir.x > 0) {
+				player->velocity.x = 0;
+			} else if (player->dash_dir.x < 0) {
+				player->velocity.x = 0;
+			} else if (player->dash_dir.y > 0) {
+				player->velocity.y = 0;
+			} else if (player->dash_dir.y < 0) {
+				player->velocity.y = 0;
+			}  
 		}
 
 		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
@@ -109,6 +158,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			};
 
 			if (rect_overlap(player_rect, up_rect, null)) {
+				player->items |= upgrade->id;
 				entity_buffer_push(to_destroy, up_view.e);
 			}
 		}
@@ -141,6 +191,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		if (player->on_ground) {
+			player->dash_count = 0;
+
 			if (player->velocity.x > 0.5f || player->velocity.x < -0.5f) {
 				if (player->face == player_face_left) {
 					if (sprite->id != animsprid_player_run_left) {
