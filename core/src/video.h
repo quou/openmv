@@ -129,5 +129,7 @@ API void free_font(struct font* font);
 API void set_font_tab_size(struct font* font, i32 n);
 API i32 get_font_tab_size(struct font* font);
 
+API float get_font_size(struct font* font);
+
 API i32 text_width(struct font* font, const char* text);
 API i32 text_height(struct font* font);

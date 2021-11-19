@@ -4,6 +4,7 @@
 #include "room.h"
 #include "ui.h"
 #include "video.h"
+#include "menu.h"
 
 struct logic_store {
 	double fps_timer;
@@ -14,6 +15,9 @@ struct logic_store {
 
 	struct world* world;
 	struct room* room;
+
+	struct menu* pause_menu;
+	bool paused;
 
 	void* keymap;
 

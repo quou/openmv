@@ -8,6 +8,7 @@
 #include "fx.h"
 #include "keymap.h"
 #include "logic_store.h"
+#include "menu.h"
 #include "player.h"
 #include "res.h"
 #include "sprites.h"
@@ -40,6 +41,13 @@ API void CALL on_init() {
 
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
 
+	logic_store->paused = false;
+	logic_store->pause_menu = new_menu(sprite_shader, load_font("res/DejaVuSansMono.ttf", 35.0f));
+	menu_add_label(logic_store->pause_menu, "Paused");
+	menu_add_selectable(logic_store->pause_menu, "Resume", null);
+	menu_add_selectable(logic_store->pause_menu, "Save Game", null);
+	menu_add_selectable(logic_store->pause_menu, "Load Save", null);
+
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);
 
@@ -67,13 +75,30 @@ API void CALL on_update(double ts) {
 		logic_store->fps_timer = 0.0;
 	}
 
+	if (key_just_pressed(main_window, KEY_ESCAPE)) {
+		logic_store->paused = !logic_store->paused;
+	}
+	
+	double time_scale;
+	if (logic_store->paused) {
+		time_scale = 0.0;
+	} else {
+		time_scale = 1.0;
+	}
+
+	double timestep = ts * time_scale;
+
 	draw_room(logic_store->room, renderer);
+	
+	player_system(world, renderer, &logic_store->room, timestep);
+	fx_system(world, timestep);
 
-	player_system(world, renderer, &logic_store->room, ts);
-	fx_system(world, ts);
-
-	render_system(world, renderer, ts);
+	render_system(world, renderer, timestep);
 	renderer_flush(renderer);
+	
+	if (logic_store->paused) {
+		menu_update(logic_store->pause_menu);
+	}
 
 	ui_begin_frame(ui);
 	
@@ -91,6 +116,8 @@ API void CALL on_update(double ts) {
 }
 
 API void CALL on_deinit() {
+	free_menu(logic_store->pause_menu);
+
 	free_room(logic_store->room);
 
 	free_renderer(logic_store->renderer);

@@ -9,7 +9,8 @@ enum {
 	texid_player = 0,
 	texid_upgrades,
 	texid_tsblue,
-	texid_fx
+	texid_fx,
+	texid_icon
 };
 
 /* Sprite IDs  */
@@ -23,7 +24,8 @@ enum {
 	animsprid_player_idle_right,
 	animsprid_player_idle_left,
 	sprid_upgrade_jetpack,
-	sprid_fx_jetpack
+	sprid_fx_jetpack,
+	sprid_icon_ptr
 };
 
 void preload_sprites();

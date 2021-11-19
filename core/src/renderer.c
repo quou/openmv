@@ -346,6 +346,10 @@ i32 get_font_tab_size(struct font* font) {
 	return (i32)(set->glyphs['\t'].xadvance / set->glyphs[' '].xadvance);
 }
 
+float get_font_size(struct font* font) {
+	return font->size;
+}
+
 i32 text_width(struct font* font, const char* text) {
 	i32 x;
 	u32 codepoint;
