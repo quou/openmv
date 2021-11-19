@@ -136,6 +136,20 @@ var dat_format = {
 				for (var ii = 0; ii < layer.objectCount; ii++) {
 					var obj = layer.objects[ii];
 
+					/* Write the object name */
+					var obj_name_len_buf = new ArrayBuffer(4);
+					var obj_name_len_view = new Uint32Array(obj_name_len_buf);
+					obj_name_len_view[0] = obj.name.length;
+					file.write(obj_name_len_buf);
+
+					var obj_name_buf = new ArrayBuffer(obj.name.length);
+					var obj_name_view = new Uint8Array(obj_name_buf);
+					for (var iii = 0; iii < obj.name.length; iii++) {
+						obj_name_view[iii] = obj.name.charCodeAt(iii);
+					}
+					file.write(obj_name_buf);
+
+					/* Write the rectangle. */
 					var rect_buf = new ArrayBuffer(4*4);
 					var rect_view = new Int32Array(rect_buf);
 					rect_view[0] = obj.x;
@@ -175,18 +189,6 @@ var dat_format = {
 							}
 							file.write(entrance_buf);
 						}
-					} else if (layer.name === "entrances") {
-						var obj_name_len_buf = new ArrayBuffer(4);
-						var obj_name_len_view = new Uint32Array(obj_name_len_buf);
-						obj_name_len_view[0] = obj.name.length;
-						file.write(obj_name_len_buf);
-
-						var obj_name_buf = new ArrayBuffer(obj.name.length);
-						var obj_name_view = new Uint8Array(obj_name_buf);
-						for (var iii = 0; iii < obj.name.length; iii++) {
-							obj_name_view[iii] = obj.name.charCodeAt(iii);
-						}
-						file.write(obj_name_buf);
 					}
 				}
 			} else {

@@ -67,6 +67,23 @@ struct room {
 	struct world* world;
 };
 
+static char* read_name(FILE* file) {
+	u32 obj_name_len;
+	fread(&obj_name_len, sizeof(obj_name_len), 1, file);
+	char* obj_name = core_alloc(obj_name_len + 1);
+	obj_name[obj_name_len] = '\0';
+	fread(obj_name, 1, obj_name_len, file);
+
+	return obj_name;
+}
+
+void skip_name(FILE* file) {
+	u32 obj_name_len;
+
+	fread(&obj_name_len, sizeof(obj_name_len), 1, file);
+	fseek(file, ftell(file) + obj_name_len, SEEK_SET);
+}
+
 struct room* load_room(struct world* world, const char* path) {
 	struct room* room = core_calloc(1, sizeof(struct room));
 	room->world = world;
@@ -168,19 +185,16 @@ struct room* load_room(struct world* world, const char* path) {
 					room->box_collider_count = object_count;
 					room->box_colliders = core_alloc(sizeof(*room->box_colliders) * object_count);
 					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(file);
+
 						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
 					}
 				} else if (strcmp(layer->name, "entrances") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
+						char* obj_name = read_name(file);
+
 						fread(&r, sizeof(r), 1, file);
-
-						u32 obj_name_len;
-						fread(&obj_name_len, sizeof(obj_name_len), 1, file);
-						char* obj_name = core_alloc(obj_name_len + 1);
-						obj_name[obj_name_len] = '\0';
-						fread(obj_name, 1, obj_name_len, file);
-
 						table_set(room->entrances, obj_name, &r);
 
 						core_free(obj_name);
@@ -191,6 +205,8 @@ struct room* load_room(struct world* world, const char* path) {
 
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(file);
+
 						fread(&r, sizeof(r), 1, file);
 
 						u32 change_to_len;
@@ -214,17 +230,31 @@ struct room* load_room(struct world* world, const char* path) {
 				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
+						char* obj_name = read_name(file);
+
 						fread(&r, sizeof(r), 1, file);
 
-						struct sprite sprite = get_sprite(sprid_upgrade_jetpack);
+						i32 sprite_id = -1;
+						i32 upgrade_id = -1;
 
-						entity pickup = new_entity(world);
-						add_componentv(world, pickup, struct room_child, .parent = room);
-						add_componentv(world, pickup, struct transform,
-							.position = { r.x * sprite_scale, r.y * sprite_scale },
-							.dimentions = { 16 * sprite_scale, 16 * sprite_scale });
-						add_component(world, pickup, struct sprite, sprite);
-						add_componentv(world, pickup, struct upgrade, .id = upgrade_jetpack, .collider = r);
+						if (strcmp(obj_name, "jetpack") == 0) {
+							sprite_id = sprid_upgrade_jetpack;
+							upgrade_id = upgrade_jetpack;
+						}
+
+						if (sprite_id != -1 && upgrade_id != -1) { 
+							struct sprite sprite = get_sprite(sprite_id);
+
+							entity pickup = new_entity(world);
+							add_componentv(world, pickup, struct room_child, .parent = room);
+							add_componentv(world, pickup, struct transform,
+								.position = { r.x * sprite_scale, r.y * sprite_scale },
+								.dimentions = { 16 * sprite_scale, 16 * sprite_scale });
+							add_component(world, pickup, struct sprite, sprite);
+							add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
+						}
+
+						core_free(obj_name);
 					}
 				}
 			} break;
