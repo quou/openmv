@@ -24,6 +24,7 @@ struct player_constants {
 	double max_jump;
 	double max_dash;
 	double dash_fx_interval;
+	double dash_cooldown;
 
 	i32 max_air_dash;
 
@@ -42,6 +43,7 @@ const struct player_constants player_constants = {
 	.max_jump = 0.23,
 	.max_dash = 0.15,
 	.dash_fx_interval = 0.045,
+	.dash_cooldown = 0.3,
 
 	.max_air_dash = 3,
 
@@ -95,11 +97,17 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		player->dash_cooldown_timer += ts;
 		if (player->items & upgrade_jetpack &&
-			!player->dashing && player->dash_count < player_constants.max_air_dash && key_just_pressed(main_window, mapped_key("dash"))) {
+			!player->on_ground &&
+			player->dash_cooldown_timer > player_constants.dash_cooldown &&
+			!player->dashing &&
+			player->dash_count < player_constants.max_air_dash &&
+			key_just_pressed(main_window, mapped_key("dash"))) {
 			player->dashing = true;
 			player->dash_time = 0.0;
 			player->dash_count++;
+			player->dash_cooldown_timer = 0.0;
 
 			if (key_pressed(main_window, mapped_key("up"))) {
 				player->velocity.y = -player_constants.dash_force;

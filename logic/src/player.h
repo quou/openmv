@@ -21,6 +21,8 @@ struct player {
 	double jump_time;
 	double dash_time;
 
+	double dash_cooldown_timer;
+
 	double dash_fx_time;
 
 	i32 dash_count;
