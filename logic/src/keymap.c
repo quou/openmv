@@ -32,11 +32,12 @@ void default_keymap() {
 	struct table* keymap = (struct table*)logic_store->keymap;
 
 	key_table_set("jump",  KEY_Z);
-	key_table_set("dash", KEY_C);
+	key_table_set("dash",  KEY_C);
 	key_table_set("left",  KEY_LEFT);
 	key_table_set("right", KEY_RIGHT);
-	key_table_set("up",  KEY_UP);
-	key_table_set("down", KEY_DOWN);
+	key_table_set("up",    KEY_UP);
+	key_table_set("down",  KEY_DOWN);
+	key_table_set("submit",KEY_RETURN);
 }
 
 void save_keymap() {

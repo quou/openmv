@@ -93,6 +93,10 @@ void menu_update(struct menu* menu) {
 		}
 	}
 
+	if (key_just_pressed(main_window, mapped_key("submit")) && menu->items[menu->selected_item].type == menu_item_selectable) {
+		menu->items[menu->selected_item].as.selectable.on_select(menu);
+	}
+
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
 
