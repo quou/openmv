@@ -4,6 +4,7 @@
 #include "util/gl.h"
 
 #include "common.h"
+#include "core.h"
 #include "platform.h"
 #include "keytable.h"
 
@@ -239,4 +240,8 @@ void set_window_uptr(struct window* window, void* uptr) {
 
 i32 get_scroll(struct window* window) {
 	return window->scroll;
+}
+
+void set_window_should_close(struct window* window, bool close) {
+	window->open = !close;
 }

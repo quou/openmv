@@ -71,13 +71,13 @@ struct rect {
 	i32 x, y, w, h;
 };
 
-struct rect make_rect(i32 x, i32 y, i32 w, i32 h);
+API struct rect make_rect(i32 x, i32 y, i32 w, i32 h);
 
 struct color {
 	u8 r, g, b, a;
 };
 
-struct color make_color(u32 rgb, u8 alpha);
+API struct color make_color(u32 rgb, u8 alpha);
 
 struct textured_quad {
 	struct texture* texture;

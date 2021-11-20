@@ -85,6 +85,10 @@ project "core"
 			"src/platform_linux.c",
 			"src/platform_x11.c"
 		}
+
+		postbuildcommands {
+			"ctags -R"
+		}
 	
 	filter "system:windows"
 		files {
