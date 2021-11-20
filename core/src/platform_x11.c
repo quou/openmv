@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "util/gl.h"
+#include "util/glad.h"
 
 #include <X11/Xlib.h>
 #include <X11/X.h>
@@ -118,7 +118,7 @@ struct window* new_window(i32 width, i32 height, const char* title) {
 	window->context = create_context(window->display, fbc[0], null, true, context_attribs);
 	glXMakeCurrent(window->display, window->window, window->context);
 
-	gladLoadGL((GLADloadfunc)glXGetProcAddress);
+	gladLoadGL();
 
 	XFree(fbc);
 
