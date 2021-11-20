@@ -5,7 +5,7 @@
 
 #include "core.h"
 #include "res.h"
-#include "util/gl.h"
+#include "util/glad.h"
 #include "video.h"
 
 void video_init() {

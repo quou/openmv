@@ -15,7 +15,7 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 
 /* Platform stuff */
-#if defined(_WIN32)
+#if defined(_WIN32) || defined(__CYGWIN__)
 	#define PLATFORM_WINDOWS
 #elif defined(__linux__)
 	#define PLATFORM_LINUX

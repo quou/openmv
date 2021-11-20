@@ -122,11 +122,13 @@ API void CALL on_update(double ts) {
 		menu_update(logic_store->pause_menu);
 	}
 
+#ifdef DEBUG
 	ui_begin_frame(ui);
 	
 	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
 		ui_text(ui, logic_store->fps_buf);
-		
+		ui_text(ui, "Hello, world!");
+
 		char mem_buf[256];
 		sprintf(mem_buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 		ui_text(ui, mem_buf);
@@ -135,6 +137,7 @@ API void CALL on_update(double ts) {
 	}
 
 	ui_end_frame(ui);
+#endif
 }
 
 API void CALL on_deinit() {

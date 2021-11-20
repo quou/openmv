@@ -77,6 +77,10 @@ int main() {
 		now = get_time();
 		timestep = (double)(now - last) / (double)get_frequency();
 		last = now;
+
+		if (timestep > 0.1) {
+			timestep = 0.1;
+		}
 	}
 
 	call_on_deinit(scripts);

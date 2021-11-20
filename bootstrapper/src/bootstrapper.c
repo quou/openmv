@@ -7,7 +7,7 @@
 #include "bootstrapper.h"
 #include "dynlib.h"
 
-static const char* working_script_name = "./workasm";
+static const char* working_script_name = "./workasm.dll";
 
 typedef void (*script_on_init_func)();
 typedef void (*script_on_update_func)(double ts);

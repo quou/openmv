@@ -24,7 +24,10 @@ obj
 tags
 Makefile
 workasm
+workasm.dll
 tags
+*.dll
+*.exe
 *.so
 *.sln
 *.cbp

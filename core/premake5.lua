@@ -35,7 +35,9 @@ project "core"
 		"src/util",
 		"src/video.h",
 		"src/video_gl.c",
-		"src/util/gl.h",
+		"src/util/glad.h",
+		"src/util/glad.c",
+		"src/util/KHR/khrplatform.h",
 		"src/util/stb_rect_pack.h",
 		"src/util/stb_truetype.h",
 		"src/util/util.c"

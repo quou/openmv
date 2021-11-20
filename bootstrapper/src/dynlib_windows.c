@@ -15,5 +15,10 @@ void* dynlib_get_sym(void* handle, const char* name) {
 }
 
 const char* dynlib_get_error() {
-	return "";
+	DWORD error = GetLastError();
+	LPSTR buffer;
+
+        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, error, 0, (LPSTR)(&buffer), 0, NULL); 
+
+	return buffer;
 }

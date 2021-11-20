@@ -4,7 +4,7 @@
 
 #include "core.h"
 #include "res.h"
-#include "util/gl.h"
+#include "util/glad.h"
 #include "util/stb_rect_pack.h"
 #include "util/stb_truetype.h"
 #include "video.h"
