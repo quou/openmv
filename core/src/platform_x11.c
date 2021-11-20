@@ -397,3 +397,7 @@ void set_on_text_input(struct window* window, on_text_input_func func) {
 void set_window_uptr(struct window* window, void* uptr) {
 	window->uptr = uptr;
 }
+
+void set_window_should_close(struct window* window, bool close) {
+	window->open = !close;
+}

@@ -104,6 +104,16 @@ void menu_update(struct menu* menu) {
 
 	i32 y = (win_h / 2) - (menu->item_count * text_height(menu->font) / 2);
 
+	struct textured_quad background_quad = {
+		.texture = null,
+		.rect = { 0 },
+		.position = { 0, 0 },
+		.dimentions = { win_w, win_h },
+		.color = make_color(0x000000, 200)
+	};
+
+	renderer_push(menu->renderer, &background_quad);
+
 	for (u32 i = 0; i < menu->item_count; i++) {
 		struct menu_item* item = menu->items + i;
 

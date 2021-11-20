@@ -11,6 +11,7 @@
 #include "menu.h"
 #include "player.h"
 #include "res.h"
+#include "savegame.h"
 #include "sprites.h"
 #include "ui.h"
 
@@ -34,6 +35,20 @@ static void on_resume(struct menu* menu) {
 	logic_store->paused = false;
 }
 
+static void on_save(struct menu* menu) {
+	savegame();
+	logic_store->paused = false;
+}
+
+static void on_load(struct menu* menu) {
+	loadgame();
+	logic_store->paused = false;
+}
+
+static void on_quit(struct menu* menu) {
+	set_window_should_close(main_window, true);
+}
+
 API void CALL on_init() {
 	keymap_init();
 	default_keymap();
@@ -49,8 +64,9 @@ API void CALL on_init() {
 	logic_store->pause_menu = new_menu(sprite_shader, load_font("res/DejaVuSansMono.ttf", 35.0f));
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
-	menu_add_selectable(logic_store->pause_menu, "Save Game", null);
-	menu_add_selectable(logic_store->pause_menu, "Load Save", null);
+	menu_add_selectable(logic_store->pause_menu, "Save Game", on_save);
+	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
+	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);
@@ -66,6 +82,8 @@ API void CALL on_init() {
 	v2i spawn = get_spawn(logic_store->room);
 	struct player* pc = get_component(world, player, struct player);
 	pc->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
+
+	logic_store->player = player;
 }
 
 API void CALL on_update(double ts) {

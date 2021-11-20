@@ -22,6 +22,8 @@ struct logic_store {
 	void* keymap;
 
 	v2f camera_position;
+
+	entity player;
 };
 
 extern struct logic_store* logic_store;
