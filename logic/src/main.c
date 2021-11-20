@@ -47,7 +47,7 @@ API void CALL on_init() {
 
 	logic_store->paused = false;
 	logic_store->pause_menu = new_menu(sprite_shader, load_font("res/DejaVuSansMono.ttf", 35.0f));
-	menu_add_label(logic_store->pause_menu, "Paused");
+	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
 	menu_add_selectable(logic_store->pause_menu, "Save Game", null);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", null);

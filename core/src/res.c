@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "core.h"
 #include "res.h"
@@ -57,7 +58,14 @@ struct res {
 struct table* res_table;
 
 static struct res* res_load(const char* path, u32 type, void* udata) {
-	void* got = table_get(res_table, path);
+	char cache_name[256];
+	strcpy(cache_name, path);
+
+	if (type == res_font) {
+		sprintf(cache_name, "%s%g", path, *(float*)udata);
+	}
+
+	struct res* got = table_get(res_table, cache_name);
 	if (got) {
 		return got;
 	}
@@ -84,12 +92,12 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 			break;
 	}
 
-	table_set(res_table, path, &new_res);
+	table_set(res_table, cache_name, &new_res);
 
-	return table_get(res_table, path);
+	return table_get(res_table, cache_name);
 }
 
-static void res_core_free(struct res* res) {
+static void res_free(struct res* res) {
 	switch (res->type) {
 		case res_shader:
 			deinit_shader(&res->as.shader);
@@ -109,7 +117,7 @@ void res_init() {
 
 void res_deinit() {
 	for (struct table_iter i = new_table_iter(res_table); table_iter_next(&i);) {
-		res_core_free(i.value);
+		res_free(i.value);
 	}
 
 	free_table(res_table);
@@ -121,7 +129,7 @@ void res_unload(const char* path) {
 		return;
 	}
 
-	res_core_free(res);
+	res_free(res);
 
 	table_delete(res_table, path);
 }

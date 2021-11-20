@@ -3,6 +3,7 @@
 #include "bootstrapper.h"
 #include "core.h"
 #include "res.h"
+#include "video.h"
 #include "platform.h"
 
 int main() {
@@ -20,6 +21,42 @@ int main() {
 #else
 	const char* lib_path = "logic.dll";
 #endif
+
+	/* Loading screen */
+	{
+		struct shader* sprite_shader = load_shader("res/shaders/sprite.glsl");
+		struct renderer* renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
+
+		u8* raw;
+		u32 raw_size;
+		read_raw("res/DejaVuSansMono.ttf", &raw, &raw_size, false);
+
+		struct font* font = load_font_from_memory(raw, raw_size, 20.0f);
+
+		struct textured_quad quad = {
+			.texture = null,
+			.rect = { 0 },
+			.position = { 0, 0 },
+			.dimentions = { 1366, 768 },
+			.color = make_color(0x6cafb5, 100),
+		};
+
+		const char* text = "Loading...";
+
+		i32 w = text_width(font, text);
+		i32 h = text_height(font);
+
+		renderer_push(renderer, &quad);
+		render_text(renderer, font, text, (1366 / 2) - (w / 2), (768 / 2) - (h - 2), make_color(0xffffff, 255));
+
+		video_clear();
+		renderer_flush(renderer);
+
+		swap_window(main_window);
+
+		free_renderer(renderer);
+		free_font(font);
+	}
 
 	struct script_context* scripts = new_script_context(lib_path);
 	call_on_init(scripts);
