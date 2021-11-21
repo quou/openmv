@@ -19,6 +19,7 @@ struct player_constants {
 	float gravity;
 	float accel;
 	float friction;
+	float slow_friction;
 	float dash_force;
 	i32 ground_hit_range;
 	double max_jump;
@@ -37,10 +38,11 @@ const struct player_constants player_constants = {
 	.jump_force = -350,
 	.gravity = 1000,
 	.accel = 1000,
-	.friction = 1300,
+	.friction = 1000,
+	.slow_friction = 100,
 	.dash_force = 1000,
 	.ground_hit_range = 12,
-	.max_jump = 0.23,
+	.max_jump = 0.3,
 	.max_dash = 0.15,
 	.dash_fx_interval = 0.045,
 	.dash_cooldown = 0.3,
@@ -90,9 +92,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			player->face = player_face_left;
 		} else {
-			if (player->velocity.x > 0.0f) {
+			if (player->velocity.x > 1.0f) {
 				player->velocity.x -= player_constants.friction * ts;
-			} else {
+			} else if (player->velocity.x < -1.0f) {
 				player->velocity.x += player_constants.friction * ts;
 			}
 		}
@@ -214,7 +216,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		if (player->on_ground) {
 			player->dash_count = 0;
 
-			if (player->velocity.x > 0.5f || player->velocity.x < -0.5f) {
+			if (player->velocity.x > 1.2f || player->velocity.x < -1.2f) {
 				if (player->face == player_face_left) {
 					if (sprite->id != animsprid_player_run_left) {
 						*sprite = get_animated_sprite(animsprid_player_run_left);
