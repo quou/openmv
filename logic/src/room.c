@@ -64,6 +64,8 @@ struct room {
 	struct transition_trigger* transition_triggers;
 	u32 transition_trigger_count;
 
+	char* path;
+
 	struct world* world;
 };
 
@@ -93,6 +95,8 @@ struct room* load_room(struct world* world, const char* path) {
 		fprintf(stderr, "Failed to fopen file `%s'.", path);
 		return null;
 	}
+
+	room->path = copy_string(path);
 
 	room->entrances = new_table(sizeof(v2i));
 
@@ -268,6 +272,8 @@ struct room* load_room(struct world* world, const char* path) {
 }
 
 void free_room(struct room* room) {
+	core_free(room->path);
+
 	struct entity_buffer* to_delete = new_entity_buffer();
 	for (single_view(room->world, view, struct room_child)) {
 		struct room_child* rc = single_view_get(&view);
@@ -385,6 +391,10 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 			}
 		}
 	}
+}
+
+char* get_room_path(struct room* room) {
+	return room->path;
 }
 
 void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* position) {
