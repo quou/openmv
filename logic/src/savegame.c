@@ -70,7 +70,9 @@ void loadgame() {
 
 	/* Read the current room path and load it. */
 	char* room_path = read_string(file);
-	free_room(logic_store->room);
+	if (logic_store->room) {
+		free_room(logic_store->room);
+	}
 	logic_store->room = load_room(world, room_path);
 	core_free(room_path);
 

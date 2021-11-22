@@ -196,3 +196,7 @@ void menu_add_label(struct menu* menu, const char* label) {
 
 	item->as.label.text = copy_string(label);
 }
+
+void menu_reset_selection(struct menu* menu) {
+	menu->selected_item = 0;
+}

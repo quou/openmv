@@ -98,6 +98,7 @@ API void CALL on_update(double ts) {
 	}
 
 	if (key_just_pressed(main_window, KEY_ESCAPE)) {
+		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
 	}
 	
@@ -110,10 +111,10 @@ API void CALL on_update(double ts) {
 
 	double timestep = ts * time_scale;
 
-	draw_room(logic_store->room, renderer);
-	
 	player_system(world, renderer, &logic_store->room, timestep);
 	fx_system(world, timestep);
+
+	draw_room(logic_store->room, renderer);	
 
 	render_system(world, renderer, timestep);
 	renderer_flush(renderer);
