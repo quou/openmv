@@ -199,8 +199,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		if (key_just_pressed(main_window, mapped_key("fire"))) {
+			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
-
 			entity projectile = new_entity(world);
 			add_componentv(world, projectile, struct transform,
 				.position = make_v2i(player->position.x, player->position.y),
@@ -212,6 +212,20 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.speed = player_constants.projectile_speed,
 				.position = v2f_add(player->position,
 					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos));
+
+			/* Spawn the muzzle flash */
+			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
+			entity flash = new_entity(world);
+			add_componentv(world, flash, struct transform,
+				.position = make_v2i(player->position.x, player->position.y),
+				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
+			add_component(world, flash, struct animated_sprite, f_sprite);
+			add_componentv(world, flash, struct projectile,
+				.face = player->face,
+				.lifetime = 1.0,
+				.speed = 0.0,
+				.position = v2f_add(player->position,
+					player->face == player_face_left ? player_constants.right_muzzle_pos : player_constants.left_muzzle_pos));
 		}
 
 		/* Update pointers because the pools might have been reallocated. */
@@ -310,7 +324,13 @@ void projectile_system(struct world* world, double ts) {
 
 		projectile->lifetime -= ts;
 
-		if (projectile->lifetime <= 0.0) {
+		if (has_component(world, view.e, struct animated_sprite)) {
+			struct animated_sprite* anim = get_component(world, view.e, struct animated_sprite);
+
+			if (anim->current_frame >= anim->frame_count - 1) {	
+				entity_buffer_push(to_delete, view.e);
+			}
+		} else if (projectile->lifetime <= 0.0) {
 			entity_buffer_push(to_delete, view.e);
 		}
 	}

@@ -24,6 +24,7 @@ enum {
 	animsprid_player_fall_left,
 	animsprid_player_idle_right,
 	animsprid_player_idle_left,
+	animsprid_muzzle_flash,
 	sprid_upgrade_jetpack,
 	sprid_fx_jetpack,
 	sprid_icon_ptr,

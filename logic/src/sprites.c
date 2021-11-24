@@ -109,6 +109,15 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_muzzle_flash] = {
+		.id = animsprid_muzzle_flash,
+		.texture = texid_fx,
+		.frames = { { 0, 8, 8, 8 }, { 8, 8, 8, 8 }, { 16, 8, 8, 8 }, { 24, 8, 8, 8 } },
+		.speed = 25,
+		.frame_count = 4,
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 
