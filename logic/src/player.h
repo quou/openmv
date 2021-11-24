@@ -45,3 +45,12 @@ struct upgrade {
 	u32 id;
 	struct rect collider;
 };
+
+struct projectile {
+	i32 face;
+	double lifetime;
+	float speed;
+	v2f position;
+};
+
+void projectile_system(struct world* world, double ts);

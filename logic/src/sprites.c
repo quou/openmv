@@ -28,6 +28,12 @@ struct sprite sprites[] = {
 		.rect = { 0, 0, 16, 16 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_projectile] = {
+		.texture = texid_arms,
+		.rect = { 0, 0, 5, 2 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 

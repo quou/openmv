@@ -26,7 +26,8 @@ enum {
 	animsprid_player_idle_left,
 	sprid_upgrade_jetpack,
 	sprid_fx_jetpack,
-	sprid_icon_ptr
+	sprid_icon_ptr,
+	sprid_projectile
 };
 
 void preload_sprites();

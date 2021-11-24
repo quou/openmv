@@ -27,6 +27,12 @@ struct player_constants {
 	double dash_fx_interval;
 	double dash_cooldown;
 
+	double projectile_lifetime;
+	double projectile_speed;
+
+	v2f left_muzzle_pos;
+	v2f right_muzzle_pos;
+
 	i32 max_air_dash;
 
 	struct rect left_collider;
@@ -46,6 +52,12 @@ const struct player_constants player_constants = {
 	.max_dash = 0.15,
 	.dash_fx_interval = 0.045,
 	.dash_cooldown = 0.3,
+	
+	.projectile_lifetime = 1.0,
+	.projectile_speed = 1000.0,
+
+	.left_muzzle_pos =  { 12 * sprite_scale, 11 * sprite_scale },
+	.right_muzzle_pos = { 3  * sprite_scale, 11 * sprite_scale },
 
 	.max_air_dash = 3,
 
@@ -186,6 +198,22 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		if (key_just_pressed(main_window, mapped_key("fire"))) {
+			struct sprite sprite = get_sprite(sprid_projectile);
+
+			entity projectile = new_entity(world);
+			add_componentv(world, projectile, struct transform,
+				.position = make_v2i(player->position.x, player->position.y),
+				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
+			add_component(world, projectile, struct sprite, sprite);
+			add_componentv(world, projectile, struct projectile,
+				.face = player->face,
+				.lifetime = player_constants.projectile_lifetime,
+				.speed = player_constants.projectile_speed,
+				.position = v2f_add(player->position,
+					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos));
+		}
+
 		/* Update pointers because the pools might have been reallocated. */
 		transform = view_get(&view, struct transform);
 		player = view_get(&view, struct player);
@@ -263,4 +291,29 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 	}
 
 	entity_buffer_clear(to_destroy, world);
+}
+
+void projectile_system(struct world* world, double ts) {
+	struct entity_buffer* to_delete = new_entity_buffer();
+
+	for (view(world, view, type_info(struct transform), type_info(struct projectile))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct projectile* projectile = view_get(&view, struct projectile);
+
+		if (projectile->face == player_face_left) {
+			projectile->position.x -= projectile->speed * ts;
+		} else {
+			projectile->position.x += projectile->speed * ts;
+		}
+
+		transform->position = make_v2i(projectile->position.x, projectile->position.y);
+
+		projectile->lifetime -= ts;
+
+		if (projectile->lifetime <= 0.0) {
+			entity_buffer_push(to_delete, view.e);
+		}
+	}
+
+	entity_buffer_clear(to_delete, world);
 }
