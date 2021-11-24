@@ -24,7 +24,7 @@ struct rect make_rect(i32 x, i32 y, i32 w, i32 h) {
 	return (struct rect) { x, y, w, h };
 }
 
-struct renderer* new_renderer(const struct shader* shader, v2i dimentions) {
+struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	struct renderer* renderer = core_calloc(1, sizeof(struct renderer));
 
 	renderer->quad_count = 0;
@@ -46,10 +46,10 @@ struct renderer* new_renderer(const struct shader* shader, v2i dimentions) {
 	renderer->camera_enable = false;
 
 	renderer->shader = shader;
-	bind_shader(renderer->shader);
+	bind_shader(&renderer->shader);
 
 	renderer->camera = m4f_orth(0.0f, (float)dimentions.x, (float)dimentions.y, 0.0f, -1.0f, 1.0f);
-	shader_set_m4f(renderer->shader, "camera", renderer->camera);
+	shader_set_m4f(&renderer->shader, "camera", renderer->camera);
 	renderer->dimentions = dimentions;
 
 	bind_shader(null);
@@ -74,7 +74,7 @@ void renderer_flush(struct renderer* renderer) {
 		glDisable(GL_SCISSOR_TEST);
 	}
 
-	bind_shader(renderer->shader);
+	bind_shader(&renderer->shader);
 
 	for (u32 i = 0; i < renderer->texture_count; i++) {
 		bind_texture(renderer->textures[i], i);
@@ -82,26 +82,26 @@ void renderer_flush(struct renderer* renderer) {
 		char name[32];
 		sprintf(name, "textures[%u]", i);
 
-		shader_set_i(renderer->shader, name, i);
+		shader_set_i(&renderer->shader, name, i);
 	}
 
 	for (u32 i = 0; i < renderer->transform_count; i++) {
 		char name[32];
 		sprintf(name, "transforms[%u]", i);
 
-		shader_set_m4f(renderer->shader, name, renderer->transforms[i]);
+		shader_set_m4f(&renderer->shader, name, renderer->transforms[i]);
 	}
 
-	shader_set_m4f(renderer->shader, "camera", renderer->camera);
+	shader_set_m4f(&renderer->shader, "camera", renderer->camera);
 
 	if (renderer->camera_enable) {
 		m4f view = m4f_translate(m4f_identity(), make_v3f(
 			-(renderer->camera_pos.x) + (renderer->dimentions.x / 2),
 			-(renderer->camera_pos.y) + (renderer->dimentions.y / 2),
 			0.0f));
-		shader_set_m4f(renderer->shader, "view", view);
+		shader_set_m4f(&renderer->shader, "view", view);
 	} else {
-		shader_set_m4f(renderer->shader, "view", m4f_identity());
+		shader_set_m4f(&renderer->shader, "view", m4f_identity());
 	}
 
 	bind_vb_for_draw(&renderer->vb);

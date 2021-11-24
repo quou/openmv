@@ -49,7 +49,7 @@ struct res {
 	char* path;
 	u32 type;
 	union {
-		struct texture texture;
+		struct texture* texture;
 		struct shader shader;
 		struct font* font;
 	} as;
@@ -84,7 +84,8 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 			core_free(raw);
 			break;
 		case res_texture:
-			init_texture(&new_res.as.texture, raw, raw_size);
+			new_res.as.texture = core_calloc(1, sizeof(struct texture));
+			init_texture(new_res.as.texture, raw, raw_size);
 			core_free(raw);
 			break;
 		case res_font:
@@ -103,7 +104,8 @@ static void res_free(struct res* res) {
 			deinit_shader(&res->as.shader);
 			break;
 		case res_texture:
-			deinit_texture(&res->as.texture);
+			deinit_texture(res->as.texture);
+			core_free(res->as.texture);
 			break;
 		case res_font:
 			free_font(res->as.font);
@@ -134,12 +136,12 @@ void res_unload(const char* path) {
 	table_delete(res_table, path);
 }
 
-struct shader* load_shader(const char* path) {
-	return &res_load(path, res_shader, null)->as.shader;
+struct shader load_shader(const char* path) {
+	return res_load(path, res_shader, null)->as.shader;
 }
 
 struct texture* load_texture(const char* path) {
-	return &res_load(path, res_texture, null)->as.texture;
+	return res_load(path, res_texture, null)->as.texture;
 }
 
 struct font* load_font(const char* path, float size) {

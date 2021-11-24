@@ -35,7 +35,7 @@ struct menu {
 	i32 selected_item;
 };
 
-struct menu* new_menu(struct shader* shader, struct font* font) {
+struct menu* new_menu(struct shader shader, struct font* font) {
 	struct menu* menu = core_calloc(1, sizeof(struct menu));
 
 	menu->font = font;

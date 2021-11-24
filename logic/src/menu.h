@@ -7,7 +7,7 @@ struct menu;
 
 typedef void (*menu_on_select)(struct menu* menu);
 
-struct menu* new_menu(struct shader* shader, struct font* font);
+struct menu* new_menu(struct shader shader, struct font* font);
 void free_menu(struct menu* menu);
 
 void menu_update(struct menu* menu);

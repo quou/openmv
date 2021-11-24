@@ -10,7 +10,8 @@ enum {
 	texid_upgrades,
 	texid_tsblue,
 	texid_fx,
-	texid_icon
+	texid_icon,
+	texid_arms
 };
 
 /* Sprite IDs  */

@@ -9,7 +9,7 @@
 
 struct ui_context;
 
-API struct ui_context* new_ui_context(struct shader* shader, struct window* window, struct font* font);
+API struct ui_context* new_ui_context(struct shader shader, struct window* window, struct font* font);
 API void free_ui_context(struct ui_context* ui);
 API void ui_text_input_event(struct ui_context* ui, const char* text);
 API void ui_begin_frame(struct ui_context* ui);

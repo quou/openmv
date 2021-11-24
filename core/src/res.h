@@ -14,6 +14,6 @@ API void res_deinit();
 
 API void res_unload(const char* path);
 
-API struct shader* load_shader(const char* path);
+API struct shader load_shader(const char* path);
 API struct texture* load_texture(const char* path);
 API struct font* load_font(const char* path, float size);

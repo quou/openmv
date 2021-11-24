@@ -91,7 +91,7 @@ struct textured_quad {
 };
 
 struct renderer {
-	const struct shader* shader;
+	struct shader shader;
 	struct vertex_buffer vb;
 
 	u32 quad_count;
@@ -112,7 +112,7 @@ struct renderer {
 	u32 transform_count;
 };
 
-API struct renderer* new_renderer(const struct shader* shader, v2i dimentions);
+API struct renderer* new_renderer(struct shader shader, v2i dimentions);
 API void free_renderer(struct renderer* renderer);
 API void renderer_flush(struct renderer* renderer);
 API void renderer_push(struct renderer* renderer, struct textured_quad* quad);

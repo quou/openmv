@@ -24,7 +24,7 @@ int main() {
 
 	/* Loading screen */
 	{
-		struct shader* sprite_shader = load_shader("res/shaders/sprite.glsl");
+		struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
 		struct renderer* renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
 		u8* raw;

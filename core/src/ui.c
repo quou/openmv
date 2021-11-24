@@ -162,7 +162,7 @@ static void ui_draw_rect(struct ui_context* ui, struct rect rect, u32 col_idx) {
 	renderer_push(ui->renderer, &quad);
 }
 
-struct ui_context* new_ui_context(struct shader* shader, struct window* window, struct font* font) {
+struct ui_context* new_ui_context(struct shader shader, struct window* window, struct font* font) {
 	struct ui_context* ui = core_calloc(1, sizeof(struct ui_context));
 
 	ui->font = font;
