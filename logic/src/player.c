@@ -333,6 +333,16 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			};
 
 			if (rect_room_overlap(room, rect, null)) {
+				/* Spawn an impact effect. */
+				struct animated_sprite f_sprite = get_animated_sprite(animsprid_projectile_impact);
+				entity flash = new_entity(world);
+				add_componentv(world, flash, struct transform,
+					.z = 100,
+					.position = transform->position,
+					.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
+				add_component(world, flash, struct animated_sprite, f_sprite);
+				add_componentv(world, flash, struct anim_fx);
+
 				entity_buffer_push(to_delete, view.e);
 			}
 		}
@@ -348,7 +358,7 @@ void anim_fx_system(struct world* world, double ts) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct animated_sprite* anim = view_get(&view, struct animated_sprite);
 
-		if (anim->current_frame >= anim->frame_count - 1) {	
+		if (anim->current_frame >= anim->frame_count - 1) {
 			entity_buffer_push(to_delete, view.e);
 		}
 	}

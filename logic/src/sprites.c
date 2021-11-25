@@ -118,6 +118,15 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 4,
 		.origin = { 0.5f, 0.5f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_projectile_impact] = {
+		.id = animsprid_projectile_impact,
+		.texture = texid_fx,
+		.frames = { { 0, 16, 8, 8 }, { 8, 16, 8, 8 }, { 16, 16, 8, 8 }, { 24, 16, 8, 8 }, { 24, 8, 8, 8 } },
+		.speed = 60,
+		.frame_count = 5,
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 
