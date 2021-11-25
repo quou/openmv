@@ -203,6 +203,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			struct sprite sprite = get_sprite(sprid_projectile);
 			entity projectile = new_entity(world);
 			add_componentv(world, projectile, struct transform,
+				.z = 100,
 				.position = make_v2i(player->position.x, player->position.y),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
 			add_component(world, projectile, struct sprite, sprite);
@@ -217,15 +218,14 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
 			entity flash = new_entity(world);
 			add_componentv(world, flash, struct transform,
-				.position = make_v2i(player->position.x, player->position.y),
+				.z = 100,
+				.position = v2i_add(transform->position,
+					player->face == player_face_right ?
+						make_v2i(player_constants.left_muzzle_pos.x, player_constants.left_muzzle_pos.y)
+						: make_v2i(player_constants.right_muzzle_pos.x, player_constants.right_muzzle_pos.y)),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
 			add_component(world, flash, struct animated_sprite, f_sprite);
-			add_componentv(world, flash, struct projectile,
-				.face = player->face,
-				.lifetime = 1.0,
-				.speed = 0.0,
-				.position = v2f_add(player->position,
-					player->face == player_face_left ? player_constants.right_muzzle_pos : player_constants.left_muzzle_pos));
+			add_componentv(world, flash, struct anim_fx);
 		}
 
 		/* Update pointers because the pools might have been reallocated. */
@@ -307,7 +307,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 	entity_buffer_clear(to_destroy, world);
 }
 
-void projectile_system(struct world* world, double ts) {
+void projectile_system(struct world* world, struct room* room, double ts) {
 	struct entity_buffer* to_delete = new_entity_buffer();
 
 	for (view(world, view, type_info(struct transform), type_info(struct projectile))) {
@@ -323,14 +323,32 @@ void projectile_system(struct world* world, double ts) {
 		transform->position = make_v2i(projectile->position.x, projectile->position.y);
 
 		projectile->lifetime -= ts;
+		if (projectile->lifetime <= 0.0) {
+			entity_buffer_push(to_delete, view.e);
+		} else {
+			struct rect rect = {
+				projectile->collider.x + transform->position.x,
+				projectile->collider.y + transform->position.y,
+				projectile->collider.w, projectile->collider.h
+			};
 
-		if (has_component(world, view.e, struct animated_sprite)) {
-			struct animated_sprite* anim = get_component(world, view.e, struct animated_sprite);
-
-			if (anim->current_frame >= anim->frame_count - 1) {	
+			if (rect_room_overlap(room, rect, null)) {
 				entity_buffer_push(to_delete, view.e);
 			}
-		} else if (projectile->lifetime <= 0.0) {
+		}
+	}
+
+	entity_buffer_clear(to_delete, world);
+}
+
+void anim_fx_system(struct world* world, double ts) {
+	struct entity_buffer* to_delete = new_entity_buffer();
+
+	for (view(world, view, type_info(struct transform), type_info(struct anim_fx), type_info(struct animated_sprite))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct animated_sprite* anim = view_get(&view, struct animated_sprite);
+
+		if (anim->current_frame >= anim->frame_count - 1) {	
 			entity_buffer_push(to_delete, view.e);
 		}
 	}

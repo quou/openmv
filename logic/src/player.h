@@ -51,6 +51,13 @@ struct projectile {
 	double lifetime;
 	float speed;
 	v2f position;
+	struct rect collider;
 };
 
-void projectile_system(struct world* world, double ts);
+void projectile_system(struct world* world, struct room* room, double ts);
+
+struct anim_fx {
+	u32 d;
+};
+
+void anim_fx_system(struct world* world, double ts);
