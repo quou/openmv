@@ -113,10 +113,11 @@ API void CALL on_update(double ts) {
 	double timestep = ts * time_scale;
 
 	player_system(world, renderer, &logic_store->room, timestep);
-	enemy_system(world, ts);
+	enemy_system(world, timestep);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
+	damage_fx_system(world, renderer, timestep);
 
 	draw_room(logic_store->room, renderer);	
 

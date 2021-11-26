@@ -65,3 +65,14 @@ struct anim_fx {
 void anim_fx_system(struct world* world, double ts);
 
 entity new_impact_effect(struct world* world, v2i position);
+
+struct damage_num_fx {
+	char text[32];
+	v2f position;
+	float velocity;
+	double timer;
+};
+
+void damage_fx_system(struct world* world, struct renderer* renderer, double ts);
+
+entity new_damage_number(struct world* world, v2i position, i32 number);

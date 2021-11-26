@@ -106,7 +106,7 @@ API bool view_valid(struct view* view);
 API void* _view_get(struct view* view, struct type_info type);
 API void view_next(struct view* view);
 
-#define entity_buffer_default_alloc 64
+#define entity_buffer_default_alloc 8
 
 /* Only starts heap allocating once the count overflows the
  * initial allocation capacity. This is to try to avoid two

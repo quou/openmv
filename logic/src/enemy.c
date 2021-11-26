@@ -10,6 +10,7 @@ static void on_bat_create(struct world* world, entity e, void* component) {
 	struct bat* bat = component;
 
 	bat->old_position = bat->position;
+	bat->offset = bat->position.y;
 }
 
 entity new_bat(struct world* world, struct room* room, v2i position) {
@@ -69,9 +70,13 @@ void enemy_system(struct world* world, double ts) {
 			};
 
 			if (rect_overlap(e_rect, p_rect, null)) {
-				enemy->hp -= projectile->damage;
 				new_impact_effect(world, p_transform->position);
+				i32 dmg = projectile->damage;
+				if (dmg > enemy->hp) { dmg = enemy->hp; }
+				new_damage_number(world, transform->position, -dmg);
 				entity_buffer_push(to_delete, p_view.e);
+
+				enemy->hp -= projectile->damage;
 
 				if (enemy->hp <= 0) {
 					entity_buffer_push(to_delete, view.e);

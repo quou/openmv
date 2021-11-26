@@ -369,3 +369,72 @@ void anim_fx_system(struct world* world, double ts) {
 
 	entity_buffer_clear(to_delete, world);
 }
+
+static struct rect damage_numbers[] = {
+	{ 66, 0, 4, 5 },
+	{ 19, 0, 4, 5 },
+	{ 24, 0, 1, 5 },
+	{ 26, 0, 4, 5 },
+	{ 31, 0, 4, 5 },
+	{ 36, 0, 4, 5 },
+	{ 41, 0, 4, 5 },
+	{ 46, 0, 4, 5 },
+	{ 51, 0, 4, 5 },
+	{ 56, 0, 4, 5 },
+	{ 61, 0, 4, 5 }
+};
+
+void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
+	struct entity_buffer* to_delete = new_entity_buffer();
+
+	struct texture* atlas = get_texture(texid_icon);
+
+	for (single_view(world, view, struct damage_num_fx)) {
+		struct damage_num_fx* d = single_view_get(&view);
+
+		d->velocity += 30.0 * ts;
+		d->position.y -= d->velocity * ts;
+
+		float x = 0.0f;
+
+		for (char* c = d->text; *c; c++) {
+			char idx = (*c - '0') + 1;
+			struct rect rect = damage_numbers[idx];
+			if (*c == '-') {
+				rect = damage_numbers[0];
+			}
+
+			struct textured_quad quad = {
+				.texture = atlas,
+				.position = make_v2i(x + d->position.x, d->position.y),
+				.dimentions = make_v2i(rect.w * sprite_scale, rect.h * sprite_scale),
+				.rect = rect,
+				.color = { 255, 255, 255, d->timer > 1.0 ? 255 : (i32)(d->timer * 255) }
+			};
+
+			x += rect.w * sprite_scale;
+
+			renderer_push(renderer, &quad);
+		}
+
+		d->timer -= ts;
+		if (d->timer <= 0.0) {
+			entity_buffer_push(to_delete, view.e);
+		}
+	}
+
+	entity_buffer_clear(to_delete, world);
+}
+
+entity new_damage_number(struct world* world, v2i position, i32 number) {
+	entity e = new_entity(world);
+	add_componentv(world, e, struct damage_num_fx,
+		.position = make_v2f(position.x, position.y),
+		.velocity = 30.0,
+		.timer = 1.2);
+
+	struct damage_num_fx* d = get_component(world, e, struct damage_num_fx);
+	sprintf(d->text, "%d", number);
+
+	return e;
+}

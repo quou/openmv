@@ -160,3 +160,7 @@ struct sprite get_sprite(u32 id) {
 struct animated_sprite get_animated_sprite(u32 id) {
 	return anim_sprites[id];
 }
+
+struct texture* get_texture(u32 id) {
+	return load_texture(texture_paths[id]);
+}

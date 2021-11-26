@@ -3,6 +3,7 @@
 #include "common.h"
 #include "coresys.h"
 #include "room.h"
+#include "video.h"
 
 /* Texture IDs */
 enum {
@@ -37,3 +38,4 @@ enum {
 void preload_sprites();
 struct sprite get_sprite(u32 id);
 struct animated_sprite get_animated_sprite(u32 id);
+struct texture* get_texture(u32 id);
