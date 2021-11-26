@@ -7,7 +7,8 @@ static const char* texture_paths[] = {
 	[texid_tsblue]   = "res/bmp/tsblue.bmp",
 	[texid_fx]       = "res/bmp/fx.bmp",
 	[texid_icon]     = "res/bmp/icon.bmp",
-	[texid_arms]     = "res/bmp/arms.bmp"
+	[texid_arms]     = "res/bmp/arms.bmp",
+	[texid_bad]      = "res/bmp/bad.bmp"
 };
 
 struct sprite sprites[] = {
@@ -127,7 +128,19 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 5,
 		.origin = { 0.5f, 0.5f },
 		.color = { 255, 255, 255, 255 }
-	}
+	},
+	[animsprid_bat] = {
+		.id = animsprid_bat,
+		.texture = texid_bad,
+		.frames = {
+			{ 0, 0, 11, 7 },  { 11, 0, 11, 7 }, { 22, 0, 11, 7 },
+			{ 33, 0, 11, 7 }, { 22, 0, 11, 7 }, { 11, 0, 11, 7 } 
+		},
+		.speed = 25,
+		.frame_count = 6,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
 };
 
 void preload_sprites() {

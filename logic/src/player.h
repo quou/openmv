@@ -52,6 +52,8 @@ struct projectile {
 	float speed;
 	v2f position;
 	struct rect collider;
+
+	i32 damage;
 };
 
 void projectile_system(struct world* world, struct room* room, double ts);
@@ -61,3 +63,5 @@ struct anim_fx {
 };
 
 void anim_fx_system(struct world* world, double ts);
+
+entity new_impact_effect(struct world* world, v2i position);

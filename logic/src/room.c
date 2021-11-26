@@ -6,6 +6,7 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
+#include "enemy.h"
 #include "logic_store.h"
 #include "physics.h"
 #include "player.h"
@@ -203,6 +204,19 @@ struct room* load_room(struct world* world, const char* path) {
 
 						core_free(obj_name);
 					}
+				} else if (strcmp(layer->name, "enemies") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						char* obj_name = read_name(file);
+
+						fread(&r, sizeof(r), 1, file);
+
+						if (strcmp(obj_name, "bat") == 0) {
+							new_bat(world, room, make_v2i(r.x * sprite_scale, r.y * sprite_scale));
+						}
+
+						core_free(obj_name);
+					}
 				} else if (strcmp(layer->name, "transition_triggers") == 0) {
 					room->transition_triggers = core_alloc(sizeof(struct transition_trigger) * object_count);
 					room->transition_trigger_count = object_count;
@@ -253,7 +267,7 @@ struct room* load_room(struct world* world, const char* path) {
 							add_componentv(world, pickup, struct room_child, .parent = room);
 							add_componentv(world, pickup, struct transform,
 								.position = { r.x * sprite_scale, r.y * sprite_scale },
-								.dimentions = { 16 * sprite_scale, 16 * sprite_scale });
+								.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 							add_component(world, pickup, struct sprite, sprite);
 							add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
 						}

@@ -212,7 +212,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
 				.position = v2f_add(player->position,
-					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos));
+					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
+				.damage = 4);
 
 			/* Spawn the muzzle flash */
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
@@ -258,7 +259,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		if (player->on_ground) {
 			player->dash_count = 0;
 
-			if (player->velocity.x > 1.2f || player->velocity.x < -1.2f) {
+			if (player->velocity.x > 5.0f || player->velocity.x < -5.0f) {
 				if (player->face == player_face_left) {
 					if (sprite->id != animsprid_player_run_left) {
 						*sprite = get_animated_sprite(animsprid_player_run_left);
@@ -333,22 +334,25 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			};
 
 			if (rect_room_overlap(room, rect, null)) {
-				/* Spawn an impact effect. */
-				struct animated_sprite f_sprite = get_animated_sprite(animsprid_projectile_impact);
-				entity flash = new_entity(world);
-				add_componentv(world, flash, struct transform,
-					.z = 100,
-					.position = transform->position,
-					.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
-				add_component(world, flash, struct animated_sprite, f_sprite);
-				add_componentv(world, flash, struct anim_fx);
-
+				new_impact_effect(world, transform->position);
 				entity_buffer_push(to_delete, view.e);
 			}
 		}
 	}
 
 	entity_buffer_clear(to_delete, world);
+}
+
+entity new_impact_effect(struct world* world, v2i position) {
+	struct animated_sprite f_sprite = get_animated_sprite(animsprid_projectile_impact);
+	entity e = new_entity(world);
+	add_componentv(world, e, struct transform,
+		.z = 100,
+		.position = position,
+		.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
+	add_component(world, e, struct animated_sprite, f_sprite);
+	add_componentv(world, e, struct anim_fx);
+	return e;
 }
 
 void anim_fx_system(struct world* world, double ts) {

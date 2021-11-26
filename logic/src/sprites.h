@@ -11,7 +11,8 @@ enum {
 	texid_tsblue,
 	texid_fx,
 	texid_icon,
-	texid_arms
+	texid_arms,
+	texid_bad
 };
 
 /* Sprite IDs  */
@@ -26,6 +27,7 @@ enum {
 	animsprid_player_idle_left,
 	animsprid_muzzle_flash,
 	animsprid_projectile_impact,
+	animsprid_bat,
 	sprid_upgrade_jetpack,
 	sprid_fx_jetpack,
 	sprid_icon_ptr,

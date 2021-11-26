@@ -4,6 +4,7 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
+#include "enemy.h"
 #include "entity.h"
 #include "fx.h"
 #include "keymap.h"
@@ -112,6 +113,7 @@ API void CALL on_update(double ts) {
 	double timestep = ts * time_scale;
 
 	player_system(world, renderer, &logic_store->room, timestep);
+	enemy_system(world, ts);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
