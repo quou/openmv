@@ -30,7 +30,7 @@ entity new_bat(struct world* world, struct room* room, v2i position) {
 		0, 0,
 		sprite.frames[0].w * sprite_scale,
 		sprite.frames[0].h * sprite_scale },
-		.hp = 1);
+		.hp = 1, .damage = 1);
 
 	return e;
 }

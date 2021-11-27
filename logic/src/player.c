@@ -4,6 +4,7 @@
 
 #include "consts.h"
 #include "coresys.h"
+#include "enemy.h"
 #include "fx.h"
 #include "keymap.h"
 #include "logic_store.h"
@@ -27,11 +28,16 @@ struct player_constants {
 	double dash_fx_interval;
 	double dash_cooldown;
 
+	double invul_time;
+	double invul_flash_interval;
+
 	double projectile_lifetime;
 	double projectile_speed;
 
 	v2f left_muzzle_pos;
 	v2f right_muzzle_pos;
+
+	v2f knockback;
 
 	i32 max_air_dash;
 
@@ -52,12 +58,17 @@ const struct player_constants player_constants = {
 	.max_dash = 0.15,
 	.dash_fx_interval = 0.045,
 	.dash_cooldown = 0.3,
+
+	.invul_time = 1.5,
+	.invul_flash_interval = 0.1,
 	
 	.projectile_lifetime = 1.0,
 	.projectile_speed = 1000.0,
 
 	.left_muzzle_pos =  { 12 * sprite_scale, 11 * sprite_scale },
 	.right_muzzle_pos = { 3  * sprite_scale, 11 * sprite_scale },
+
+	.knockback = { 300.0f, 300.0f },
 
 	.max_air_dash = 3,
 
@@ -70,7 +81,10 @@ entity new_player_entity(struct world* world) {
 
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
-	add_componentv(world, e, struct player, .position = { 128, 128 }, .collider = player_constants.left_collider);
+	add_componentv(world, e, struct player,
+		.position = { 128, 128 },
+		.collider = player_constants.left_collider,
+		.visible = true);
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
@@ -198,6 +212,45 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		if (!player->invul) {
+			for (view(world, e_view, type_info(struct transform), type_info(struct enemy))) {
+				struct transform* e_transform = view_get(&e_view, struct transform);
+				struct enemy* enemy = view_get(&e_view, struct enemy);
+
+				struct rect e_rect = {
+					e_transform->position.x + enemy->collider.x,
+					e_transform->position.y + enemy->collider.y,
+					enemy->collider.w, enemy->collider.h
+				};
+
+				v2i n;
+				if (rect_overlap(player_rect, e_rect, &n)) {
+					player->velocity = v2f_mul(make_v2f(-n.x, -n.y), player_constants.knockback);
+
+					player->invul = true;
+					player->invul_timer = player_constants.invul_time;
+					player->invul_flash_timer = player_constants.invul_flash_interval;
+					player->visible = false;
+
+					new_damage_number(world, transform->position, -enemy->damage);
+
+					break;
+				}
+			}
+		} else {
+			player->invul_flash_timer -= ts;
+			if (player->invul_flash_timer <= 0.0) {
+				player->invul_flash_timer = player_constants.invul_flash_interval;
+				player->visible = !player->visible;
+			}
+
+			player->invul_timer -= ts;
+			if (player->invul_timer <= 0.0) {
+				player->invul = false;
+				player->visible = true;
+			}
+		}
+
 		if (key_just_pressed(main_window, mapped_key("fire"))) {
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
@@ -291,6 +344,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				}
 			}
 		}
+
+		sprite->hidden = !player->visible;
 
 		transform->position = make_v2i((i32)player->position.x, (i32)player->position.y);
 

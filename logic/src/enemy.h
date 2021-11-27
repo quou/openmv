@@ -6,6 +6,7 @@
 
 struct enemy {
 	i32 hp;
+	i32 damage;
 	struct rect collider;
 };
 

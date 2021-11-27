@@ -47,6 +47,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 		struct transform* t = view_get(&view, struct transform);
 		struct sprite* s = view_get(&view, struct sprite);
 
+		if (s->hidden) { continue; }
+
 		struct textured_quad quad = {
 			.texture = s->texture,
 			.rect = s->rect,
@@ -75,6 +77,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 				s->current_frame = 0;
 			}
 		}
+
+		if (s->hidden) { continue; }
 
 		struct textured_quad quad = {
 			.texture = s->texture,

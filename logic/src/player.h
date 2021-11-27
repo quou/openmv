@@ -20,10 +20,13 @@ struct player {
 
 	double jump_time;
 	double dash_time;
-
 	double dash_cooldown_timer;
-
 	double dash_fx_time;
+
+	bool invul;
+	double invul_timer;
+	double invul_flash_timer;
+	bool visible;
 
 	i32 dash_count;
 
