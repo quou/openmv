@@ -122,12 +122,6 @@ struct window* new_window(i32 width, i32 height, const char* title) {
 
 	XFree(fbc);
 
-/*	void (*swap_interval_ext)(Display*, Window, int)
-		= glXGetProcAddress((unsigned char*)"glXSwapIntervalEXT");
-	if (swap_interval_ext) {
-		swap_interval_ext(window->display, window->window, 0);
-	}*/
-
 	XWindowAttributes gwa;
 	XGetWindowAttributes(window->display, window->window, &gwa);
 	glViewport(0, 0, gwa.width, gwa.height);

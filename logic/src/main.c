@@ -24,6 +24,14 @@ API u64 CALL get_storage_size() {
 
 API void CALL on_reload(void* instance) {
 	logic_store = instance;
+
+	/* Sprites are also reloaded every time the code is.
+	 * This is because the sprite textures defined in `sprites.c'
+	 * are reset every reload, and so will become invalid.
+	 *
+	 * The sprite files are not reloaded, only looked up again
+	 * in the resource manager cache, so this is fairly quick. */
+	preload_sprites();
 }
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
@@ -75,8 +83,6 @@ API void CALL on_init() {
 	struct world* world = new_world();
 	logic_store->world = world;
 
-	preload_sprites();
-
 	logic_store->room = load_room(world, "res/maps/test_room.dat");
 
 	entity player = new_player_entity(world);
@@ -94,7 +100,7 @@ API void CALL on_update(double ts) {
 
 	logic_store->fps_timer += ts;
 	if (logic_store->fps_timer > 1.0) {
-		sprintf(logic_store->fps_buf, "FPS: %g", 1.0 / ts);
+		sprintf(logic_store->fps_buf, "FPS: %g    Timestep: %g", 1.0 / ts, ts);
 		logic_store->fps_timer = 0.0;
 	}
 
@@ -133,7 +139,6 @@ API void CALL on_update(double ts) {
 	
 	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
 		ui_text(ui, logic_store->fps_buf);
-		ui_text(ui, "Hello, world!");
 
 		char mem_buf[256];
 		sprintf(mem_buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);

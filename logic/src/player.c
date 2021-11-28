@@ -34,6 +34,8 @@ struct player_constants {
 	double projectile_lifetime;
 	double projectile_speed;
 
+	double shoot_cooldown;
+
 	v2f left_muzzle_pos;
 	v2f right_muzzle_pos;
 
@@ -60,10 +62,12 @@ const struct player_constants player_constants = {
 	.dash_cooldown = 0.3,
 
 	.invul_time = 1.5,
-	.invul_flash_interval = 0.1,
+	.invul_flash_interval = 0.05,
 	
 	.projectile_lifetime = 1.0,
 	.projectile_speed = 1000.0,
+
+	.shoot_cooldown = 0.1,
 
 	.left_muzzle_pos =  { 12 * sprite_scale, 11 * sprite_scale },
 	.right_muzzle_pos = { 3  * sprite_scale, 11 * sprite_scale },
@@ -250,8 +254,11 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				player->visible = true;
 			}
 		}
+		
+		player->shoot_timer -= ts;
+		if (key_just_pressed(main_window, mapped_key("fire")) && player->shoot_timer <= 0.0) {
+			player->shoot_timer = player_constants.shoot_cooldown;
 
-		if (key_just_pressed(main_window, mapped_key("fire"))) {
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
 			entity projectile = new_entity(world);

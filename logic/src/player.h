@@ -23,6 +23,10 @@ struct player {
 	double dash_cooldown_timer;
 	double dash_fx_time;
 
+	double shoot_timer;
+
+	double accum;
+
 	bool invul;
 	double invul_timer;
 	double invul_flash_timer;
