@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="128">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="129">
  <editorsettings>
   <export target="test_room.dat" format="dat"/>
  </editorsettings>
@@ -72,7 +72,10 @@
   <object id="63" x="16" y="272" width="16" height="16"/>
   <object id="64" x="272" y="112" width="16" height="400"/>
  </objectgroup>
- <objectgroup color="#550000" id="7" name="enemies">
+ <objectgroup id="8" name="meta" visible="0" locked="1">
+  <object id="128" name="camera_bounds" x="0" y="0" width="288" height="512"/>
+ </objectgroup>
+ <objectgroup color="#550000" id="7" name="enemies" locked="1">
   <object id="122" name="bat" x="248.667" y="266.667">
    <point/>
   </object>

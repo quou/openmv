@@ -62,6 +62,8 @@ struct room {
 
 	struct table* entrances;
 
+	struct rect camera_bounds;
+
 	struct transition_trigger* transition_triggers;
 	u32 transition_trigger_count;
 
@@ -270,6 +272,22 @@ struct room* load_room(struct world* world, const char* path) {
 								.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 							add_component(world, pickup, struct sprite, sprite);
 							add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
+						}
+
+						core_free(obj_name);
+					}
+				} else if (strcmp(layer->name, "meta") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						char* obj_name = read_name(file);
+
+						fread(&r, sizeof(r), 1, file);
+
+						if (strcmp(obj_name, "camera_bounds") == 0) {
+							room->camera_bounds = (struct rect) {
+								r.x * sprite_scale, r.y * sprite_scale,
+								r.w * sprite_scale, r.h * sprite_scale
+							};
 						}
 
 						core_free(obj_name);
@@ -484,4 +502,8 @@ v2i get_spawn(struct room* room) {
 	}
 
 	return make_v2i(0, 0);
+}
+
+struct rect room_get_camera_bounds(struct room* room) {
+	return room->camera_bounds;
 }

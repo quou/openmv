@@ -15,6 +15,7 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal);
 char* get_room_path(struct room* room);
 
 v2i get_spawn(struct room* room);
+struct rect room_get_camera_bounds(struct room* room);
 
 struct room_child {
 	struct room* parent;

@@ -365,6 +365,30 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		logic_store->camera_position.y += camera_dir.y * distance_to_player * ts * 10.0f;
 
 		renderer->camera_pos = make_v2i((i32)logic_store->camera_position.x, (i32)logic_store->camera_position.y);
+
+		v2i camera_corner = v2i_sub(renderer->camera_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
+		struct rect camera_bounds = room_get_camera_bounds(*room);
+		if (camera_corner.x < camera_bounds.x) {
+			renderer->camera_pos.x = camera_bounds.x + renderer->dimentions.x / 2;
+		} else if (camera_corner.x + renderer->dimentions.x > camera_bounds.w)  {
+			if (camera_bounds.w > renderer->dimentions.x) {
+				renderer->camera_pos.x = camera_bounds.w - renderer->dimentions.x / 2;
+			} else {
+				renderer->camera_pos.x = camera_bounds.x + renderer->dimentions.x / 2;
+			}
+		}
+
+		if (camera_corner.y <= camera_bounds.y) {
+			renderer->camera_pos.y = camera_bounds.y + renderer->dimentions.y / 2;
+		} else if (camera_corner.y + renderer->dimentions.y > camera_bounds.h)  {
+			if (camera_bounds.h > renderer->dimentions.y) {
+				renderer->camera_pos.y = camera_bounds.h - renderer->dimentions.y / 2;
+			} else {
+				renderer->camera_pos.y = camera_bounds.y + renderer->dimentions.y / 2;
+			}
+		}
+
+		logic_store->camera_position = make_v2f(renderer->camera_pos.x, renderer->camera_pos.y);
 	}
 
 	entity_buffer_clear(to_destroy, world);
