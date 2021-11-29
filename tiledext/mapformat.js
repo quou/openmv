@@ -99,25 +99,27 @@ var dat_format = {
 						if (tile) {
 							tile_id = tile.id;
 						}
+						var tileset_idx = 0;
 						if (tile_id >= 0) {
-							/* Figure out the index of the tileset that this
-							 * tile uses, and use that to add on the tile count,
-							 * to get a sort of "global" tile ID. */
-							var tileset_idx = 0;
 							for (var ii = 0; ii < tilesets.length; ii++) {
 								if (tile.tileset == tilesets[ii]) {
 									tileset_idx = ii;
+									break;
 								}
 							}
-							tile_id += tileset_idx * tile.tileset.tileCount;
 						}
 
 						/* Write the ID */
-						var id_buf = new ArrayBuffer(4);
-						var id_view = new Int32Array(id_buf);
+						var id_buf = new ArrayBuffer(2);
+						var id_view = new Int16Array(id_buf);
 						id_view[0] = tile_id;
 
+						var set_id_buf = new ArrayBuffer(2);
+						var set_id_view = new Int16Array(set_id_buf);
+						set_id_view[0] = tileset_idx;
+
 						file.write(id_buf);
+						file.write(set_id_buf);
 					}
 				}
 			} else if (layer.isObjectLayer) {

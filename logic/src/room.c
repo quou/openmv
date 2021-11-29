@@ -16,8 +16,8 @@
 #include "table.h"
 
 struct tile {
-	i32 id;
-	i32 tileset_id;
+	i16 id;
+	i16 tileset_id;
 };
 
 struct tileset {
@@ -158,24 +158,10 @@ struct room* load_room(struct world* world, const char* path) {
 				u32 h = layer->as.tile_layer.h;
 				for (u32 y = 0; y < h; y++) {
 					for (u32 x = 0; x < w; x++) {
-						i32 id, tileset_idx = 0;
+						i16 id, tileset_idx = 0;
 
 						fread(&id, sizeof(id), 1, file);
-
-						if (id != -1) {
-							for (i32 ii = 0; ii < room->tileset_count; ii++) {
-								struct tileset* tileset = room->tilesets + ii;
-								i32 tile_count = (tileset->image->width / tileset->tile_w) *
-									(tileset->image->height / tileset->tile_h);
-
-								if (id >= tile_count) {
-									id -= tile_count;
-									tileset_idx++;
-								} else {
-									break;
-								}
-							}
-						}
+						fread(&tileset_idx, sizeof(tileset_idx), 1, file);
 
 						layer->as.tile_layer.tiles[x + y * w] = (struct tile) {
 							.id = id,

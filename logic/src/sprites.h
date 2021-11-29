@@ -13,7 +13,8 @@ enum {
 	texid_fx,
 	texid_icon,
 	texid_arms,
-	texid_bad
+	texid_bad,
+	texid_back
 };
 
 /* Sprite IDs  */

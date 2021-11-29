@@ -4,6 +4,7 @@
 #include "video.h"
 
 struct room;
+struct player;
 
 struct room* load_room(struct world* world, const char* path);
 void free_room(struct room* room);

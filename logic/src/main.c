@@ -86,8 +86,9 @@ API void CALL on_init() {
 	logic_store->room = load_room(world, "res/maps/test_room.dat");
 
 	entity player = new_player_entity(world);
-	v2i spawn = get_spawn(logic_store->room);
 	struct player* pc = get_component(world, player, struct player);
+
+	v2i spawn = get_spawn(logic_store->room);
 	pc->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
 
 	logic_store->player = player;
@@ -123,9 +124,8 @@ API void CALL on_update(double ts) {
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
-	damage_fx_system(world, renderer, timestep);
-
 	draw_room(logic_store->room, renderer);	
+	damage_fx_system(world, renderer, timestep);
 
 	render_system(world, renderer, timestep);
 	renderer_flush(renderer);

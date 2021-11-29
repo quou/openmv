@@ -8,7 +8,8 @@ static const char* texture_paths[] = {
 	[texid_fx]       = "res/bmp/fx.bmp",
 	[texid_icon]     = "res/bmp/icon.bmp",
 	[texid_arms]     = "res/bmp/arms.bmp",
-	[texid_bad]      = "res/bmp/bad.bmp"
+	[texid_bad]      = "res/bmp/bad.bmp",
+	[texid_back]     = "res/bmp/back.bmp"
 };
 
 struct sprite sprites[] = {
