@@ -122,6 +122,8 @@ struct font;
 
 API i32 render_text(struct renderer* renderer, struct font* font,
 		const char* text, i32 x, i32 y, struct color color);
+API i32 render_text_n(struct renderer* renderer, struct font* font,
+		const char* text, u32 n, i32 x, i32 y, struct color color);
 
 API struct font* load_font_from_memory(void* data, i32 filesize, float size);
 API void free_font(struct font* font);

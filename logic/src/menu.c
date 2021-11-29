@@ -1,5 +1,8 @@
+#include <string.h>
+
 #include "core.h"
 #include "keymap.h"
+#include "logic_store.h"
 #include "menu.h"
 #include "platform.h"
 #include "sprites.h"
@@ -199,4 +202,77 @@ void menu_add_label(struct menu* menu, const char* label) {
 
 void menu_reset_selection(struct menu* menu) {
 	menu->selected_item = 0;
+}
+
+struct prompt_ctx {
+	char* message;
+	u32 message_len;
+	u32 current_character;
+
+	double type_speed;
+
+	double timer;
+
+	struct renderer* renderer;
+	struct font* font;
+};
+
+void prompts_init(struct shader shader, struct font* font) {
+	logic_store->prompt_ctx = core_calloc(1, sizeof(struct prompt_ctx));	
+
+	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
+
+	ctx->font = font;
+	ctx->renderer = new_renderer(shader, make_v2i(800, 600));
+}
+
+void prompts_deinit() {
+	core_free(logic_store->prompt_ctx);
+}
+
+void message_prompt(const char* text) {
+	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
+
+	if (ctx->message) {
+		core_free(ctx->message);
+	}
+
+	ctx->message = copy_string(text);
+	ctx->message_len = (u32)strlen(text);
+	ctx->current_character = 0;
+
+	logic_store->frozen = true;
+}
+
+void prompts_update(double ts) {
+	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
+
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+	ctx->renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
+
+	if (ctx->message) {
+		if (key_pressed(main_window, mapped_key("submit")) || key_pressed(main_window, mapped_key("jump"))) {
+			ctx->type_speed = 40.0;
+		} else {
+			ctx->type_speed = 20.0;
+		}
+
+		ctx->timer += ctx->type_speed * ts;
+		if (ctx->timer > 1.0 && ctx->current_character < ctx->message_len) {
+			ctx->timer = 0.0;
+			ctx->current_character++;
+		}
+
+		render_text_n(ctx->renderer, ctx->font, ctx->message,
+			ctx->current_character, 0, 0, make_color(0xffffff, 255));
+
+		if (ctx->current_character >= ctx->message_len - 1 && 
+				(key_just_pressed(main_window, mapped_key("submit")) || key_just_pressed(main_window, mapped_key("jump")))) {
+			ctx->message = null;
+			logic_store->frozen = false;
+		}
+	}
+
+	renderer_flush(ctx->renderer);
 }

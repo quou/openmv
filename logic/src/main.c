@@ -70,12 +70,15 @@ API void CALL on_init() {
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
 
 	logic_store->paused = false;
+	logic_store->frozen = false;
 	logic_store->pause_menu = new_menu(sprite_shader, load_font("res/DejaVuSansMono.ttf", 35.0f));
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
 	menu_add_selectable(logic_store->pause_menu, "Save Game", on_save);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
+
+	prompts_init(sprite_shader, load_font("res/DejaVuSansMono.ttf", 25.0f));
 
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);
@@ -109,9 +112,13 @@ API void CALL on_update(double ts) {
 		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
 	}
+
+	if (key_just_pressed(main_window, KEY_SPACE)) {
+		message_prompt("Hello, world!");
+	}
 	
 	double time_scale;
-	if (logic_store->paused) {
+	if (logic_store->frozen || logic_store->paused) {
 		time_scale = 0.0;
 	} else {
 		time_scale = 1.0;
@@ -128,13 +135,16 @@ API void CALL on_update(double ts) {
 	damage_fx_system(world, renderer, timestep);
 
 	render_system(world, renderer, timestep);
+
 	renderer_flush(renderer);
-	
+
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
+	} else {
+		prompts_update(ts);
 	}
 
-#ifdef DEBUG
+#if 0
 	ui_begin_frame(ui);
 	
 	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
@@ -152,6 +162,7 @@ API void CALL on_update(double ts) {
 }
 
 API void CALL on_deinit() {
+	prompts_deinit();
 	free_menu(logic_store->pause_menu);
 
 	free_room(logic_store->room);

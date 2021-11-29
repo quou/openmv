@@ -15,3 +15,8 @@ void menu_reset_selection(struct menu* menu);
 
 void menu_add_selectable(struct menu* menu, const char* label, menu_on_select on_select);
 void menu_add_label(struct menu* menu, const char* label);
+
+void prompts_init(struct shader shader, struct font* font);
+void prompts_deinit();
+void message_prompt(const char* text);
+void prompts_update(double ts);

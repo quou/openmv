@@ -18,8 +18,10 @@ struct logic_store {
 
 	struct menu* pause_menu;
 	bool paused;
+	bool frozen;
 
 	void* keymap;
+	void* prompt_ctx;
 
 	v2f camera_position;
 
