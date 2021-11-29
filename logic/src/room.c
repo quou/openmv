@@ -248,7 +248,17 @@ struct room* load_room(struct world* world, const char* path) {
 							upgrade_id = upgrade_jetpack;
 						}
 
-						if (sprite_id != -1 && upgrade_id != -1) { 
+						bool has_upgrade = false;
+						for (single_view(world, view, struct player)) {
+							struct player* player = single_view_get(&view);
+
+							if (player->items & upgrade_id) {
+								has_upgrade = true;
+								break;
+							}
+						}
+
+						if (!has_upgrade && sprite_id != -1 && upgrade_id != -1) { 
 							struct sprite sprite = get_sprite(sprite_id);
 
 							entity pickup = new_entity(world);
