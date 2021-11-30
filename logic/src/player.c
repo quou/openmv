@@ -95,8 +95,6 @@ entity new_player_entity(struct world* world) {
 }
 
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts) {
-	struct entity_buffer* to_destroy = new_entity_buffer();
-
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
@@ -212,7 +210,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			if (rect_overlap(player_rect, up_rect, null)) {
 				player->items |= upgrade->id;
-				entity_buffer_push(to_destroy, up_view.e);
+				destroy_entity(world, up_view.e);
 			}
 		}
 
@@ -390,13 +388,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		logic_store->camera_position = make_v2f(renderer->camera_pos.x, renderer->camera_pos.y);
 	}
-
-	entity_buffer_clear(to_destroy, world);
 }
 
 void projectile_system(struct world* world, struct room* room, double ts) {
-	struct entity_buffer* to_delete = new_entity_buffer();
-
 	for (view(world, view, type_info(struct transform), type_info(struct projectile))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct projectile* projectile = view_get(&view, struct projectile);
@@ -411,7 +405,7 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 
 		projectile->lifetime -= ts;
 		if (projectile->lifetime <= 0.0) {
-			entity_buffer_push(to_delete, view.e);
+			destroy_entity(world, view.e);
 		} else {
 			struct rect rect = {
 				projectile->collider.x + transform->position.x,
@@ -421,12 +415,10 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 
 			if (rect_room_overlap(room, rect, null)) {
 				new_impact_effect(world, transform->position);
-				entity_buffer_push(to_delete, view.e);
+				destroy_entity(world, view.e);
 			}
 		}
 	}
-
-	entity_buffer_clear(to_delete, world);
 }
 
 entity new_impact_effect(struct world* world, v2i position) {
@@ -442,18 +434,14 @@ entity new_impact_effect(struct world* world, v2i position) {
 }
 
 void anim_fx_system(struct world* world, double ts) {
-	struct entity_buffer* to_delete = new_entity_buffer();
-
 	for (view(world, view, type_info(struct transform), type_info(struct anim_fx), type_info(struct animated_sprite))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct animated_sprite* anim = view_get(&view, struct animated_sprite);
 
 		if (anim->current_frame >= anim->frame_count - 1) {
-			entity_buffer_push(to_delete, view.e);
+			destroy_entity(world, view.e);
 		}
 	}
-
-	entity_buffer_clear(to_delete, world);
 }
 
 static struct rect damage_numbers[] = {
@@ -471,8 +459,6 @@ static struct rect damage_numbers[] = {
 };
 
 void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
-	struct entity_buffer* to_delete = new_entity_buffer();
-
 	struct texture* atlas = get_texture(texid_icon);
 
 	for (single_view(world, view, struct damage_num_fx)) {
@@ -505,11 +491,9 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 
 		d->timer -= ts;
 		if (d->timer <= 0.0) {
-			entity_buffer_push(to_delete, view.e);
+			destroy_entity(world, view.e);
 		}
 	}
-
-	entity_buffer_clear(to_delete, world);
 }
 
 entity new_damage_number(struct world* world, v2i position, i32 number) {

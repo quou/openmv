@@ -15,8 +15,6 @@ entity new_jetpack_particle(struct world* world, v2i position) {
 }
 
 void fx_system(struct world* world, double ts) {
-	struct entity_buffer* to_delete = new_entity_buffer();
-
 	for (view(world, view,
 		type_info(struct jetpack_fx),
 		type_info(struct transform),
@@ -32,9 +30,7 @@ void fx_system(struct world* world, double ts) {
 		transform->dimentions.y = (8 * sprite_scale * (1.0 - fx->timer)) + 8 * sprite_scale;
 
 		if (fx->timer <= 0.0) {
-			entity_buffer_push(to_delete, view.e);
+			destroy_entity(world, view.e);
 		}
 	}
-
-	entity_buffer_clear(to_delete, world);
 }

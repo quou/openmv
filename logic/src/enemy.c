@@ -36,8 +36,6 @@ entity new_bat(struct world* world, struct room* room, v2i position) {
 }
 
 void enemy_system(struct world* world, double ts) {
-	struct entity_buffer* to_delete = new_entity_buffer();
-
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct bat* bat = view_get(&view, struct bat);
@@ -74,16 +72,14 @@ void enemy_system(struct world* world, double ts) {
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }
 				new_damage_number(world, transform->position, -dmg);
-				entity_buffer_push(to_delete, p_view.e);
+				destroy_entity(world, p_view.e);
 
 				enemy->hp -= projectile->damage;
 
 				if (enemy->hp <= 0) {
-					entity_buffer_push(to_delete, view.e);
+					destroy_entity(world, view.e);
 				}
 			}
 		}
 	}
-
-	entity_buffer_clear(to_delete, world);
 }

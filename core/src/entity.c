@@ -212,6 +212,16 @@ static struct pool* get_pool(struct world* world, struct type_info type) {
 	}
 }
 
+static struct pool* get_pool_no_create(struct world* world, struct type_info type) {
+	for (u32 i = 0; i < world->pool_count; i++) {
+		if (world->pools[i].type.id == type.id) {
+			return &world->pools[i];
+		}
+	}
+
+	return null;
+}
+
 struct world* new_world() {
 	struct world* w = core_calloc(1, sizeof(struct world));
 
@@ -290,10 +300,10 @@ void* _get_component(struct world* world, entity e, struct type_info type) {
 
 struct single_view _new_single_view(struct world* world, struct type_info type) {
 	struct single_view v = { 0 };
-	v.pool = get_pool(world, type);
+	v.pool = get_pool_no_create(world, type);
 
 	struct pool* pool = (struct pool*)v.pool;
-	if (pool->count != 0) {
+	if (pool && pool->count != 0) {
 		v.idx = pool->count - 1;
 		v.e = pool->dense[v.idx];
 	} else {
@@ -346,7 +356,14 @@ struct view new_view(struct world* world, u32 type_count, struct type_info* type
 	v.pool_count = type_count;
 
 	for (u32 i = 0; i < type_count; i++) {
-		v.pools[i] = get_pool(world, types[i]);
+		v.pools[i] = get_pool_no_create(world, types[i]);
+		if (!v.pools[i]) {
+			return (struct view) {
+				.idx = 0,
+				.e = null_entity
+			};
+		}
+
 		if (!v.pool) {
 			v.pool = v.pools[i];
 		} else {

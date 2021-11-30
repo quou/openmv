@@ -302,15 +302,13 @@ struct room* load_room(struct world* world, const char* path) {
 void free_room(struct room* room) {
 	core_free(room->path);
 
-	struct entity_buffer* to_delete = new_entity_buffer();
 	for (single_view(room->world, view, struct room_child)) {
 		struct room_child* rc = single_view_get(&view);
 		
 		if (rc->parent == room) {
-			entity_buffer_push(to_delete, view.e);
+			destroy_entity(room->world, view.e);
 		}
 	}
-	entity_buffer_clear(to_delete, room->world);
 
 	if (room->tilesets) {
 		for (u32 i = 0; i < room->tileset_count; i++) {
