@@ -18,7 +18,6 @@ struct player {
 	bool on_ground;
 	bool dashing;
 
-	double jump_time;
 	double dash_time;
 	double dash_cooldown_timer;
 	double dash_fx_time;

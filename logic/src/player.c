@@ -22,8 +22,8 @@ struct player_constants {
 	float friction;
 	float slow_friction;
 	float dash_force;
+	float low_jump_mul;
 	i32 ground_hit_range;
-	double max_jump;
 	double max_dash;
 	double dash_fx_interval;
 	double dash_cooldown;
@@ -49,17 +49,17 @@ struct player_constants {
 
 const struct player_constants player_constants = {
 	.move_speed = 300,
-	.jump_force = -350,
-	.gravity = 1000,
-	.accel = 1000,
-	.friction = 1000,
+	.jump_force = -800,
+	.gravity = 1500,
+	.accel = 2000,
+	.friction = 800,
 	.slow_friction = 100,
 	.dash_force = 1000,
 	.ground_hit_range = 12,
-	.max_jump = 0.3,
 	.max_dash = 0.15,
 	.dash_fx_interval = 0.045,
 	.dash_cooldown = 0.3,
+	.low_jump_mul = 3000.0f,
 
 	.invul_time = 1.5,
 	.invul_flash_interval = 0.05,
@@ -306,18 +306,16 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
 			player->velocity.y = player_constants.jump_force;
-			player->jump_time = 0.0;
 		}
-
-		player->jump_time += ts;
-		if (!player->on_ground && key_pressed(main_window, mapped_key("jump")) && player->jump_time < player_constants.max_jump) {
-			player->velocity.y += player_constants.jump_force * 5 * ts;
+		
+		if (!player->on_ground && player->velocity.y < 0.0f && !key_pressed(main_window, mapped_key("jump"))) {
+				player->velocity.y += player_constants.low_jump_mul * ts;
 		}
 
 		if (player->on_ground) {
 			player->dash_count = 0;
 
-			if (player->velocity.x > 5.0f || player->velocity.x < -5.0f) {
+			if (player->velocity.x > 50.0f || player->velocity.x < -50.0f) {
 				if (player->face == player_face_left) {
 					if (sprite->id != animsprid_player_run_left) {
 						*sprite = get_animated_sprite(animsprid_player_run_left);

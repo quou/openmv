@@ -68,8 +68,15 @@ static void on_load(struct menu* menu) {
 	logic_store->paused = false;
 }
 
+static void on_quit_ask(bool yes) {
+	if (yes) {
+		set_window_should_close(main_window, true);
+	}
+}
+
 static void on_quit(struct menu* menu) {
-	set_window_should_close(main_window, true);
+	prompt_ask("Do you want to stop playing? (Unsaved progress won't be saved.)", on_quit_ask);
+	logic_store->paused = false;
 }
 
 API void CALL on_init() {
@@ -136,7 +143,7 @@ API void CALL on_update(double ts) {
 
 	double timestep = ts * time_scale;
 
-	player_system(world, renderer, &logic_store->room, timestep);
+	if (!logic_store->frozen && !logic_store->paused) { player_system(world, renderer, &logic_store->room, timestep); }
 	enemy_system(world, timestep);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
