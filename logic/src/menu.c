@@ -215,6 +215,10 @@ struct prompt_ctx {
 
 	struct renderer* renderer;
 	struct font* font;
+
+	bool selected;
+
+	prompt_submit_func on_submit;
 };
 
 void prompts_init(struct shader shader, struct font* font) {
@@ -240,6 +244,23 @@ void message_prompt(const char* text) {
 	ctx->message = copy_string(text);
 	ctx->message_len = (u32)strlen(text);
 	ctx->current_character = 0;
+	ctx->on_submit = null;
+
+	logic_store->frozen = true;
+}
+
+void prompt_ask(const char* text, prompt_submit_func on_submit) {
+	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
+
+	if (ctx->message) {
+		core_free(ctx->message);
+	}
+
+	ctx->message = copy_string(text);
+	ctx->message_len = (u32)strlen(text);
+	ctx->current_character = 0;
+	ctx->on_submit = on_submit;
+	ctx->selected = false;
 
 	logic_store->frozen = true;
 }
@@ -252,8 +273,18 @@ void prompts_update(double ts) {
 	ctx->renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (ctx->message) {
+		struct textured_quad back = {
+			.texture = null,
+			.position = { 10, win_h - 150 },
+			.dimentions = { win_w - 20, 140 },
+			.rect = { 0 },
+			.color = make_color(0x6d5e64, 255)
+		};
+
+		renderer_push(ctx->renderer, &back);
+
 		if (key_pressed(main_window, mapped_key("submit")) || key_pressed(main_window, mapped_key("jump"))) {
-			ctx->type_speed = 40.0;
+			ctx->type_speed = 200.0;
 		} else {
 			ctx->type_speed = 20.0;
 		}
@@ -264,10 +295,58 @@ void prompts_update(double ts) {
 			ctx->current_character++;
 		}
 
-		render_text_n(ctx->renderer, ctx->font, ctx->message,
-			ctx->current_character, 0, 0, make_color(0xffffff, 255));
+		i32 h = text_height(ctx->font);
 
-		if (ctx->current_character >= ctx->message_len - 1 && 
+		render_text_n(ctx->renderer, ctx->font, ctx->message,
+			ctx->current_character, 20, win_h - h - (back.dimentions.y / 2), make_color(0xffffff, 255));
+
+		if (ctx->on_submit && ctx->current_character >= ctx->message_len) {
+			const char* text = "Yes / No";
+			const char* yes_text = "Yes";
+			const char* no_text = "No";
+			const char* mid_text = " / ";
+
+			i32 w = text_width(ctx->font, text);
+
+			struct textured_quad back2 = {
+				.texture = null,
+				.position = { win_w - w + 5 * 2 - 40, win_h - 160 },
+				.dimentions = { w + 5 * 2, h + 5 * 2 },
+				.rect = { 0 },
+				.color = make_color(0x6b5151, 255)
+			};
+
+			renderer_push(ctx->renderer, &back2);
+
+			u32 normal_color = 0xffffff;
+			u32 selected_color = 0xefe74f;
+
+			if (key_just_pressed(main_window, mapped_key("left")) || key_just_pressed(main_window, mapped_key("right"))) {
+				ctx->selected = !ctx->selected;
+			}
+
+			i32 offset = 3;
+
+			i32 x = back2.position.x + 5;
+			x = render_text(ctx->renderer, ctx->font, yes_text,
+				x, (back2.position.y + 5) - (ctx->selected ? offset : 0),
+				ctx->selected ? make_color(selected_color, 255) : make_color(normal_color, 255));
+			x = render_text(ctx->renderer, ctx->font, mid_text,
+				x, back2.position.y + 5, make_color(0xffffff, 255));
+			x = render_text(ctx->renderer, ctx->font, no_text,
+				x, (back2.position.y + 5) - (ctx->selected ? 0 : offset),
+				ctx->selected ? make_color(normal_color, 255) : make_color(selected_color, 255));
+
+			if (key_just_pressed(main_window, mapped_key("submit"))) {
+				ctx->on_submit(ctx->selected);
+
+				ctx->message = null;
+				ctx->on_submit = null;
+				logic_store->frozen = false;
+			}
+		}
+
+		if (!ctx->on_submit && ctx->current_character >= ctx->message_len - 1 && 
 				(key_just_pressed(main_window, mapped_key("submit")) || key_just_pressed(main_window, mapped_key("jump")))) {
 			ctx->message = null;
 			logic_store->frozen = false;

@@ -40,17 +40,31 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 	ui_text_input_event(ui, text);
 }
 
+static void on_save_ask(bool yes) {
+	if (yes) {
+		savegame();
+	}
+}
+
+static void on_load_ask(bool yes) {
+	if (yes) {
+		loadgame();
+	}
+}
+
 static void on_resume(struct menu* menu) {
 	logic_store->paused = false;
 }
 
 static void on_save(struct menu* menu) {
-	savegame();
+	prompt_ask("Do you want to save?", on_save_ask);
+
 	logic_store->paused = false;
 }
 
 static void on_load(struct menu* menu) {
-	loadgame();
+	prompt_ask("Do you want to load?", on_load_ask);
+
 	logic_store->paused = false;
 }
 
@@ -112,10 +126,6 @@ API void CALL on_update(double ts) {
 		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
 	}
-
-	if (key_just_pressed(main_window, KEY_SPACE)) {
-		message_prompt("Hello, world!");
-	}
 	
 	double time_scale;
 	if (logic_store->frozen || logic_store->paused) {
@@ -144,7 +154,6 @@ API void CALL on_update(double ts) {
 		prompts_update(ts);
 	}
 
-#if 0
 	ui_begin_frame(ui);
 	
 	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
@@ -158,7 +167,6 @@ API void CALL on_update(double ts) {
 	}
 
 	ui_end_frame(ui);
-#endif
 }
 
 API void CALL on_deinit() {

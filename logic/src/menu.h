@@ -16,7 +16,10 @@ void menu_reset_selection(struct menu* menu);
 void menu_add_selectable(struct menu* menu, const char* label, menu_on_select on_select);
 void menu_add_label(struct menu* menu, const char* label);
 
+typedef void (*prompt_submit_func)(bool yes);
+
 void prompts_init(struct shader shader, struct font* font);
 void prompts_deinit();
 void message_prompt(const char* text);
+void prompt_ask(const char* text, prompt_submit_func on_submit);
 void prompts_update(double ts);
