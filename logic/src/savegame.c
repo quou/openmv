@@ -15,6 +15,8 @@ static void write_player(FILE* file) {
 
 	fwrite(&transform->position.x, sizeof(transform->position.x), 1, file);
 	fwrite(&transform->position.y, sizeof(transform->position.y), 1, file);
+	fwrite(&player->velocity.x, sizeof(player->velocity.x), 1, file);
+	fwrite(&player->velocity.y, sizeof(player->velocity.y), 1, file);
 
 	fwrite(&player->items, sizeof(player->items), 1, file);
 }
@@ -27,6 +29,8 @@ static void read_player(FILE* file) {
 
 	fread(&transform->position.x, sizeof(transform->position.x), 1, file);
 	fread(&transform->position.y, sizeof(transform->position.y), 1, file);
+	fread(&player->velocity.x, sizeof(player->velocity.x), 1, file);
+	fread(&player->velocity.y, sizeof(player->velocity.y), 1, file);
 
 	player->position = make_v2f(transform->position.x, transform->position.y);
 
