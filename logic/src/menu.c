@@ -58,6 +58,9 @@ void free_menu(struct menu* menu) {
 				case menu_item_selectable: {
 					core_free(item->as.selectable.text);
 				} break;
+				case menu_item_label: {
+					core_free(item->as.label.text);
+				} break;
 				default: break;
 			}
 		}
@@ -231,6 +234,14 @@ void prompts_init(struct shader shader, struct font* font) {
 }
 
 void prompts_deinit() {
+	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
+
+	if (ctx->message) {
+		core_free(ctx->message);
+	}
+
+	free_renderer(ctx->renderer);
+
 	core_free(logic_store->prompt_ctx);
 }
 

@@ -75,7 +75,7 @@ static void on_quit_ask(bool yes) {
 }
 
 static void on_quit(struct menu* menu) {
-	prompt_ask("Do you want to stop playing? (Unsaved progress won't be saved.)", on_quit_ask);
+	prompt_ask("Do you want to stop playing? Unsaved progress will be lost!", on_quit_ask);
 	logic_store->paused = false;
 }
 

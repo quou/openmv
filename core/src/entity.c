@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,6 +18,29 @@ entity_id get_entity_id(entity e) {
 entity make_handle(entity_id id, entity_version v) {
 	return ((u64)v << 32) | id;
 }
+
+struct pool;
+
+#define free_queue_size 256
+
+struct world {
+	struct pool* pools;
+	u32 pool_count;
+	u32 pool_capacity;
+
+	entity* entities;
+	u32 entity_count;
+	u32 entity_capacity;
+
+	entity_id avail_id;
+
+	i32 iteration_scope;
+
+	void* free_queue[free_queue_size];
+	u32 free_queue_count;
+};
+
+static void world_push_free(struct world* world, void* ptr);
 
 struct pool {
 	i32* sparse;
@@ -80,8 +104,19 @@ static i32 pool_sparse_idx(struct pool* pool, entity e) {
 
 static void* pool_add(struct pool* pool, entity e, void* init) {
 	if (pool->count >= pool->capacity) {
-		pool->capacity = pool->capacity < 8 ? 8 : pool->capacity * 2;
-		pool->data = core_realloc(pool->data, pool->capacity * pool->type.size);
+		u32 capacity = pool->capacity < 8 ? 8 : pool->capacity * 2;
+		void* new_allocation = core_alloc(capacity * pool->type.size);
+		memcpy(new_allocation, pool->data, pool->capacity * pool->type.size);
+		if (pool->data) {
+			if (pool->world->iteration_scope <= 0) {
+				core_free(pool->data);
+			} else {
+				world_push_free(pool->world, pool->data);
+			}
+		}
+
+		pool->data = new_allocation;
+		pool->capacity = capacity;
 	}
 
 	void* ptr = &((u8*)pool->data)[(pool->count++) * pool->type.size];
@@ -89,7 +124,18 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 	const u32 eid = get_entity_id(e);
 	if (eid >= pool->sparse_capacity) {
 		const u32 new_cap = eid + 1;
-		pool->sparse = core_realloc(pool->sparse, new_cap * sizeof(i32));
+		i32* alloc = core_alloc(new_cap * sizeof(i32));
+		memcpy(alloc, pool->sparse, pool->sparse_capacity * sizeof(i32));
+		if (pool->sparse) {
+			if (pool->world->iteration_scope <= 0) {
+				core_free(pool->sparse);
+			} else {
+				world_push_free(pool->world, pool->sparse);
+			}
+		}
+
+		pool->sparse = alloc;
+
 		for (u32 i = pool->sparse_capacity; i < new_cap; i++) {
 			pool->sparse[i] = -1;
 		}
@@ -99,8 +145,19 @@ static void* pool_add(struct pool* pool, entity e, void* init) {
 	pool->sparse[eid] = (i32)pool->dense_count;
 
 	if (pool->dense_count >= pool->dense_capacity) {
-		pool->dense_capacity = pool->dense_capacity < 8 ? 8 : pool->dense_capacity * 2;
-		pool->dense = core_realloc(pool->dense, pool->dense_capacity * sizeof(entity));
+		u32 dense_capacity = pool->dense_capacity < 8 ? 8 : pool->dense_capacity * 2;
+		void* alloc = core_alloc(dense_capacity * sizeof(entity));
+		memcpy(alloc, pool->dense, pool->dense_capacity * sizeof(entity));
+		if (pool->dense) {
+			if (pool->world->iteration_scope <= 0) {
+				core_free(pool->dense);
+			} else {
+				world_push_free(pool->world, pool->dense);
+			}
+		}
+
+		pool->dense_capacity = dense_capacity;
+		pool->dense = alloc;
 	}
 
 	pool->dense[pool->dense_count++] = e;
@@ -146,17 +203,22 @@ static void* pool_get(struct pool* pool, entity e) {
 	return pool_get_by_idx(pool, pool_sparse_idx(pool, e));
 }
 
-struct world {
-	struct pool* pools;
-	u32 pool_count;
-	u32 pool_capacity;
+static void world_push_free(struct world* world, void* ptr) {
+	if (world->free_queue_count < free_queue_size) {
+		world->free_queue[world->free_queue_count++] = ptr;
+		return;
+	}
 
-	entity* entities;
-	u32 entity_count;
-	u32 entity_capacity;
+	assert(0 && "Free queue too small.");
+}
 
-	entity_id avail_id;
-};
+static void world_clear_free_queue(struct world* world) {
+	for (u32 i = 0; i < world->free_queue_count; i++) {
+		core_free(world->free_queue[i]);
+	}
+
+	world->free_queue_count = 0;
+}
 
 static entity generate_entity(struct world* world) {
 	if (world->entity_count >= world->entity_capacity) {
@@ -202,8 +264,20 @@ static struct pool* get_pool(struct world* world, struct type_info type) {
 		return r;
 	} else {
 		if (world->pool_count >= world->pool_capacity) {
-			world->pool_capacity = world->pool_capacity < 8 ? 8 : world->pool_capacity * 2;
-			world->pools = core_realloc(world->pools, world->pool_capacity * sizeof(struct pool));
+			u32 pool_capacity = world->pool_capacity < 8 ? 8 : world->pool_capacity * 2;
+			void* new_alloc = core_alloc(pool_capacity * sizeof(struct pool));
+			memcpy(new_alloc, world->pools, world->pool_capacity * sizeof(struct pool));
+			
+			if (world->pools) {
+				if (world->iteration_scope >= 0) {
+					world_push_free(world, world->pools);
+				} else {
+					core_free(world->pools);
+				}
+			}
+
+			world->pools = new_alloc;
+			world->pool_capacity = pool_capacity;
 		}
 
 		struct pool* new = &world->pools[world->pool_count++];
@@ -231,6 +305,8 @@ struct world* new_world() {
 }
 
 void free_world(struct world* world) {
+	world_clear_free_queue(world);
+
 	if (world->pools) {
 		for (u32 i = 0; i < world->pool_count; i++) {
 			deinit_pool(&world->pools[i]);
@@ -300,6 +376,7 @@ void* _get_component(struct world* world, entity e, struct type_info type) {
 
 struct single_view _new_single_view(struct world* world, struct type_info type) {
 	struct single_view v = { 0 };
+	v.world = world;
 	v.pool = get_pool_no_create(world, type);
 
 	struct pool* pool = (struct pool*)v.pool;
@@ -311,11 +388,23 @@ struct single_view _new_single_view(struct world* world, struct type_info type) 
 		v.e = null_entity;
 	}
 
+	world->iteration_scope++;
+
 	return v;
 }
 
 bool single_view_valid(struct single_view* view) {
-	return (view->e != null_entity);
+	bool valid = view->e != null_entity;
+
+	if (!valid) {
+		view->world->iteration_scope--;
+		
+		if (view->world->iteration_scope <= 0) {
+			world_clear_free_queue(view->world);
+		}
+	}
+
+	return valid;
 }
 
 void* single_view_get(struct single_view* view) {
@@ -353,14 +442,18 @@ static u32 view_get_idx(struct view* view, struct type_info type) {
 
 struct view new_view(struct world* world, u32 type_count, struct type_info* types) {
 	struct view v = { 0 };
+	v.world = world;
 	v.pool_count = type_count;
+
+	world->iteration_scope++;
 
 	for (u32 i = 0; i < type_count; i++) {
 		v.pools[i] = get_pool_no_create(world, types[i]);
 		if (!v.pools[i]) {
 			return (struct view) {
 				.idx = 0,
-				.e = null_entity
+				.e = null_entity,
+				.world = world
 			};
 		}
 
@@ -389,7 +482,17 @@ struct view new_view(struct world* world, u32 type_count, struct type_info* type
 }
 
 bool view_valid(struct view* view) {
-	return view->e != null_entity;
+	bool valid = view->e != null_entity;
+
+	if (!valid) {
+		view->world->iteration_scope--;
+		
+		if (view->world->iteration_scope <= 0) {
+			world_clear_free_queue(view->world);
+		}
+	}
+
+	return valid;
 }
 
 void* _view_get(struct view* view, struct type_info type) {

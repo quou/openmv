@@ -84,6 +84,8 @@ struct single_view {
 	void* pool;
 	u32 idx;
 	entity e;
+
+	struct world* world;
 };
 
 API struct single_view _new_single_view(struct world* world, struct type_info type);
@@ -99,6 +101,8 @@ struct view {
 	void* pool;
 	u32 idx;
 	entity e;
+
+	struct world* world;
 };
 
 API struct view new_view(struct world* world, u32 type_count, struct type_info* types);
