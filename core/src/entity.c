@@ -374,6 +374,10 @@ void* _get_component(struct world* world, entity e, struct type_info type) {
 	return pool_get(get_pool(world, type), e);
 }
 
+u32 get_component_pool_count(struct world* world) {
+	return world->pool_count;
+}
+
 struct single_view _new_single_view(struct world* world, struct type_info type) {
 	struct single_view v = { 0 };
 	v.world = world;

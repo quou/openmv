@@ -68,6 +68,8 @@ API entity new_entity(struct world* world);
 API void destroy_entity(struct world* world, entity e);
 API bool entity_valid(struct world* world, entity e);
 
+API u32 get_component_pool_count(struct world* world);
+
 API void _set_component_create_func(struct world* world, struct type_info type, component_create_func f);
 API void _set_component_destroy_func(struct world* world, struct type_info type, component_create_func f);
 
@@ -76,9 +78,6 @@ API void* _add_component(struct world* world,    entity e, struct type_info type
 API void  _remove_component(struct world* world, entity e, struct type_info type);
 API bool  _has_component(struct world* world,    entity e, struct type_info type);
 API void* _get_component(struct world* world,    entity e, struct type_info type);
-
-/* Note on views: Entities should not be created or destroyed and
- * components should not be added or removed while iterating a view. */
 
 struct single_view {
 	void* pool;
