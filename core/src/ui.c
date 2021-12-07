@@ -170,7 +170,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->renderer = new_renderer(shader, make_v2i(800, 600));
 	ui->renderer->clip_enable = true;
 
-	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 250);
+	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 150);
 	ui->style_colors[ui_col_background] = make_color(0x212121, 255);
 	ui->style_colors[ui_col_hovered] = make_color(0x242533, 255);
 	ui->style_colors[ui_col_hot] = make_color(0x393d5b, 255);

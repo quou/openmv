@@ -87,19 +87,20 @@ API void CALL on_init() {
 	struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 	logic_store->renderer->camera_enable = true;
+	logic_store->ui_renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
 
 	logic_store->paused = false;
 	logic_store->frozen = false;
-	logic_store->pause_menu = new_menu(sprite_shader, load_font("res/DejaVuSansMono.ttf", 35.0f));
+	logic_store->pause_menu = new_menu(load_font("res/DejaVuSansMono.ttf", 35.0f));
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
 	menu_add_selectable(logic_store->pause_menu, "Save Game", on_save);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
-	prompts_init(sprite_shader, load_font("res/DejaVuSansMono.ttf", 25.0f));
+	prompts_init(load_font("res/DejaVuSansMono.ttf", 25.0f));
 
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);
@@ -143,12 +144,16 @@ API void CALL on_update(double ts) {
 
 	double timestep = ts * time_scale;
 
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
+
 	if (!logic_store->frozen && !logic_store->paused) { player_system(world, renderer, &logic_store->room, timestep); }
 	enemy_system(world, timestep);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
-	draw_room(logic_store->room, renderer);	
+	draw_room(logic_store->room, renderer, timestep);	
 	damage_fx_system(world, renderer, timestep);
 
 	render_system(world, renderer, timestep);
@@ -160,6 +165,8 @@ API void CALL on_update(double ts) {
 	} else {
 		prompts_update(ts);
 	}
+
+	renderer_flush(logic_store->ui_renderer);
 
 	ui_begin_frame(ui);
 	
@@ -183,6 +190,7 @@ API void CALL on_deinit() {
 	free_room(logic_store->room);
 
 	free_renderer(logic_store->renderer);
+	free_renderer(logic_store->ui_renderer);
 	free_ui_context(logic_store->ui);
 	free_world(logic_store->world);
 

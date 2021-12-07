@@ -3,9 +3,12 @@
  <editorsettings>
   <export target="test_room.dat" format="dat"/>
  </editorsettings>
+ <properties>
+  <property name="name" value="Test Room"/>
+ </properties>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
  <tileset firstgid="10" source="../tilesets/backgrounds.tsx"/>
- <layer id="10" name="background" width="32" height="32">
+ <layer id="10" name="background" width="32" height="32" opacity="0.99">
   <data encoding="csv">
 10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11,10,11,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,12,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

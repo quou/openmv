@@ -67,7 +67,12 @@ struct room {
 	struct transition_trigger* transition_triggers;
 	u32 transition_trigger_count;
 
+	struct font* name_font;
+
 	char* path;
+	char* name;
+
+	double name_timer;
 
 	struct world* world;
 };
@@ -96,8 +101,14 @@ struct room* load_room(struct world* world, const char* path) {
 	FILE* file = fopen(path, "rb");
 	if (!file) {
 		fprintf(stderr, "Failed to fopen file `%s'.", path);
+		core_free(room);
 		return null;
 	}
+
+	room->name_font = load_font("res/DejaVuSansMono.ttf", 25.0f);
+	room->name_timer = 3.0;
+
+	room->name = read_name(file);
 
 	room->path = copy_string(path);
 
@@ -301,6 +312,7 @@ struct room* load_room(struct world* world, const char* path) {
 
 void free_room(struct room* room) {
 	core_free(room->path);
+	core_free(room->name);
 
 	for (single_view(room->world, view, struct room_child)) {
 		struct room_child* rc = single_view_get(&view);
@@ -351,7 +363,20 @@ void free_room(struct room* room) {
 	core_free(room);
 }
 
-void draw_room(struct room* room, struct renderer* renderer) {
+void draw_room(struct room* room, struct renderer* renderer, double ts) {
+	if (room->name_timer >= 0.0) {
+		room->name_timer -= ts;
+	
+		i32 win_w, win_h;
+		query_window(main_window, &win_w, &win_h);
+
+		i32 text_w = text_width(room->name_font, room->name);
+		i32 text_h = text_height(room->name_font);
+
+		render_text(logic_store->ui_renderer, room->name_font, room->name,
+			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
+	}
+
 	for (u32 i = 0; i < room->layer_count; i++) {
 		struct layer* layer = room->layers + i;
 

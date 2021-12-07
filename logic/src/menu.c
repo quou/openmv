@@ -38,18 +38,16 @@ struct menu {
 	i32 selected_item;
 };
 
-struct menu* new_menu(struct shader shader, struct font* font) {
+struct menu* new_menu(struct font* font) {
 	struct menu* menu = core_calloc(1, sizeof(struct menu));
 
 	menu->font = font;
-	menu->renderer = new_renderer(shader, make_v2i(800, 600));
+	menu->renderer = logic_store->ui_renderer;
 
 	return menu;
 }
 
 void free_menu(struct menu* menu) {
-	free_renderer(menu->renderer);
-
 	if (menu->items) {
 		for (u32 i = 0; i < menu->item_count; i++) {
 			struct menu_item* item = menu->items + i;
@@ -224,13 +222,13 @@ struct prompt_ctx {
 	prompt_submit_func on_submit;
 };
 
-void prompts_init(struct shader shader, struct font* font) {
+void prompts_init(struct font* font) {
 	logic_store->prompt_ctx = core_calloc(1, sizeof(struct prompt_ctx));	
 
 	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
 
 	ctx->font = font;
-	ctx->renderer = new_renderer(shader, make_v2i(800, 600));
+	ctx->renderer = logic_store->ui_renderer;
 }
 
 void prompts_deinit() {
@@ -239,8 +237,6 @@ void prompts_deinit() {
 	if (ctx->message) {
 		core_free(ctx->message);
 	}
-
-	free_renderer(ctx->renderer);
 
 	core_free(logic_store->prompt_ctx);
 }

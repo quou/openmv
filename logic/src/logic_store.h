@@ -11,6 +11,7 @@ struct logic_store {
 	char fps_buf[256];
 
 	struct renderer* renderer;
+	struct renderer* ui_renderer;
 	struct ui_context* ui;
 
 	struct world* world;
