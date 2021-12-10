@@ -68,6 +68,12 @@ var dat_format = {
 			}
 			file.write(image_path_buf);
 
+			/* Write tile count */
+			var tile_count_buf = new ArrayBuffer(4);
+			var tile_count_view = new Uint32Array(tile_count_buf);
+			tile_count_view[0] = tileset.tileCount;
+			file.write(tile_count_buf);
+
 			/* Write tile size */
 			var size_buf = new ArrayBuffer(8);
 			var size_view = new Uint32Array(size_buf);
@@ -173,13 +179,26 @@ var dat_format = {
 					file.write(obj_name_buf);
 
 					/* Write the rectangle. */
-					var rect_buf = new ArrayBuffer(4*4);
-					var rect_view = new Int32Array(rect_buf);
-					rect_view[0] = obj.x;
-					rect_view[1] = obj.y;
-					rect_view[2] = obj.size.width;
-					rect_view[3] = obj.size.height;
-					file.write(rect_buf);
+
+					if (layer.name == "slopes") {
+						for (var iii = 0; iii < 2; iii += 2) {
+							var rect_buf = new ArrayBuffer(4*4);
+							var rect_view = new Int32Array(rect_buf);
+							rect_view[0] = obj.x + obj.polygon[iii].x;
+							rect_view[1] = obj.y + obj.polygon[iii].y;
+							rect_view[2] = obj.x + obj.polygon[iii + 1].x;
+							rect_view[3] = obj.y + obj.polygon[iii + 1].y;
+							file.write(rect_buf);
+						}
+					} else {
+						var rect_buf = new ArrayBuffer(4*4);
+						var rect_view = new Int32Array(rect_buf);
+						rect_view[0] = obj.x;
+						rect_view[1] = obj.y;
+						rect_view[2] = obj.size.width;
+						rect_view[3] = obj.size.height;
+						file.write(rect_buf);
+					}
 
 					if (layer.name === "transition_triggers") {
 						var change_to_prop = obj.property("change_to");

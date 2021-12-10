@@ -6,8 +6,8 @@
 
 #define pie 3.14159265358f
 
-double todeg(double rad);
-double torad(double deg);
+API double todeg(double rad);
+API double torad(double deg);
 
 typedef struct {
 	u32 x;

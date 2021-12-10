@@ -41,3 +41,22 @@ bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 
 	return true;
 }
+
+static i32 area(v2i a, v2i b, v2i c) {
+	return (i32)abs((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y)) / 2.0);
+}
+
+bool point_vs_tri(v2i p, v2i a, v2i b, v2i c) {
+	float A  = area(a, b, c);
+	float A1 = area(p, b, c);
+	float A2 = area(p, a, c);
+	float A3 = area(p, a, b);
+
+	return (A == A1 + A2 + A3);
+}
+
+bool point_vs_rtri(v2i p, v2i a, v2i b) {
+	v2i c = make_v2i(a.x, b.y);
+
+	return point_vs_tri(p, a, b, c);
+}

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include "consts.h"
 #include "core.h"
@@ -24,6 +25,7 @@ struct tileset {
 	struct texture* image;
 	char* name;
 	i32 tile_w, tile_h;
+	i32 tile_count;
 };
 
 enum {
@@ -59,6 +61,9 @@ struct room {
 
 	struct rect* box_colliders;
 	u32 box_collider_count;
+
+	v4i* slope_colliders;
+	u32 slope_collider_count;
 
 	struct table* entrances;
 
@@ -137,6 +142,9 @@ struct room* load_room(struct world* world, const char* path) {
 		current->image = load_texture(path);
 		core_free(path);
 
+		/* Read the tile count. */
+		fread(&current->tile_count, sizeof(current->tile_count), 1, file);
+
 		/* Read the tile width and height */
 		fread(&current->tile_w, sizeof(current->tile_w), 1, file);
 		fread(&current->tile_h, sizeof(current->tile_h), 1, file);
@@ -192,6 +200,28 @@ struct room* load_room(struct world* world, const char* path) {
 						skip_name(file);
 
 						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
+					}
+				} else if (strcmp(layer->name, "slopes") == 0) {
+					room->slope_collider_count = object_count;
+					room->slope_colliders = core_alloc(sizeof(*room->slope_colliders) * object_count);
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(file);
+
+						fread(room->slope_colliders + ii, sizeof(*room->slope_colliders), 1, file);
+
+						v2i start = make_v2i(room->slope_colliders[ii].x, room->slope_colliders[ii].y);
+						v2i end = make_v2i(room->slope_colliders[ii].z, room->slope_colliders[ii].w);
+						if (start.y > end.y) {
+							i32 c = end.y;
+							end.y = start.y;
+							start.y = c;
+
+							c = end.x;
+							end.x = start.x;
+							start.x = c;
+						}
+
+						room->slope_colliders[ii] = make_v4i(start.x, start.y, end.x, end.y);
 					}
 				} else if (strcmp(layer->name, "entrances") == 0) {
 					struct rect r;
@@ -392,8 +422,8 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 							.position = { x * set->tile_w * sprite_scale, y * set->tile_h * sprite_scale },
 							.dimentions = { set->tile_w * sprite_scale, set->tile_h * sprite_scale },
 							.rect = {
-								.x = ((tile.id % (set->image->width / set->tile_w)) * set->tile_w),
-								.y = ((tile.id / (set->image->height / set->tile_h)) * set->tile_h),
+								.x = ((tile.id % (set->image->width  / set->tile_w)) * set->tile_w),
+								.y = ((tile.id / (set->image->width / set->tile_h)) * set->tile_h),
 								.w = set->tile_w,
 								.h = set->tile_h
 							},
@@ -417,6 +447,7 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 		.w = collider.w, .h = collider.h
 	};
 
+	/* Resolve rectangle collisions, using a basic AABB vs AABB method. */
 	for (u32 i = 0; i < room->box_collider_count; i++) {
 		struct rect rect = {
 			.x = room->box_colliders[i].x * sprite_scale,
@@ -440,6 +471,28 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 				position->y = ((float)rect.y + rect.h) - collider.y;
 				velocity->y = 0.0f;
 			}
+		}
+	}
+
+	/* Resolve slope collisions.
+	 *
+	 * The collisons are checked for by checking the bottom-centre point of the collider
+	 * against the right-angle triangle created by the two points that define the slope.
+	 *
+	 * Slope-intersection is then used to position the player on the `y' access accordingly. */
+ 	v2i check_point = make_v2i(body_rect.x + (body_rect.w / 2), body_rect.y + body_rect.h);
+	for (u32 i = 0; i < room->slope_collider_count; i++) {
+		v2i start = v2i_mul(make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y), make_v2i(sprite_scale, sprite_scale));
+		v2i end   = v2i_mul(make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w), make_v2i(sprite_scale, sprite_scale));
+
+		if (point_vs_rtri(check_point, start, end)) {
+		 	float col_centre = body_rect.x + (body_rect.w / 2);
+
+			float slope = (float)(end.y - start.y) / (float)(end.x - start.x);
+		 	float b = (start.y - (slope * start.x));
+
+			position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;
+			velocity->y = 0.0f;
 		}
 	}
 }
@@ -507,6 +560,17 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 		};
 
 		if (rect_overlap(rect, r, normal)) {
+			return true;
+		}
+	}
+
+ 	v2i check_point = make_v2i(rect.x + (rect.w / 2), rect.y + rect.h);
+
+	for (u32 i = 0; i < room->slope_collider_count; i++) {
+		v2i start = v2i_mul(make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y), make_v2i(sprite_scale, sprite_scale));
+		v2i end   = v2i_mul(make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w), make_v2i(sprite_scale, sprite_scale));
+
+		if (point_vs_rtri(check_point, start, end)) {
 			return true;
 		}
 	}
