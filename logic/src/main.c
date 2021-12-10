@@ -157,6 +157,7 @@ API void CALL on_update(double ts) {
 	damage_fx_system(world, renderer, timestep);
 
 	render_system(world, renderer, timestep);
+	draw_room_forground(logic_store->room, renderer);
 
 	renderer_flush(renderer);
 

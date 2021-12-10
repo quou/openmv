@@ -74,6 +74,8 @@ struct room {
 
 	struct font* name_font;
 
+	u32 forground_index;
+
 	char* path;
 	char* name;
 
@@ -163,6 +165,10 @@ struct room* load_room(struct world* world, const char* path) {
 		layer->name = core_alloc(name_len + 1);
 		layer->name[name_len] = '\0';
 		fread(layer->name, 1, name_len, file);
+
+		if (strcmp(layer->name, "forground") == 0) {
+			room->forground_index = i;
+		}
 
 		fread(&layer->type, sizeof(layer->type), 1, file);
 
@@ -420,7 +426,7 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	for (u32 i = 0; i < room->layer_count; i++) {
 		struct layer* layer = room->layers + i;
 
-		if (layer->type == layer_tiles) {
+		if (layer->type == layer_tiles && room->forground_index != i) {
 			for (u32 y = 0; y < layer->as.tile_layer.h; y++) {
 				for (u32 x = 0; x < layer->as.tile_layer.w; x++) {
 					struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
@@ -448,6 +454,35 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	}
 }
 
+void draw_room_forground(struct room* room, struct renderer* renderer) {
+	struct layer* layer = room->layers + room->forground_index;
+
+	if (layer->type == layer_tiles) {
+		for (u32 y = 0; y < layer->as.tile_layer.h; y++) {
+			for (u32 x = 0; x < layer->as.tile_layer.w; x++) {
+				struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
+				if (tile.id != -1) {
+					struct tileset* set = room->tilesets + tile.tileset_id;
+
+					struct textured_quad quad = {
+						.texture = set->image,
+						.position = { x * set->tile_w * sprite_scale, y * set->tile_h * sprite_scale },
+						.dimentions = { set->tile_w * sprite_scale, set->tile_h * sprite_scale },
+						.rect = {
+							.x = ((tile.id % (set->image->width  / set->tile_w)) * set->tile_w),
+							.y = ((tile.id / (set->image->width / set->tile_h)) * set->tile_h),
+							.w = set->tile_w,
+							.h = set->tile_h
+						},
+						.color = { 255, 255, 255, 255 }
+					};
+
+					renderer_push(renderer, &quad);
+				}
+			}
+		}
+	}
+}
 void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {
 	struct room* room = *room_ptr;
 
@@ -493,9 +528,10 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 		if (point_vs_rtri(check_point, start, end)) {
 		 	float col_centre = body_rect.x + (body_rect.w / 2);
 
-			float slope = (float)(end.y - start.y) / (float)(end.x - start.x);
+			float slope = (float)(end.y - start.y) / (float)(end.x - start.x); /* Rise/Run. */
 		 	float b = (start.y - (slope * start.x));
 
+		 	/* y = mx + b */
 			position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;
 			velocity->y = 0.0f;
 		}
