@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="51">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="54">
  <editorsettings>
   <export target="test_room2.dat" format="dat"/>
  </editorsettings>
@@ -44,14 +44,14 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="1" name="Tile Layer 1" width="32" height="32">
+ <layer id="1" name="Tile Layer 1" width="32" height="32" locked="1">
   <data encoding="csv">
 6,6,6,6,6,6,6,6,6,6,6,6,6,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 6,6,6,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 6,6,6,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-2,2,2,0,0,0,0,0,2,2,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,8,4,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+2,2,2,0,0,0,0,0,6,6,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 6,6,6,4,0,0,0,0,0,0,0,0,8,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 6,6,6,6,2,2,2,0,0,2,2,2,6,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,6,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -95,7 +95,7 @@
   <object id="34" x="0" y="112" width="96" height="16"/>
   <object id="35" x="160" y="112" width="64" height="16"/>
  </objectgroup>
- <objectgroup id="8" name="slopes" locked="1">
+ <objectgroup id="8" name="slopes">
   <object id="41" x="144" y="144">
    <polyline points="0,0 -16,16"/>
   </object>
@@ -107,6 +107,12 @@
   </object>
   <object id="50" x="192" y="112">
    <polyline points="0,0 16,-16"/>
+  </object>
+  <object id="51" x="128" y="80">
+   <polyline points="0,0 16,-16"/>
+  </object>
+  <object id="53" x="144" y="64">
+   <polyline points="0,0 16,16"/>
   </object>
  </objectgroup>
  <objectgroup color="#ff0000" id="3" name="transition_triggers" locked="1">

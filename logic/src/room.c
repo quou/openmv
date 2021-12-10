@@ -200,6 +200,11 @@ struct room* load_room(struct world* world, const char* path) {
 						skip_name(file);
 
 						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
+
+						room->box_colliders[ii].x *= sprite_scale;
+						room->box_colliders[ii].y *= sprite_scale;
+						room->box_colliders[ii].w *= sprite_scale;
+						room->box_colliders[ii].h *= sprite_scale;
 					}
 				} else if (strcmp(layer->name, "slopes") == 0) {
 					room->slope_collider_count = object_count;
@@ -209,8 +214,9 @@ struct room* load_room(struct world* world, const char* path) {
 
 						fread(room->slope_colliders + ii, sizeof(*room->slope_colliders), 1, file);
 
-						v2i start = make_v2i(room->slope_colliders[ii].x, room->slope_colliders[ii].y);
-						v2i end = make_v2i(room->slope_colliders[ii].z, room->slope_colliders[ii].w);
+						/* Ensure that the start of the slope is alway smaller than the end on the `x' axis. */
+						v2i start = make_v2i(room->slope_colliders[ii].x * sprite_scale, room->slope_colliders[ii].y * sprite_scale);
+						v2i end = make_v2i(room->slope_colliders[ii].z * sprite_scale, room->slope_colliders[ii].w * sprite_scale);
 						if (start.y > end.y) {
 							i32 c = end.y;
 							end.y = start.y;
@@ -229,6 +235,10 @@ struct room* load_room(struct world* world, const char* path) {
 						char* obj_name = read_name(file);
 
 						fread(&r, sizeof(r), 1, file);
+						r.x *= sprite_scale;
+						r.y *= sprite_scale;
+						r.w *= sprite_scale;
+						r.h *= sprite_scale;
 						table_set(room->entrances, obj_name, &r);
 
 						core_free(obj_name);
@@ -269,7 +279,7 @@ struct room* load_room(struct world* world, const char* path) {
 						fread(entrance, 1, entrance_len, file);
 
 						room->transition_triggers[ii] = (struct transition_trigger) {
-							.rect = r,
+							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
 							.change_to = change_to,
 							.entrance = entrance
 						};
@@ -449,12 +459,7 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 
 	/* Resolve rectangle collisions, using a basic AABB vs AABB method. */
 	for (u32 i = 0; i < room->box_collider_count; i++) {
-		struct rect rect = {
-			.x = room->box_colliders[i].x * sprite_scale,
-			.y = room->box_colliders[i].y * sprite_scale,
-			.w = room->box_colliders[i].w * sprite_scale,
-			.h = room->box_colliders[i].h * sprite_scale,
-		};
+		struct rect rect = room->box_colliders[i];
 
 		v2i normal;
 		if (rect_overlap(body_rect, rect, &normal)) {
@@ -482,8 +487,8 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 	 * Slope-intersection is then used to position the player on the `y' access accordingly. */
  	v2i check_point = make_v2i(body_rect.x + (body_rect.w / 2), body_rect.y + body_rect.h);
 	for (u32 i = 0; i < room->slope_collider_count; i++) {
-		v2i start = v2i_mul(make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y), make_v2i(sprite_scale, sprite_scale));
-		v2i end   = v2i_mul(make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w), make_v2i(sprite_scale, sprite_scale));
+		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
+		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
 
 		if (point_vs_rtri(check_point, start, end)) {
 		 	float col_centre = body_rect.x + (body_rect.w / 2);
@@ -512,12 +517,7 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 
 	struct transition_trigger* transition = null;
 	for (u32 i = 0; i < room->transition_trigger_count; i++) {
-		struct rect rect = {
-			.x = room->transition_triggers[i].rect.x * sprite_scale,
-			.y = room->transition_triggers[i].rect.y * sprite_scale,
-			.w = room->transition_triggers[i].rect.w * sprite_scale,
-			.h = room->transition_triggers[i].rect.h * sprite_scale,
-		};
+		struct rect rect = room->transition_triggers[i].rect;
 
 		v2i normal;
 		if (rect_overlap(body_rect, rect, &normal)) {
@@ -537,8 +537,8 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 
 		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
 		if (entrance_pos) {
-			position->x = entrance_pos->x * sprite_scale - (collider.w / 2);
-			position->y = entrance_pos->y * sprite_scale - collider.h;
+			position->x = entrance_pos->x - (collider.w / 2);
+			position->y = entrance_pos->y - collider.h;
 
 			logic_store->camera_position = *position;
 		} else {
@@ -552,12 +552,7 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 
 bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 	for (u32 i = 0; i < room->box_collider_count; i++) {
-		struct rect r = {
-			.x = room->box_colliders[i].x * sprite_scale,
-			.y = room->box_colliders[i].y * sprite_scale,
-			.w = room->box_colliders[i].w * sprite_scale,
-			.h = room->box_colliders[i].h * sprite_scale,
-		};
+		struct rect r = room->box_colliders[i];
 
 		if (rect_overlap(rect, r, normal)) {
 			return true;
@@ -567,8 +562,8 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
  	v2i check_point = make_v2i(rect.x + (rect.w / 2), rect.y + rect.h);
 
 	for (u32 i = 0; i < room->slope_collider_count; i++) {
-		v2i start = v2i_mul(make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y), make_v2i(sprite_scale, sprite_scale));
-		v2i end   = v2i_mul(make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w), make_v2i(sprite_scale, sprite_scale));
+		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
+		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
 
 		if (point_vs_rtri(check_point, start, end)) {
 			return true;
@@ -581,7 +576,7 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 v2i get_spawn(struct room* room) {
 	v2i* entrance_pos = (v2i*)table_get(room->entrances, "spawn");
 	if (entrance_pos) {
-		return make_v2i(entrance_pos->x * sprite_scale, entrance_pos->y * sprite_scale);
+		return make_v2i(entrance_pos->x, entrance_pos->y);
 	}
 
 	return make_v2i(0, 0);
