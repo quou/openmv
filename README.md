@@ -27,8 +27,15 @@ Generate a Makefile using Premake. Requires a C99 compatible compiler that
 supports variadic macros and the ability to cast a void pointer to a function
 pointer. GCC is what I use.
 
-Dependencies:
+Dependencies on Linux:
  - `libdl`
  - `libGL`
  - `libm`
  - `libX11`
+
+Dependencies on Windows:
+ - `opengl32`
+ - `gdi32`
+ - `user32`
+ - `kernel32`
+ - `winmm`
