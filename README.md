@@ -23,9 +23,8 @@ make it a good engine. It is designed with non-linear platform games in mind.
  - [ ] Actually make a damn game.
 
 ## Building
-Generate a Makefile using Premake. Requires a C99 compatible compiler that
-supports variadic macros and the ability to cast a void pointer to a function
-pointer. GCC is what I use.
+Generate a Makefile using Premake. Requires a bunch of GCC extensions, because
+I am bad at programming.
 
 Dependencies on Linux:
  - `libdl`
