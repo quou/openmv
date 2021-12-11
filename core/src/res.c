@@ -6,13 +6,16 @@
 #include "res.h"
 #include "table.h"
 
+static const char* package_path = "res.pck";
+
+#if DEBUG
 bool read_raw(const char* path, u8** buf, u32* size, bool term) {
 	*buf = null;
 	size ? *size = 0 : 0;
 
 	FILE* file = fopen(path, "rb");
 	if (!file) {
-		printf("Failed to fopen file %s\n", path);
+		fprintf(stderr, "Failed to fopen file %s\n", path);
 		return false;
 	}
 
@@ -38,6 +41,139 @@ bool read_raw(const char* path, u8** buf, u32* size, bool term) {
 
 	return true;
 }
+
+struct file file_open(const char* path) {
+	FILE* handle = fopen(path, "rb");
+	if (!handle) {
+		return (struct file) { 0 };
+	}
+
+	fseek(handle, 0, SEEK_END);
+	u64 size = ftell(handle);
+	fseek(handle, 0, SEEK_SET);
+
+	return (struct file) { handle, 0, 0, size };
+}
+
+bool file_good(struct file* file) {
+	return file->handle != null;
+}
+
+void file_close(struct file* file) {
+	fclose(file->handle);
+	file->handle = null;
+}
+
+u64 file_seek(struct file* file, u64 offset) {
+	file->cursor = offset;
+}
+
+u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
+	fseek(file->handle, file->pk_offset + file->cursor, SEEK_SET);
+
+	file->cursor += size * count;
+
+	return fread(buf, size, count, file->handle);
+}
+#else
+bool read_raw(const char* path, u8** buf, u32* size, bool term) {
+	FILE* file = fopen(package_path, "rb");
+	if (!file) {
+		fprintf(stderr, "Failed to open `%s'\n", package_path);
+		return false;
+	}
+
+	fseek(file, 0, SEEK_SET);
+
+	u64 header_el_size = sizeof(u64) * 3;
+	u64 header_size;
+	fread(&header_size, sizeof(header_size), 1, file);
+	u64 header_count = header_size / header_el_size;
+
+	u64 name_hash = elf_hash(path, strlen(path));
+
+	for (u64 i = 0; i < header_count; i++) {
+		u64 hash, offset, f_size;
+
+		fread(&hash, sizeof(hash), 1, file);
+		fread(&offset, sizeof(offset), 1, file);
+		fread(&f_size, sizeof(f_size), 1, file);
+
+		if (hash == name_hash) {
+			if (size) {
+				*size = f_size;
+			}
+			*buf = core_alloc(f_size + (term ? 1 : 0));
+
+			fseek(file, offset, SEEK_SET);
+			fread(*buf, 1, f_size, file);
+
+			if (term) {
+					*((*buf) + f_size) = '\0';
+			}
+
+			fclose(file);
+			return true;
+		}
+	}
+	
+	fprintf(stderr, "Failed to read file from package: %s\n", path);
+
+	fclose(file);
+	return false;
+}
+
+struct file file_open(const char* path) {
+	FILE* handle = fopen(package_path, "rb");
+	if (!handle) {
+		return (struct file) { 0 };
+	}
+
+	u64 header_el_size = sizeof(u64) * 3;
+	u64 header_size;
+	fread(&header_size, sizeof(header_size), 1, handle);
+	u64 header_count = header_size / header_el_size;
+
+	u64 name_hash = elf_hash(path, strlen(path));
+
+	for (u64 i = 0; i < header_count; i++) {
+		u64 hash, offset, f_size;
+
+		fread(&hash, sizeof(hash), 1, handle);
+		fread(&offset, sizeof(offset), 1, handle);
+		fread(&f_size, sizeof(f_size), 1, handle);
+
+		if (hash == name_hash) {
+			return (struct file) { handle, offset, 0, f_size };
+		}
+	}
+
+	fclose(handle);
+
+	return (struct file) { 0 };
+}
+
+bool file_good(struct file* file) {
+	return file->handle != null;
+}
+
+void file_close(struct file* file) {
+	fclose(file->handle);
+	file->handle = null;
+}
+
+u64 file_seek(struct file* file, u64 offset) {
+	file->cursor = offset;
+}
+
+u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
+	fseek(file->handle, file->pk_offset + file->cursor, SEEK_SET);
+
+	file->cursor += size * count;
+
+	return fread(buf, size, count, file->handle);
+}
+#endif
 
 enum {
 	res_shader,

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="108" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="71">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="108" height="100" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="72">
  <editorsettings>
   <export target="overworld_test.dat" format="dat"/>
  </editorsettings>
@@ -109,6 +109,11 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="7" name="enemies">
+  <object id="71" name="bat" x="178" y="12">
+   <point/>
+  </object>
+ </objectgroup>
  <objectgroup id="5" name="entrances" locked="1">
   <object id="1" name="spawn" x="16" y="32">
    <point/>

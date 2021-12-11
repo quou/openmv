@@ -84,30 +84,30 @@ struct room {
 	struct world* world;
 };
 
-static char* read_name(FILE* file) {
-	u32 obj_name_len;
-	fread(&obj_name_len, sizeof(obj_name_len), 1, file);
-	char* obj_name = core_alloc(obj_name_len + 1);
-	obj_name[obj_name_len] = '\0';
-	fread(obj_name, 1, obj_name_len, file);
+static char* read_name(struct file* file) {
+	u32 name_len;
+	file_read(&name_len, sizeof(name_len), 1, file);
+	char* name = core_alloc(name_len + 1);
+	name[name_len] = '\0';
+	file_read(name, 1, name_len, file);
 
-	return obj_name;
+	return name;
 }
 
-void skip_name(FILE* file) {
+void skip_name(struct file* file) {
 	u32 obj_name_len;
 
-	fread(&obj_name_len, sizeof(obj_name_len), 1, file);
-	fseek(file, ftell(file) + obj_name_len, SEEK_SET);
+	file_read(&obj_name_len, sizeof(obj_name_len), 1, file);
+	file_seek(file, file->cursor + obj_name_len);
 }
 
 struct room* load_room(struct world* world, const char* path) {
 	struct room* room = core_calloc(1, sizeof(struct room));
 	room->world = world;
 
-	FILE* file = fopen(path, "rb");
-	if (!file) {
-		fprintf(stderr, "Failed to fopen file `%s'.", path);
+	struct file file = file_open(path);
+	if (!file_good(&file)) {
+		fprintf(stderr, "Failed to open file `%s'.", path);
 		core_free(room);
 		return null;
 	}
@@ -115,67 +115,59 @@ struct room* load_room(struct world* world, const char* path) {
 	room->name_font = load_font("res/DejaVuSansMono.ttf", 25.0f);
 	room->name_timer = 3.0;
 
-	room->name = read_name(file);
+	room->name = read_name(&file);
 
 	room->path = copy_string(path);
 
 	room->entrances = new_table(sizeof(v2i));
 
 	/* Load the tilesets. */
-	fread(&room->tileset_count, sizeof(room->tileset_count), 1, file);
+	file_read(&room->tileset_count, sizeof(room->tileset_count), 1, &file);
 	room->tilesets = core_calloc(room->tileset_count, sizeof(struct tileset));
 
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		struct tileset* current = room->tilesets + i;
 
 		/* Read the name. */
-		u32 name_len;
-		fread(&name_len, sizeof(name_len), 1, file);
-		current->name = core_alloc(name_len + 1);
-		current->name[name_len] = '\0';
-		fread(current->name, 1, name_len, file);
+		current->name = read_name(&file);
 
 		/* Read the tileset image. */
 		u32 path_len;
-		fread(&path_len, sizeof(path_len), 1, file);
+		file_read(&path_len, sizeof(path_len), 1, &file);
 		char* path = core_alloc(path_len + 1);
 		path[path_len] = '\0';
-		fread(path, 1, path_len, file);
+		file_read(path, 1, path_len, &file);
 		current->image = load_texture(path);
 		core_free(path);
 
 		/* Read the tile count. */
-		fread(&current->tile_count, sizeof(current->tile_count), 1, file);
+		file_read(&current->tile_count, sizeof(current->tile_count), 1, &file);
 
 		/* Read the tile width and height */
-		fread(&current->tile_w, sizeof(current->tile_w), 1, file);
-		fread(&current->tile_h, sizeof(current->tile_h), 1, file);
+		file_read(&current->tile_w, sizeof(current->tile_w), 1, &file);
+		file_read(&current->tile_h, sizeof(current->tile_h), 1, &file);
 	}
 
 	/* Load the tile layers */	
-	fread(&room->layer_count, sizeof(room->layer_count), 1, file);
+	file_read(&room->layer_count, sizeof(room->layer_count), 1, &file);
 	room->layers = core_calloc(room->layer_count, sizeof(struct layer));
 
 	for (u32 i = 0; i < room->layer_count; i++) {
 		struct layer* layer = room->layers + i;
 
 		/* Read the name. */
-		u32 name_len;
-		fread(&name_len, sizeof(name_len), 1, file);
-		layer->name = core_alloc(name_len + 1);
-		layer->name[name_len] = '\0';
-		fread(layer->name, 1, name_len, file);
+		layer->name = read_name(&file);
 
 		if (strcmp(layer->name, "forground") == 0) {
 			room->forground_index = i;
 		}
 
-		fread(&layer->type, sizeof(layer->type), 1, file);
+		file_read(&layer->type, sizeof(layer->type), 1, &file);
 
 		switch (layer->type) {
 			case layer_tiles: {
-				fread(&layer->as.tile_layer.w, sizeof(layer->as.tile_layer.w), 1, file);
-				fread(&layer->as.tile_layer.h, sizeof(layer->as.tile_layer.h), 1, file);
+				file_read(&layer->as.tile_layer.w, sizeof(layer->as.tile_layer.w), 1, &file);
+				file_read(&layer->as.tile_layer.h, sizeof(layer->as.tile_layer.h), 1, &file);
 
 				layer->as.tile_layer.tiles = core_alloc(sizeof(struct tile) * layer->as.tile_layer.w * layer->as.tile_layer.h);
 
@@ -185,8 +177,8 @@ struct room* load_room(struct world* world, const char* path) {
 					for (u32 x = 0; x < w; x++) {
 						i16 id, tileset_idx = 0;
 
-						fread(&id, sizeof(id), 1, file);
-						fread(&tileset_idx, sizeof(tileset_idx), 1, file);
+						file_read(&id, sizeof(id), 1, &file);
+						file_read(&tileset_idx, sizeof(tileset_idx), 1, &file);
 
 						layer->as.tile_layer.tiles[x + y * w] = (struct tile) {
 							.id = id,
@@ -197,15 +189,15 @@ struct room* load_room(struct world* world, const char* path) {
 			} break;
 			case layer_objects: {
 				u32 object_count;
-				fread(&object_count, sizeof(object_count), 1, file);
+				file_read(&object_count, sizeof(object_count), 1, &file);
 
 				if (strcmp(layer->name, "collisions") == 0) {
 					room->box_collider_count = object_count;
 					room->box_colliders = core_alloc(sizeof(*room->box_colliders) * object_count);
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(file);
+						skip_name(&file);
 
-						fread(room->box_colliders + ii, sizeof(*room->box_colliders), 1, file);
+						file_read(room->box_colliders + ii, sizeof(*room->box_colliders), 1, &file);
 
 						room->box_colliders[ii].x *= sprite_scale;
 						room->box_colliders[ii].y *= sprite_scale;
@@ -216,9 +208,9 @@ struct room* load_room(struct world* world, const char* path) {
 					room->slope_collider_count = object_count;
 					room->slope_colliders = core_alloc(sizeof(*room->slope_colliders) * object_count);
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(file);
+						skip_name(&file);
 
-						fread(room->slope_colliders + ii, sizeof(*room->slope_colliders), 1, file);
+						file_read(room->slope_colliders + ii, sizeof(*room->slope_colliders), 1, &file);
 
 						/* Ensure that the start of the slope is alway smaller than the end on the `x' axis. */
 						v2i start = make_v2i(room->slope_colliders[ii].x * sprite_scale, room->slope_colliders[ii].y * sprite_scale);
@@ -238,9 +230,9 @@ struct room* load_room(struct world* world, const char* path) {
 				} else if (strcmp(layer->name, "entrances") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(file);
+						char* obj_name = read_name(&file);
 
-						fread(&r, sizeof(r), 1, file);
+						file_read(&r, sizeof(r), 1, &file);
 						r.x *= sprite_scale;
 						r.y *= sprite_scale;
 						r.w *= sprite_scale;
@@ -252,9 +244,9 @@ struct room* load_room(struct world* world, const char* path) {
 				} else if (strcmp(layer->name, "enemies") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(file);
+						char* obj_name = read_name(&file);
 
-						fread(&r, sizeof(r), 1, file);
+						file_read(&r, sizeof(r), 1, &file);
 
 						if (strcmp(obj_name, "bat") == 0) {
 							new_bat(world, room, make_v2i(r.x * sprite_scale, r.y * sprite_scale));
@@ -268,21 +260,12 @@ struct room* load_room(struct world* world, const char* path) {
 
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(file);
+						skip_name(&file);
 
-						fread(&r, sizeof(r), 1, file);
+						file_read(&r, sizeof(r), 1, &file);
 
-						u32 change_to_len;
-						fread(&change_to_len, sizeof(change_to_len), 1, file);
-						char* change_to = core_alloc(change_to_len + 1);
-						change_to[change_to_len] = '\0';
-						fread(change_to, 1, change_to_len, file);
-
-						u32 entrance_len;
-						fread(&entrance_len, sizeof(entrance_len), 1, file);
-						char* entrance = core_alloc(entrance_len + 1);
-						entrance[entrance_len] = '\0';
-						fread(entrance, 1, entrance_len, file);
+						char* change_to = read_name(&file);
+						char* entrance = read_name(&file);
 
 						room->transition_triggers[ii] = (struct transition_trigger) {
 							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
@@ -293,9 +276,9 @@ struct room* load_room(struct world* world, const char* path) {
 				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(file);
+						char* obj_name = read_name(&file);
 
-						fread(&r, sizeof(r), 1, file);
+						file_read(&r, sizeof(r), 1, &file);
 
 						i32 sprite_id = -1;
 						i32 upgrade_id = -1;
@@ -332,9 +315,9 @@ struct room* load_room(struct world* world, const char* path) {
 				} else if (strcmp(layer->name, "meta") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(file);
+						char* obj_name = read_name(&file);
 
-						fread(&r, sizeof(r), 1, file);
+						file_read(&r, sizeof(r), 1, &file);
 
 						if (strcmp(obj_name, "camera_bounds") == 0) {
 							room->camera_bounds = (struct rect) {
@@ -351,7 +334,7 @@ struct room* load_room(struct world* world, const char* path) {
 		}
 	}
 
-	fclose(file);
+	file_close(&file);
 
 	return room;
 }

@@ -17,3 +17,21 @@ API void res_unload(const char* path);
 API struct shader load_shader(const char* path);
 API struct texture* load_texture(const char* path);
 API struct font* load_font(const char* path, float size);
+
+/* File API, for reading only.
+ *
+ * In debug, it wraps the default C stdio.
+ * In release, it contains extra functionality to read from the
+ * packed resource file. */
+struct file {
+	void* handle;
+	u64 pk_offset;
+	u64 cursor;
+	u64 size;
+};
+
+struct file file_open(const char* path);
+bool file_good(struct file* file);
+void file_close(struct file* file);
+u64 file_seek(struct file* file, u64 offset);
+u64 file_read(void* buf, u64 size, u64 count, struct file* file);

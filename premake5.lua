@@ -4,3 +4,5 @@ workspace "openmv"
 include "core"
 include "logic"
 include "bootstrapper"
+
+include "util/packer"

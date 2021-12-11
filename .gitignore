@@ -25,6 +25,7 @@ tags
 Makefile
 workasm
 workasm.dll
+res.pck
 tags
 *.dll
 *.exe

@@ -7,7 +7,7 @@
 #include "bootstrapper.h"
 #include "dynlib.h"
 
-static const char* working_script_name = "./workasm.dll";
+const char* working_script_name = "./workasm.dll";
 
 typedef void (*script_on_init_func)();
 typedef void (*script_on_update_func)(double ts);
@@ -105,7 +105,11 @@ struct script_context* new_script_context(const char* lib_path) {
 		ctx->lib_mod_time = s.st_mtime;
 	}
 
+#ifdef RELEASE
+	working_script_name = lib_path;
+#else
 	copy_asm(lib_path);
+#endif
 
 	open_funcs(ctx);
 

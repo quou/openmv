@@ -1,0 +1,15 @@
+res/bmp/arms.bmp
+res/bmp/back.bmp
+res/bmp/bad.bmp
+res/bmp/char.bmp
+res/bmp/fx.bmp
+res/bmp/icon.bmp
+res/bmp/item.bmp
+res/bmp/overworld.bmp
+res/bmp/tsblue.bmp
+res/maps/overworld_test.dat
+res/maps/test_room.dat
+res/maps/test_room2.dat
+res/DejaVuSans.ttf
+res/DejaVuSansMono.ttf
+res/shaders/sprite.glsl
