@@ -12,11 +12,11 @@ make it a good engine. It is designed with non-linear platform games in mind.
  - [x] Resource management.
  - [x] Code hot-reloading for game logic.
  - [x] Windows support.
- - [ ] Physics.
+ - [x] Physics.
  - [ ] Audio.
  - [x] In-game GUI.
  - [x] Debug IMGUI.
- - [ ] Save-game system.
+ - [x] Save-game system.
  - [x] Room system.
  - [x] Resource Packing.
  - [x] Tilemap system.
