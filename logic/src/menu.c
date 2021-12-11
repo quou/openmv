@@ -253,6 +253,8 @@ void message_prompt(const char* text) {
 	ctx->current_character = 0;
 	ctx->on_submit = null;
 
+	ctx->timer = 0.0;
+
 	logic_store->frozen = true;
 }
 
@@ -268,6 +270,8 @@ void prompt_ask(const char* text, prompt_submit_func on_submit) {
 	ctx->current_character = 0;
 	ctx->on_submit = on_submit;
 	ctx->selected = false;
+
+	ctx->timer = 0.0;
 
 	logic_store->frozen = true;
 }

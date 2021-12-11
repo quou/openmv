@@ -69,6 +69,9 @@ void loadgame() {
 	struct world* world = logic_store->world;
 
 	FILE* file = fopen("savegame", "rb");
+	if (!file) {
+		return;
+	}
 
 	read_player(file);
 
