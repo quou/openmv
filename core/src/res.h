@@ -30,8 +30,8 @@ struct file {
 	u64 size;
 };
 
-struct file file_open(const char* path);
-bool file_good(struct file* file);
-void file_close(struct file* file);
-u64 file_seek(struct file* file, u64 offset);
-u64 file_read(void* buf, u64 size, u64 count, struct file* file);
+API struct file file_open(const char* path);
+API bool file_good(struct file* file);
+API void file_close(struct file* file);
+API u64 file_seek(struct file* file, u64 offset);
+API u64 file_read(void* buf, u64 size, u64 count, struct file* file);

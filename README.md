@@ -27,6 +27,11 @@ make it a good engine. It is designed with non-linear platform games in mind.
 Generate a Makefile using Premake. Requires a bunch of GCC extensions, because
 I am bad at programming; Just use GCC.
 
+Before you can run the game in release mode, build the `packer` project and run
+it from the project root to create a file named `res.pck` which contains all of
+the game's resources. The game reads from this file in release mode so that
+shipping the entire resource folder isn't required.
+
 Dependencies on Linux:
  - `libdl`
  - `libGL`
@@ -39,3 +44,8 @@ Dependencies on Windows:
  - `user32`
  - `kernel32`
  - `winmm`
+
+## Levels
+Levels are created using the Tiled level editor and exported using a custom binary
+format. An extension for Tiled to add this format can be found in
+`tiledext/mapformat.js`.

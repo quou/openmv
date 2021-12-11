@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,13 +25,13 @@ i32 main() {
 		return 1;
 	}
 
-	char* line = null;
+	char line[256];
 	u64 len = 0;
 	u64 read = 0;
 
 	file_count = 0;
 
-	while ((read = getline(&line, &len, list_f)) != -1) {
+	while (fgets(line, sizeof(line), list_f)) {
 		line[strlen(line) - 1] = '\0';
 
 		FILE* file = fopen(line, "r");
@@ -54,7 +53,7 @@ i32 main() {
 	for (u32 i = 0; i < file_count; i++) {
 		u64 hash = elf_hash(files[i], strlen(files[i]));
 
-		FILE* file = fopen(files[i], "r");
+		FILE* file = fopen(files[i], "rb");
 
 		fseek(file, 0, SEEK_END);
 
@@ -70,7 +69,7 @@ i32 main() {
 	}
 
 	for (u32 i = 0; i < file_count; i++) {
-		FILE* file = fopen(files[i], "r");
+		FILE* file = fopen(files[i], "rb");
 
 		fseek(file, 0, SEEK_END);
 		u64 file_size = ftell(file);
@@ -82,10 +81,6 @@ i32 main() {
 		}
 
 		fclose(file);
-	}
-
-	if (line) {
-		free(line);
 	}
 
 	fclose(out);
