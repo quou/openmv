@@ -483,6 +483,7 @@ void draw_room_forground(struct room* room, struct renderer* renderer) {
 		}
 	}
 }
+
 void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {
 	struct room* room = *room_ptr;
 

@@ -108,7 +108,7 @@ API void CALL on_init() {
 	struct world* world = new_world();
 	logic_store->world = world;
 
-	logic_store->room = load_room(world, "res/maps/test_room.dat");
+	logic_store->room = load_room(world, "res/maps/overworld_test.dat");
 
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);
