@@ -18,13 +18,14 @@ make it a good engine. It is designed with non-linear platform games in mind.
  - [x] Debug IMGUI.
  - [ ] Save-game system.
  - [x] Room system.
+ - [x] Resource Packing.
  - [x] Tilemap system.
  - [ ] Advanced Rendering (Post processing fx, etc.).
  - [ ] Actually make a damn game.
 
 ## Building
 Generate a Makefile using Premake. Requires a bunch of GCC extensions, because
-I am bad at programming.
+I am bad at programming; Just use GCC.
 
 Dependencies on Linux:
  - `libdl`
