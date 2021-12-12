@@ -402,7 +402,7 @@ v3f v3f_mul(v3f a, v3f b) {
 v3f v3f_cross(v3f a, v3f b) {
 	return make_v3f(
 			a.y * b.z - a.z * b.y,
-			a.z * b.x - a.y * b.z,
+			a.z * b.x - a.x * b.z,
 			a.x * b.y - a.y * b.x);
 }
 
@@ -594,7 +594,7 @@ v3d v3d_mul(v3d a, v3d b) {
 v3d v3d_cross(v3d a, v3d b) {
 	return make_v3d(
 			a.y * b.z - a.z * b.y,
-			a.z * b.x - a.y * b.z,
+			a.z * b.x - a.x * b.z,
 			a.x * b.y - a.y * b.x);
 }
 
@@ -675,7 +675,7 @@ v3u v3u_mul(v3u a, v3u b) {
 v3u v3u_cross(v3u a, v3u b) {
 	return make_v3u(
 			a.y * b.z - a.z * b.y,
-			a.z * b.x - a.y * b.z,
+			a.z * b.x - a.x * b.z,
 			a.x * b.y - a.y * b.x);
 }
 
@@ -756,7 +756,7 @@ v3i v3i_mul(v3i a, v3i b) {
 v3i v3i_cross(v3i a, v3i b) {
 	return make_v3i(
 			a.y * b.z - a.z * b.y,
-			a.z * b.x - a.y * b.z,
+			a.z * b.x - a.x * b.z,
 			a.x * b.y - a.y * b.x);
 }
 
