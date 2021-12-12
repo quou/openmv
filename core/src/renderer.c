@@ -311,9 +311,13 @@ struct font* load_font_from_memory(void* data, u64 filesize, float size) {
 	return font;
 
 fail:
-	if (font->data) { core_free(font->data); }
-	if (font) { core_free(font); }
-	return NULL;
+	if (font) {
+		if (font->data) {
+			core_free(font->data);
+		}
+		core_free(font);
+	}
+	return null;
 }
 
 void free_font(struct font* font) {
