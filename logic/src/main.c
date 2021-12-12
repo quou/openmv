@@ -114,7 +114,7 @@ API void CALL on_init() {
 	struct player* pc = get_component(world, player, struct player);
 
 	v2i spawn = get_spawn(logic_store->room);
-	pc->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
+	get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
 
 	logic_store->player = player;
 }

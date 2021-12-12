@@ -9,11 +9,11 @@
 static void on_bat_create(struct world* world, entity e, void* component) {
 	struct bat* bat = component;
 
-	bat->old_position = bat->position;
-	bat->offset = bat->position.y;
+	bat->old_position = get_component(world, e, struct transform)->position;
+	bat->offset = get_component(world, e, struct transform)->position.y;
 }
 
-entity new_bat(struct world* world, struct room* room, v2i position) {
+entity new_bat(struct world* world, struct room* room, v2f position) {
 	entity e = new_entity(world);
 
 	struct animated_sprite sprite = get_animated_sprite(animsprid_bat);
@@ -25,7 +25,7 @@ entity new_bat(struct world* world, struct room* room, v2i position) {
 		.dimentions = { sprite.frames[0].w * sprite_scale, sprite.frames[0].h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct bat, .position = make_v2f(position.x, position.y));
+	add_componentv(world, e, struct bat);
 	add_componentv(world, e, struct enemy, .collider = {
 		0, 0,
 		sprite.frames[0].w * sprite_scale,
@@ -42,9 +42,7 @@ void enemy_system(struct world* world, double ts) {
 
 		bat->offset += ts;
 
-		bat->position.y = bat->old_position.y + (float)sin(bat->offset) * 100.0f;
-
-		transform->position = make_v2i(bat->position.x, bat->position.y);
+		transform->position.y = bat->old_position.y + (float)sin(bat->offset) * 100.0f;
 	}
 
 	for (view(world, view, type_info(struct transform), type_info(struct enemy))) {

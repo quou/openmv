@@ -249,7 +249,7 @@ struct room* load_room(struct world* world, const char* path) {
 						file_read(&r, sizeof(r), 1, &file);
 
 						if (strcmp(obj_name, "bat") == 0) {
-							new_bat(world, room, make_v2i(r.x * sprite_scale, r.y * sprite_scale));
+							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
 						}
 
 						core_free(obj_name);

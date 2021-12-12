@@ -32,8 +32,6 @@ static void read_player(FILE* file) {
 	fread(&player->velocity.x, sizeof(player->velocity.x), 1, file);
 	fread(&player->velocity.y, sizeof(player->velocity.y), 1, file);
 
-	player->position = make_v2f(transform->position.x, transform->position.y);
-
 	fread(&player->items, sizeof(player->items), 1, file);
 }
 

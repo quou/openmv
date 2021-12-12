@@ -11,7 +11,6 @@ enum {
 };
 
 struct player {
-	v2f position;
 	v2f velocity;
 
 	struct rect collider;
@@ -62,7 +61,6 @@ struct projectile {
 	i32 face;
 	double lifetime;
 	float speed;
-	v2f position;
 	struct rect collider;
 
 	i32 damage;
@@ -76,7 +74,7 @@ struct anim_fx {
 
 void anim_fx_system(struct world* world, double ts);
 
-entity new_impact_effect(struct world* world, v2i position);
+entity new_impact_effect(struct world* world, v2f position);
 
 struct damage_num_fx {
 	char text[32];
@@ -87,4 +85,4 @@ struct damage_num_fx {
 
 void damage_fx_system(struct world* world, struct renderer* renderer, double ts);
 
-entity new_damage_number(struct world* world, v2i position, i32 number);
+entity new_damage_number(struct world* world, v2f position, i32 number);

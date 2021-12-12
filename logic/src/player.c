@@ -86,7 +86,6 @@ entity new_player_entity(struct world* world) {
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 });
 	add_componentv(world, e, struct player,
-		.position = { 128, 128 },
 		.collider = player_constants.left_collider,
 		.visible = true,
 
@@ -176,9 +175,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			player->dash_fx_time += ts;
 			if (player->dash_fx_time >= player_constants.dash_fx_interval) {
 				player->dash_fx_time = 0.0;
-				new_jetpack_particle(world, make_v2i(
-					transform->position.x + transform->dimentions.x / 2,
-					transform->position.y + transform->dimentions.y / 2));
+				new_jetpack_particle(world, v2f_add(transform->position,
+					v2f_div(make_v2f(transform->dimentions.x, transform->dimentions.y), make_v2f(2, 2))));
 			}
 
 			if (player->dash_time >= player_constants.max_dash) {
@@ -195,14 +193,14 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
-		player->position = v2f_add(player->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
+		transform->position = v2f_add(transform->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
-		handle_body_collisions(room, player->collider, &player->position, &player->velocity);
-		handle_body_transitions(room, player->collider, &player->position);
+		handle_body_collisions(room, player->collider, &transform->position, &player->velocity);
+		handle_body_transitions(room, player->collider, &transform->position);
 
 		struct rect player_rect = {
-			(i32)player->position.x + player->collider.x,
-			(i32)player->position.y + player->collider.y,
+			(i32)transform->position.x + player->collider.x,
+			(i32)transform->position.y + player->collider.y,
 			player->collider.w, player->collider.h
 		};
 		for (single_view(world, up_view, struct upgrade)) {
@@ -273,15 +271,14 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			entity projectile = new_entity(world);
 			add_componentv(world, projectile, struct transform,
 				.z = 100,
-				.position = make_v2i(player->position.x, player->position.y),
+				.position = v2f_add(transform->position,
+					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
 			add_component(world, projectile, struct sprite, sprite);
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
-				.position = v2f_add(player->position,
-					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
 				.damage = 4);
 
 			/* Spawn the muzzle flash */
@@ -289,10 +286,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			entity flash = new_entity(world);
 			add_componentv(world, flash, struct transform,
 				.z = 100,
-				.position = v2i_add(transform->position,
+				.position = v2f_add(transform->position,
 					player->face == player_face_right ?
-						make_v2i(player_constants.left_muzzle_pos.x, player_constants.left_muzzle_pos.y)
-						: make_v2i(player_constants.right_muzzle_pos.x, player_constants.right_muzzle_pos.y)),
+						make_v2f(player_constants.left_muzzle_pos.x, player_constants.left_muzzle_pos.y)
+						: make_v2f(player_constants.right_muzzle_pos.x, player_constants.right_muzzle_pos.y)),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
 			add_component(world, flash, struct animated_sprite, f_sprite);
 			add_componentv(world, flash, struct anim_fx);
@@ -305,8 +302,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		{
 			struct rect ground_test_rect = {
-				player->position.x + player->collider.x + 1,
-				player->position.y + player->collider.y + player->collider.h,
+				transform->position.x + player->collider.x + 1,
+				transform->position.y + player->collider.y + player->collider.h,
 				player->collider.w - 2,
 				player_constants.ground_hit_range
 			};
@@ -362,12 +359,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		sprite->hidden = !player->visible;
 
-		transform->position = make_v2i((i32)player->position.x, (i32)player->position.y);
+		float distance_to_player = sqrtf(powf(logic_store->camera_position.x - transform->position.x, 2)
+			+ powf(logic_store->camera_position.y - transform->position.y, 2));
 
-		float distance_to_player = sqrtf(powf(logic_store->camera_position.x - player->position.x, 2)
-			+ powf(logic_store->camera_position.y - player->position.y, 2));
-
-		v2f camera_dir = v2f_normalised(v2f_sub(player->position, logic_store->camera_position));
+		v2f camera_dir = v2f_normalised(v2f_sub(transform->position, logic_store->camera_position));
 
 		logic_store->camera_position.x += camera_dir.x * distance_to_player * ts * 10.0f;
 		logic_store->camera_position.y += camera_dir.y * distance_to_player * ts * 10.0f;
@@ -406,12 +401,10 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 		struct projectile* projectile = view_get(&view, struct projectile);
 
 		if (projectile->face == player_face_left) {
-			projectile->position.x -= projectile->speed * ts;
+			transform->position.x -= projectile->speed * ts;
 		} else {
-			projectile->position.x += projectile->speed * ts;
+			transform->position.x += projectile->speed * ts;
 		}
-
-		transform->position = make_v2i(projectile->position.x, projectile->position.y);
 
 		projectile->lifetime -= ts;
 		if (projectile->lifetime <= 0.0) {
@@ -431,7 +424,7 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 	}
 }
 
-entity new_impact_effect(struct world* world, v2i position) {
+entity new_impact_effect(struct world* world, v2f position) {
 	struct animated_sprite f_sprite = get_animated_sprite(animsprid_projectile_impact);
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform,
@@ -506,10 +499,10 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 	}
 }
 
-entity new_damage_number(struct world* world, v2i position, i32 number) {
+entity new_damage_number(struct world* world, v2f position, i32 number) {
 	entity e = new_entity(world);
 	add_componentv(world, e, struct damage_num_fx,
-		.position = make_v2f(position.x, position.y),
+		.position = position,
 		.velocity = 30.0,
 		.timer = 1.2);
 

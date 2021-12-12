@@ -4,7 +4,7 @@
 #include "fx.h"
 #include "sprites.h"
 
-entity new_jetpack_particle(struct world* world, v2i position) {
+entity new_jetpack_particle(struct world* world, v2f position) {
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform,
 		.position = position,

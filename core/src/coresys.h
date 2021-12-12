@@ -6,7 +6,7 @@
 
 struct transform {
 	const char* name;
-	v2i position;
+	v2f position;
 	v2i dimentions;
 	i32 rotation;
 	i32 z;

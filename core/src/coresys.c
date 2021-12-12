@@ -52,7 +52,7 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 		struct textured_quad quad = {
 			.texture = s->texture,
 			.rect = s->rect,
-			.position = t->position,
+			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
 			.rotation = t->rotation,
@@ -83,7 +83,7 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 		struct textured_quad quad = {
 			.texture = s->texture,
 			.rect = s->frames[s->current_frame],
-			.position = t->position,
+			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
 			.rotation = t->rotation,

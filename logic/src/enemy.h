@@ -11,11 +11,10 @@ struct enemy {
 };
 
 struct bat {
-	v2f position;
 	v2f old_position;
 	double offset;
 };
 
-entity new_bat(struct world* world, struct room* room, v2i position);
+entity new_bat(struct world* world, struct room* room, v2f position);
 
 void enemy_system(struct world* world, double ts);
