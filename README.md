@@ -13,7 +13,7 @@ make it a good engine. It is designed with non-linear platform games in mind.
  - [x] Code hot-reloading for game logic.
  - [x] Windows support.
  - [x] Physics.
- - [ ] Audio.
+ - [x] Audio.
  - [x] In-game GUI.
  - [x] Debug IMGUI.
  - [x] Save-game system.
