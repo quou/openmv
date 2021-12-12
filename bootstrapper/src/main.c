@@ -1,10 +1,11 @@
 #include <stdio.h>
 
+#include "audio.h"
 #include "bootstrapper.h"
 #include "core.h"
+#include "platform.h"
 #include "res.h"
 #include "video.h"
-#include "platform.h"
 
 int main() {
 	init_time();
@@ -12,6 +13,7 @@ int main() {
 	main_window = new_window(1366, 768, "OpenMV");
 
 	video_init();
+	audio_init();
 	res_init();
 
 	init_time();
@@ -28,7 +30,7 @@ int main() {
 		struct renderer* renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
 		u8* raw;
-		u32 raw_size;
+		u64 raw_size;
 		read_raw("res/DejaVuSansMono.ttf", &raw, &raw_size, false);
 
 		struct font* font = load_font_from_memory(raw, raw_size, 20.0f);
@@ -74,6 +76,8 @@ int main() {
 
 		swap_window(main_window);
 
+		audio_update();
+
 		now = get_time();
 		timestep = (double)(now - last) / (double)get_frequency();
 		last = now;
@@ -85,6 +89,8 @@ int main() {
 
 	call_on_deinit(scripts);
 	free_script_context(scripts);
+
+	audio_deinit();
 
 	res_deinit();
 

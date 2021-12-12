@@ -134,7 +134,7 @@ API void CALL on_update(double ts) {
 		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
 	}
-	
+
 	double time_scale;
 	if (logic_store->frozen || logic_store->paused) {
 		time_scale = 0.0;

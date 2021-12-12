@@ -11,6 +11,8 @@ project "core"
 	staticruntime "on"
 
 	files {
+		"src/audio.c",
+		"src/audio.h",
 		"src/common.h",
 		"src/core.c",
 		"src/core.h",
@@ -33,14 +35,14 @@ project "core"
 		"src/ui.c",
 		"src/ui.h",
 		"src/util",
-		"src/video.h",
-		"src/video_gl.c",
-		"src/util/glad.h",
-		"src/util/glad.c",
 		"src/util/KHR/khrplatform.h",
+		"src/util/glad.c",
+		"src/util/glad.h",
 		"src/util/stb_rect_pack.h",
 		"src/util/stb_truetype.h",
-		"src/util/util.c"
+		"src/util/util.c",
+		"src/video.h",
+		"src/video_gl.c"
 	}
 
 	includedirs {
@@ -56,7 +58,8 @@ project "core"
 			"X11",
 			"GL",
 			"m",
-			"dl"
+			"dl",
+			"pthread"
 		}
 
 	filter "system:windows"

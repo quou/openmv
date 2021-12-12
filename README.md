@@ -37,6 +37,7 @@ Dependencies on Linux:
  - `libGL`
  - `libm`
  - `libX11`
+ - `libpthread`
 
 Dependencies on Windows:
  - `opengl32`

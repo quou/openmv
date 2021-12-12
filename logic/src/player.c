@@ -88,7 +88,12 @@ entity new_player_entity(struct world* world) {
 	add_componentv(world, e, struct player,
 		.position = { 128, 128 },
 		.collider = player_constants.left_collider,
-		.visible = true);
+		.visible = true,
+
+		.jump_sound = load_audio_clip("res/aud/jump.wav"),
+		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
+		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
+		.fly_sound = load_audio_clip("res/aud/fly.wav"));
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
@@ -138,6 +143,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			player->dash_time = 0.0;
 			player->dash_count++;
 			player->dash_cooldown_timer = 0.0;
+
+			play_audio_clip(player->fly_sound);
 
 			if (key_pressed(main_window, mapped_key("up"))) {
 				player->velocity.y = -player_constants.dash_force;
@@ -236,6 +243,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 					new_damage_number(world, transform->position, -enemy->damage);
 
+					play_audio_clip(player->hurt_sound);
+
 					break;
 				}
 			}
@@ -256,6 +265,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		player->shoot_timer -= ts;
 		if (key_just_pressed(main_window, mapped_key("fire")) && player->shoot_timer <= 0.0) {
 			player->shoot_timer = player_constants.shoot_cooldown;
+
+			play_audio_clip(player->shoot_sound);
 
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
@@ -306,6 +317,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
 			player->velocity.y = player_constants.jump_force;
+			play_audio_clip(player->jump_sound);
 		}
 		
 		if (!player->on_ground && player->velocity.y < 0.0f && !key_pressed(main_window, mapped_key("jump"))) {

@@ -283,7 +283,7 @@ static struct glyph_set* get_glyph_set(struct font* font, i32 code_poi32) {
 	return font->sets[idx];
 }
 
-struct font* load_font_from_memory(void* data, i32 filesize, float size) {
+struct font* load_font_from_memory(void* data, u64 filesize, float size) {
 	struct font* font;
 	i32 r, ascent, descent, linegap;
 	float scale;

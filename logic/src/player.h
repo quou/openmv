@@ -1,5 +1,6 @@
 #pragma once
 
+#include "audio.h"
 #include "entity.h"
 #include "maths.h"
 #include "room.h"
@@ -38,6 +39,11 @@ struct player {
 	i32 face;
 
 	u32 items;
+
+	struct audio_clip* jump_sound;
+	struct audio_clip* shoot_sound;
+	struct audio_clip* hurt_sound;
+	struct audio_clip* fly_sound;
 };
 
 entity new_player_entity(struct world* world);

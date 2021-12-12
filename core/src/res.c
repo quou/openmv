@@ -9,7 +9,7 @@
 static const char* package_path = "res.pck";
 
 #if DEBUG
-bool read_raw(const char* path, u8** buf, u32* size, bool term) {
+bool read_raw(const char* path, u8** buf, u64* size, bool term) {
 	*buf = null;
 	size ? *size = 0 : 0;
 
@@ -20,11 +20,11 @@ bool read_raw(const char* path, u8** buf, u32* size, bool term) {
 	}
 
 	fseek(file, 0, SEEK_END);
-	const u32 file_size = ftell(file);
+	const u64 file_size = ftell(file);
 	rewind(file);
 
 	*buf = core_alloc(file_size + (term ? 1 : 0));
-	const u32 bytes_read = (u32)fread(*buf, sizeof(char), file_size, file);
+	const u64 bytes_read = fread(*buf, sizeof(char), file_size, file);
 	if (bytes_read < file_size) {
 		printf("Failed to read file: %s\n", path);
 	}
@@ -76,7 +76,7 @@ u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
 	return fread(buf, size, count, file->handle);
 }
 #else
-bool read_raw(const char* path, u8** buf, u32* size, bool term) {
+bool read_raw(const char* path, u8** buf, u64* size, bool term) {
 	FILE* file = fopen(package_path, "rb");
 	if (!file) {
 		fprintf(stderr, "Failed to open `%s'\n", package_path);
@@ -178,7 +178,8 @@ u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
 enum {
 	res_shader,
 	res_texture,
-	res_font
+	res_font,
+	res_audio_clip
 };
 
 struct res {
@@ -188,6 +189,7 @@ struct res {
 		struct texture* texture;
 		struct shader shader;
 		struct font* font;
+		struct audio_clip* audio_clip;
 	} as;
 };
 
@@ -207,7 +209,7 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	}
 
 	u8* raw;
-	u32 raw_size;
+	u64 raw_size;
 	read_raw(path, &raw, &raw_size, type == res_shader);
 
 	struct res new_res = { 0 };
@@ -227,6 +229,10 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 		case res_font:
 			new_res.as.font = load_font_from_memory(raw, raw_size, *(float*)udata);
 			break;
+		case res_audio_clip:
+			new_res.as.audio_clip = new_audio_clip(raw, raw_size);
+			break;
+		default: break;
 	}
 
 	table_set(res_table, cache_name, &new_res);
@@ -246,6 +252,10 @@ static void res_free(struct res* res) {
 		case res_font:
 			free_font(res->as.font);
 			break;
+		case res_audio_clip:
+			free_audio_clip(res->as.audio_clip);
+			break;
+		default: break;
 	}
 }
 
@@ -282,4 +292,8 @@ struct texture* load_texture(const char* path) {
 
 struct font* load_font(const char* path, float size) {
 	return res_load(path, res_font, &size)->as.font;
+}
+
+struct audio_clip* load_audio_clip(const char* path) {
+	return res_load(path, res_audio_clip, null)->as.audio_clip;
 }

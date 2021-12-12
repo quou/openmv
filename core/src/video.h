@@ -125,7 +125,7 @@ API i32 render_text(struct renderer* renderer, struct font* font,
 API i32 render_text_n(struct renderer* renderer, struct font* font,
 		const char* text, u32 n, i32 x, i32 y, struct color color);
 
-API struct font* load_font_from_memory(void* data, i32 filesize, float size);
+API struct font* load_font_from_memory(void* data, u64 filesize, float size);
 API void free_font(struct font* font);
 
 API void set_font_tab_size(struct font* font, i32 n);
