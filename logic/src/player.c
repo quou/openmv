@@ -196,7 +196,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		transform->position = v2f_add(transform->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
 		handle_body_collisions(room, player->collider, &transform->position, &player->velocity);
-		handle_body_transitions(room, player->collider, &transform->position);
+		handle_body_transitions(room, player->collider, view.e);
 
 		struct rect player_rect = {
 			(i32)transform->position.x + player->collider.x,

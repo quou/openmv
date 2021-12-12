@@ -526,8 +526,12 @@ char* get_room_path(struct room* room) {
 	return room->path;
 }
 
-void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* position) {
+void handle_body_transitions(struct room** room_ptr, struct rect collider, entity body) {
 	struct room* room = *room_ptr;
+
+	assert(has_component(room->world, body, struct transform));
+
+	v2f* position = &get_component(room->world, body, struct transform)->position;
 
 	struct rect body_rect = {
 		.x = collider.x + position->x,
@@ -557,6 +561,8 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, v2f* 
 
 		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
 		if (entrance_pos) {
+			position = &get_component(room->world, body, struct transform)->position;
+
 			position->x = entrance_pos->x - (collider.w / 2);
 			position->y = entrance_pos->y - collider.h;
 
