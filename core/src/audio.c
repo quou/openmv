@@ -144,6 +144,13 @@ void free_audio_clip(struct audio_clip* clip) {
 }
 
 void play_audio_clip(struct audio_clip* clip) {
+	for (u32 i = 0; i < audio.clip_count; i++) {
+		if (audio.clips[i] == clip) {
+			stop_audio_clip(audio.clips[i]);
+			break;
+		}
+	}
+
 	clip->decoder_config = ma_decoder_config_init(sample_format, channel_count, sample_rate);
 	ma_result r = ma_decoder_init_memory(clip->data, clip->data_size, &clip->decoder_config, &clip->decoder);
 	if (r != MA_SUCCESS) {
