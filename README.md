@@ -50,3 +50,12 @@ Dependencies on Windows:
 Levels are created using the Tiled level editor and exported using a custom binary
 format. An extension for Tiled to add this format can be found in
 `tiledext/mapformat.js`.
+
+## Stuff by Other People
+Below is a list of pieces of code that I didn't write:
+ - [glad](https://github.com/Dav1dde/glad).
+ - [miniaudio](https://miniaud.io/index.html).
+ - [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h)
+ - [stb_rect_pack](https://github.com/nothings/stb/blob/master/stb_rect_pack.h)
+
+Everything else was written by me, from scratch.
