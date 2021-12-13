@@ -306,10 +306,24 @@ void update_events(struct window* window) {
 				break;
 			}
 			case KeyRelease: {
-				sym = XLookupKeysym(&e.xkey, 0);
-				i32 key = search_key_table(&window->keymap, sym);
-				window->held_keys[key] = false;
-				window->released_keys[key] = true;
+				bool repeat = false;
+
+				if (XEventsQueued(window->display, QueuedAfterReading)) {
+					XEvent nev;
+					XPeekEvent(window->display, &nev);
+
+					if (nev.type == KeyPress && nev.xkey.time == e.xkey.time && nev.xkey.keycode == e.xkey.keycode) {
+						repeat = true;
+						XNextEvent(window->display, &e);
+					}
+				}
+
+				if (!repeat) {
+					sym = XLookupKeysym(&e.xkey, 0);
+					i32 key = search_key_table(&window->keymap, sym);
+					window->held_keys[key] = false;
+					window->released_keys[key] = true;
+				}
 				break;
 			}
 			case MotionNotify: {
