@@ -38,6 +38,10 @@ struct player {
 	i32 face;
 
 	u32 items;
+	u32 hp_ups;
+
+	i32 hp;
+	i32 max_hp;
 
 	struct audio_clip* jump_sound;
 	struct audio_clip* shoot_sound;
@@ -53,6 +57,12 @@ enum {
 };
 
 struct upgrade {
+	u32 id;
+	struct rect collider;
+};
+
+struct health_upgrade {
+	bool booster;
 	u32 id;
 	struct rect collider;
 };

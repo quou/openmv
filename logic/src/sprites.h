@@ -31,6 +31,8 @@ enum {
 	animsprid_projectile_impact,
 	animsprid_bat,
 	sprid_upgrade_jetpack,
+	sprid_upgrade_health_pack,
+	sprid_upgrade_health_booster,
 	sprid_fx_jetpack,
 	sprid_icon_ptr,
 	sprid_projectile

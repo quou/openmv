@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="130">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="132">
  <editorsettings>
   <export target="test_room.dat" format="dat"/>
  </editorsettings>
@@ -141,8 +141,18 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="5" name="upgrade_pickups" locked="1">
+ <objectgroup id="5" name="upgrade_pickups">
   <object id="116" name="jetpack" x="176" y="64" width="16" height="16"/>
+  <object id="130" template="../templates/health_pack.tx" x="16" y="288">
+   <properties>
+    <property name="id" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="131" template="../templates/health_booster.tx" x="80" y="480">
+   <properties>
+    <property name="id" type="int" value="4"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup color="#0000ff" id="4" name="entrances" locked="1">
   <object id="22" name="right" x="256" y="80">

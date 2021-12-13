@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="54">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="55">
  <editorsettings>
   <export target="test_room2.dat" format="dat"/>
  </editorsettings>
@@ -80,6 +80,13 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="9" name="upgrade_pickups">
+  <object id="54" template="../templates/health_booster.tx" x="96" y="96">
+   <properties>
+    <property name="id" type="int" value="8"/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="6" name="meta" locked="1">
   <object id="30" name="camera_bounds" x="0" y="0" width="224" height="176.333"/>
  </objectgroup>
@@ -95,7 +102,7 @@
   <object id="34" x="0" y="112" width="96" height="16"/>
   <object id="35" x="160" y="112" width="64" height="16"/>
  </objectgroup>
- <objectgroup id="8" name="slopes">
+ <objectgroup id="8" name="slopes" locked="1">
   <object id="41" x="144" y="144">
    <polyline points="0,0 -16,16"/>
   </object>

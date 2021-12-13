@@ -218,6 +218,7 @@ struct prompt_ctx {
 	struct font* font;
 
 	bool selected;
+	bool nullify;
 
 	prompt_submit_func on_submit;
 };
@@ -248,6 +249,10 @@ void message_prompt(const char* text) {
 		core_free(ctx->message);
 	}
 
+	if (ctx->nullify) {
+		ctx->nullify = false;
+	}
+
 	ctx->message = copy_string(text);
 	ctx->message_len = (u32)strlen(text);
 	ctx->current_character = 0;
@@ -263,6 +268,10 @@ void prompt_ask(const char* text, prompt_submit_func on_submit) {
 
 	if (ctx->message) {
 		core_free(ctx->message);
+	}
+
+	if (ctx->nullify) {
+		ctx->nullify = false;
 	}
 
 	ctx->message = copy_string(text);
@@ -349,11 +358,14 @@ void prompts_update(double ts) {
 				ctx->selected ? make_color(normal_color, 255) : make_color(selected_color, 255));
 
 			if (key_just_pressed(main_window, mapped_key("submit"))) {
+				ctx->nullify = true;
 				ctx->on_submit(ctx->selected);
 
-				ctx->message = null;
-				ctx->on_submit = null;
-				logic_store->frozen = false;
+				if (ctx->nullify) {
+					ctx->message = null;
+					ctx->on_submit = null;
+					logic_store->frozen = false;
+				}
 			}
 		}
 

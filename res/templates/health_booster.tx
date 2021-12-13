@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="health_booster" width="16" height="16">
+  <properties>
+   <property name="id" type="int" value="0"/>
+  </properties>
+ </object>
+</template>

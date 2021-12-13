@@ -12,6 +12,7 @@
 #include "platform.h"
 #include "player.h"
 #include "res.h"
+#include "savegame.h"
 #include "sprites.h"
 
 struct player_constants {
@@ -43,6 +44,10 @@ struct player_constants {
 
 	i32 max_air_dash;
 
+	i32 default_hp;
+	i32 health_pack_value;
+	i32 health_boost_value;
+
 	struct rect left_collider;
 	struct rect right_collider;
 };
@@ -69,16 +74,28 @@ const struct player_constants player_constants = {
 
 	.shoot_cooldown = 0.1,
 
-	.left_muzzle_pos =  { 12 * sprite_scale, 11 * sprite_scale },
-	.right_muzzle_pos = { 3  * sprite_scale, 11 * sprite_scale },
+	.left_muzzle_pos =  { 11 * sprite_scale, 11 * sprite_scale },
+	.right_muzzle_pos = { 4  * sprite_scale, 11 * sprite_scale },
 
 	.knockback = { 300.0f, 300.0f },
 
 	.max_air_dash = 3,
 
+	.default_hp = 3,
+	.health_pack_value = 3,
+	.health_boost_value = 3,
+
 	.right_collider = { 4 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale },
 	.left_collider =  { 3 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale }
 };
+
+static void on_player_die(bool yes) {
+	if (yes) {
+		loadgame();
+	} else {
+		set_window_should_close(main_window, true);
+	}
+}
 
 entity new_player_entity(struct world* world) {
 	struct texture* tex = load_texture("res/bmp/char.bmp");
@@ -88,6 +105,9 @@ entity new_player_entity(struct world* world) {
 	add_componentv(world, e, struct player,
 		.collider = player_constants.left_collider,
 		.visible = true,
+
+		.hp = player_constants.default_hp,
+		.max_hp = player_constants.default_hp,
 
 		.jump_sound = load_audio_clip("res/aud/jump.wav"),
 		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
@@ -219,6 +239,40 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		for (single_view(world, up_view, struct health_upgrade)) {
+			struct health_upgrade* upgrade = single_view_get(&up_view);
+
+			struct rect up_rect = {
+				upgrade->collider.x * sprite_scale,
+				upgrade->collider.y * sprite_scale,
+				upgrade->collider.w * sprite_scale,
+				upgrade->collider.h * sprite_scale,
+			};
+
+			if (rect_overlap(player_rect, up_rect, null)) {
+				if (upgrade->booster) {
+					player->max_hp += player_constants.health_boost_value;
+					player->hp = player->max_hp;
+
+					char buf[256];
+					sprintf(buf, "Max health increased by %d!", player_constants.health_boost_value);
+					message_prompt(buf);
+
+					printf("HP: %d\tMax HP: %d\n", player->hp, player->max_hp);
+				} else {
+					player->hp += player_constants.health_pack_value;
+
+					if (player->hp > player->max_hp) {
+						player->hp = player->max_hp;
+					}
+
+					printf("HP: %d\tMax HP: %d\n", player->hp, player->max_hp);
+				}
+				player->hp_ups |= upgrade->id;
+				destroy_entity(world, up_view.e);
+			}
+		}
+
 		if (!player->invul) {
 			for (view(world, e_view, type_info(struct transform), type_info(struct enemy))) {
 				struct transform* e_transform = view_get(&e_view, struct transform);
@@ -242,6 +296,12 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					new_damage_number(world, transform->position, -enemy->damage);
 
 					play_audio_clip(player->hurt_sound);
+
+					player->hp -= enemy->damage;
+
+					if (player->hp <= 0) {
+						prompt_ask("You have died. Want to retry?", on_player_die);
+					}
 
 					break;
 				}

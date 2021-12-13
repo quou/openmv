@@ -280,34 +280,62 @@ struct room* load_room(struct world* world, const char* path) {
 
 						file_read(&r, sizeof(r), 1, &file);
 
+						bool hp = false;
+						bool booster = false;
 						i32 sprite_id = -1;
 						i32 upgrade_id = -1;
 
 						if (strcmp(obj_name, "jetpack") == 0) {
 							sprite_id = sprid_upgrade_jetpack;
 							upgrade_id = upgrade_jetpack;
+						} else if (strcmp(obj_name, "health_pack") == 0) {
+							sprite_id = sprid_upgrade_health_pack;
+							hp = true;
+						} else if (strcmp(obj_name, "health_booster") == 0) {
+							sprite_id = sprid_upgrade_health_booster;
+							hp = true;
+							booster = true;
+						}
+
+						if (hp) {
+							file_read(&upgrade_id, sizeof(upgrade_id), 1, &file);
 						}
 
 						bool has_upgrade = false;
 						for (single_view(world, view, struct player)) {
 							struct player* player = single_view_get(&view);
-
-							if (player->items & upgrade_id) {
+							
+							if (hp && player->hp_ups & upgrade_id) {
+								has_upgrade = true;
+								break;
+							} else if (player->items & upgrade_id) {
 								has_upgrade = true;
 								break;
 							}
 						}
 
-						if (!has_upgrade && sprite_id != -1 && upgrade_id != -1) { 
-							struct sprite sprite = get_sprite(sprite_id);
+						if (!has_upgrade) {
+							if (hp && sprite_id != -1) {	
+								struct sprite sprite = get_sprite(sprite_id);
 
-							entity pickup = new_entity(world);
-							add_componentv(world, pickup, struct room_child, .parent = room);
-							add_componentv(world, pickup, struct transform,
-								.position = { r.x * sprite_scale, r.y * sprite_scale },
-								.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
-							add_component(world, pickup, struct sprite, sprite);
-							add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
+								entity pickup = new_entity(world);
+								add_componentv(world, pickup, struct room_child, .parent = room);
+								add_componentv(world, pickup, struct transform,
+									.position = { r.x * sprite_scale, r.y * sprite_scale },
+									.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+								add_component(world, pickup, struct sprite, sprite);
+								add_componentv(world, pickup, struct health_upgrade, .id = upgrade_id, .collider = r, .booster = booster);
+							} else if (sprite_id != -1 && upgrade_id != -1) { 
+								struct sprite sprite = get_sprite(sprite_id);
+
+								entity pickup = new_entity(world);
+								add_componentv(world, pickup, struct room_child, .parent = room);
+								add_componentv(world, pickup, struct transform,
+									.position = { r.x * sprite_scale, r.y * sprite_scale },
+									.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+								add_component(world, pickup, struct sprite, sprite);
+								add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
+							}
 						}
 
 						core_free(obj_name);

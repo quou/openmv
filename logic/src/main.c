@@ -43,6 +43,7 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 static void on_save_ask(bool yes) {
 	if (yes) {
 		savegame();
+		message_prompt("Game saved.");
 	}
 }
 

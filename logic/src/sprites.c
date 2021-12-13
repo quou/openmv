@@ -19,6 +19,18 @@ struct sprite sprites[] = {
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	},
+	[sprid_upgrade_health_pack] = {
+		.texture = texid_upgrades,
+		.rect = { 32, 0, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_upgrade_health_booster] = {
+		.texture = texid_upgrades,
+		.rect = { 16, 0, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
 	[sprid_fx_jetpack] = {
 		.texture = texid_fx,
 		.rect = { 0, 0, 8, 8 },

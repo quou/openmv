@@ -231,6 +231,11 @@ var dat_format = {
 							}
 							file.write(entrance_buf);
 						}
+					} else if (obj.name == "health_pack" || obj.name == "health_booster") {
+						var obj_id_buf = new ArrayBuffer(4);
+						var obj_id_view = new Uint32Array(obj_id_buf);
+						obj_id_view[0] = obj.property("id");
+						file.write(obj_id_buf);
 					}
 				}
 			} else {
