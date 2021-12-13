@@ -112,7 +112,8 @@ entity new_player_entity(struct world* world) {
 		.jump_sound = load_audio_clip("res/aud/jump.wav"),
 		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
 		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
-		.fly_sound = load_audio_clip("res/aud/fly.wav"));
+		.fly_sound = load_audio_clip("res/aud/fly.wav"),
+		.upgrade_sound = load_audio_clip("res/aud/upgrade.wav"));
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
@@ -235,6 +236,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			if (rect_overlap(player_rect, up_rect, null)) {
 				player->items |= upgrade->id;
+				play_audio_clip(player->upgrade_sound);
 				destroy_entity(world, up_view.e);
 			}
 		}
@@ -269,6 +271,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					printf("HP: %d\tMax HP: %d\n", player->hp, player->max_hp);
 				}
 				player->hp_ups |= upgrade->id;
+				play_audio_clip(player->upgrade_sound);
 				destroy_entity(world, up_view.e);
 			}
 		}

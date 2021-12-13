@@ -47,6 +47,7 @@ struct player {
 	struct audio_clip* shoot_sound;
 	struct audio_clip* hurt_sound;
 	struct audio_clip* fly_sound;
+	struct audio_clip* upgrade_sound;
 };
 
 entity new_player_entity(struct world* world);
