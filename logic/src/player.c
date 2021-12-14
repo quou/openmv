@@ -113,7 +113,8 @@ entity new_player_entity(struct world* world) {
 		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
 		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
 		.fly_sound = load_audio_clip("res/aud/fly.wav"),
-		.upgrade_sound = load_audio_clip("res/aud/upgrade.wav"));
+		.upgrade_sound = load_audio_clip("res/aud/upgrade.wav"),
+		.heart_sound = load_audio_clip("res/aud/heart.wav"));
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	
 	return e;
@@ -260,7 +261,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					sprintf(buf, "Max health increased by %d!", player_constants.health_boost_value);
 					message_prompt(buf);
 
-					printf("HP: %d\tMax HP: %d\n", player->hp, player->max_hp);
+					play_audio_clip(player->upgrade_sound);
 				} else {
 					player->hp += player_constants.health_pack_value;
 
@@ -268,10 +269,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 						player->hp = player->max_hp;
 					}
 
-					printf("HP: %d\tMax HP: %d\n", player->hp, player->max_hp);
+					play_audio_clip(player->heart_sound);
 				}
 				player->hp_ups |= upgrade->id;
-				play_audio_clip(player->upgrade_sound);
 				destroy_entity(world, up_view.e);
 			}
 		}
