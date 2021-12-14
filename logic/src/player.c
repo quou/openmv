@@ -259,14 +259,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		for (single_view(world, up_view, struct health_upgrade)) {
 			struct health_upgrade* upgrade = single_view_get(&up_view);
 
-			struct rect up_rect = {
-				upgrade->collider.x * sprite_scale,
-				upgrade->collider.y * sprite_scale,
-				upgrade->collider.w * sprite_scale,
-				upgrade->collider.h * sprite_scale,
-			};
-
-			if (rect_overlap(player_rect, up_rect, null)) {
+			if (rect_overlap(player_rect, upgrade->collider, null)) {
 				if (upgrade->booster) {
 					player->max_hp += player_constants.health_boost_value;
 					player->hp = player->max_hp;
@@ -285,7 +278,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 					play_audio_clip(player->heart_sound);
 				}
-				player->hp_ups |= upgrade->id;
+				if (upgrade->id != 0) {
+					player->hp_ups |= upgrade->id;
+				}
 				destroy_entity(world, up_view.e);
 			}
 		}
@@ -684,4 +679,19 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 		.collider = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
 	return e;
+}
+
+entity new_heart(struct world* world, struct room* room, v2f position) {
+	struct sprite sprite = get_sprite(sprid_upgrade_health_pack);
+
+	entity pickup = new_entity(world);
+	add_componentv(world, pickup, struct room_child, .parent = room);
+	add_componentv(world, pickup, struct transform, .position = position,
+		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+	add_component(world, pickup, struct sprite, sprite);
+	add_componentv(world, pickup, struct health_upgrade, .id = 0,
+		.collider = { position.x, position.y, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
+		.booster = false);
+
+	return pickup;
 }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <time.h>
 
 #include "audio.h"
 #include "bootstrapper.h"
@@ -8,6 +9,8 @@
 #include "video.h"
 
 int main() {
+	srand(time(null));
+
 	init_time();
 
 	main_window = new_window(1366, 768, "OpenMV");

@@ -153,3 +153,12 @@ u64 core_get_memory_usage() {
 	return 0;
 }
 #endif
+
+i32 random_int(i32 min, i32 max) {
+	return (rand() % (max - min + 1)) + min;
+}
+
+bool random_chance(double chance) {
+	double scale = rand() / (double)RAND_MAX;
+	return (scale * (100.0 - 0.0)) <= chance;
+}

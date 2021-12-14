@@ -124,8 +124,12 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				enemy->hp -= projectile->damage;
 
-				for (i32 i = 0; i < enemy->money_drop; i++) {
-					new_coin_pickup(world, room, transform->position);
+				if (random_chance(30)) {
+					new_heart(world, room, transform->position);
+				} else {
+					for (i32 i = 0; i < enemy->money_drop; i++) {
+						new_coin_pickup(world, room, transform->position);
+					}
 				}
 
 				if (enemy->hp <= 0) {
