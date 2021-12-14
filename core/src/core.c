@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,6 +46,11 @@ u64 memory_usage = 0;
 void* core_alloc(u64 size) {
 	u8* ptr = malloc(sizeof(u64) + size);
 
+	if (!ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
+
 	memcpy(ptr, &size, sizeof(u64));
 
 	memory_usage += size;
@@ -56,6 +62,11 @@ void* core_calloc(u64 count, u64 size) {
 	u64 alloc_size = count * size;
 
 	u8* ptr = malloc(sizeof(u64) + alloc_size);
+
+	if (!ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
 
 	memset(ptr + sizeof(u64), 0, alloc_size);
 
@@ -75,6 +86,11 @@ void* core_realloc(void* p, u64 size) {
 	}
 
 	void* new_ptr = realloc(ptr ? ptr - sizeof(u64) : null, sizeof(u64) + size);
+
+	if (!new_ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
 
 	memcpy(new_ptr, &size, sizeof(u64));
 
@@ -96,6 +112,43 @@ u64 core_get_memory_usage() {
 	return memory_usage;
 }
 #else
+void* core_alloc(u64 size) {
+	void* ptr = malloc(size);
+
+	if (!ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
+
+	return ptr;
+}
+
+void* core_calloc(u64 count, u64 size) {
+	void* ptr = calloc(count, size);
+
+	if (!ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
+
+	return ptr;
+}
+
+void* core_realloc(void* p, u64 size) {
+	void* ptr = realloc(p, size);
+
+	if (!ptr) {
+		fprintf(stderr, "Out of memory.\n");
+		abort();
+	}
+
+	return ptr;
+}
+
+void core_free(void* p) {
+	free(p);
+}
+
 u64 core_get_memory_usage() {
 	return 0;
 }
