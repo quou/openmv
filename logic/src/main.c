@@ -162,6 +162,8 @@ API void CALL on_update(double ts) {
 
 	renderer_flush(renderer);
 
+	hud_system(world, logic_store->ui_renderer);
+
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
 	} else {

@@ -48,6 +48,18 @@ struct sprite sprites[] = {
 		.rect = { 0, 0, 5, 2 },
 		.origin = { 0.5f, 0.5f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_hud_hp] = {
+		.texture = texid_icon,
+		.rect = { 19, 7, 36, 5 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_hud_hp_bar] = {
+		.texture = texid_icon,
+		.rect = { 56, 7, 1, 3 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 

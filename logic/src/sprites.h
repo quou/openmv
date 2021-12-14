@@ -35,7 +35,9 @@ enum {
 	sprid_upgrade_health_booster,
 	sprid_fx_jetpack,
 	sprid_icon_ptr,
-	sprid_projectile
+	sprid_projectile,
+	sprid_hud_hp,
+	sprid_hud_hp_bar
 };
 
 void preload_sprites();

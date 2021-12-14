@@ -422,6 +422,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		sprite->hidden = !player->visible;
 
+		/* Camera movement. */
 		float distance_to_player = sqrtf(powf(logic_store->camera_position.x - transform->position.x, 2)
 			+ powf(logic_store->camera_position.y - transform->position.y, 2));
 
@@ -455,6 +456,40 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		logic_store->camera_position = make_v2f(renderer->camera_pos.x, renderer->camera_pos.y);
+	}
+}
+
+void hud_system(struct world* world, struct renderer* renderer) {
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	for (single_view(world, view, struct player)) {
+		struct player* player = single_view_get(&view);
+
+		struct sprite hp_sprite = get_sprite(sprid_hud_hp);
+		struct sprite hp_bar_sprite = get_sprite(sprid_hud_hp_bar);
+		struct textured_quad hp_quad = {
+			.texture = hp_sprite.texture,
+			.position = { win_w - (hp_sprite.rect.w + 1) * sprite_scale, sprite_scale },
+			.dimentions = { hp_sprite.rect.w * sprite_scale, hp_sprite.rect.h * sprite_scale },
+			.rect = hp_sprite.rect,
+			.color = hp_sprite.color,
+		};
+		struct textured_quad hp_bar_quad = {
+			.texture = hp_sprite.texture,
+			.position = {
+				win_w - (hp_bar_sprite.rect.w + 35) * sprite_scale,
+				2 * sprite_scale
+			},
+			.dimentions = {
+				(i32)(((float)player->hp / (float)player->max_hp) * 25.0f) * sprite_scale,
+				hp_bar_sprite.rect.h * sprite_scale
+			},
+			.rect = hp_bar_sprite.rect,
+			.color = hp_bar_sprite.color,
+		};
+		renderer_push(renderer, &hp_quad);
+		renderer_push(renderer, &hp_bar_quad);
 	}
 }
 
