@@ -19,6 +19,7 @@ static void write_player(FILE* file) {
 	fwrite(&player->velocity.y, sizeof(player->velocity.y), 1, file);
 	fwrite(&player->hp, sizeof(player->hp), 1, file);
 	fwrite(&player->max_hp, sizeof(player->max_hp), 1, file);
+	fwrite(&player->money, sizeof(player->money), 1, file);
 
 	fwrite(&player->items, sizeof(player->items), 1, file);
 	fwrite(&player->hp_ups, sizeof(player->hp_ups), 1, file);
@@ -36,6 +37,7 @@ static void read_player(FILE* file) {
 	fread(&player->velocity.y, sizeof(player->velocity.y), 1, file);
 	fread(&player->hp, sizeof(player->hp), 1, file);
 	fread(&player->max_hp, sizeof(player->max_hp), 1, file);
+	fread(&player->money, sizeof(player->money), 1, file);
 
 	fread(&player->items, sizeof(player->items), 1, file);
 	fread(&player->hp_ups, sizeof(player->hp_ups), 1, file);

@@ -30,6 +30,7 @@ enum {
 	animsprid_muzzle_flash,
 	animsprid_projectile_impact,
 	animsprid_bat,
+	animsprid_coin,
 	sprid_upgrade_jetpack,
 	sprid_upgrade_health_pack,
 	sprid_upgrade_health_booster,

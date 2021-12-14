@@ -335,6 +335,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 					new_damage_number(world, transform->position, -enemy->damage);
 
+					player->hp -= enemy->damage;
 					play_audio_clip(player->hurt_sound);
 
 					if (player->hp <= 0) {
@@ -544,6 +545,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			coin_text_w += prim_numbers[idx].w + 1;
 		}
 
+		i32 xpos = 0;
 		for (char* c = coin_text; *c; c++) {
 			char idx = (*c - '0') + 1;
 			struct rect rect = prim_numbers[idx];
@@ -551,7 +553,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			struct textured_quad num_quad = {
 				.texture = get_texture(texid_icon),
 				.position = {
-					win_w - (coin_text_w + coin_sprite.rect.w + 1) * sprite_scale,
+					win_w - ((coin_text_w + coin_sprite.rect.w + 1) - xpos) * sprite_scale,
 					sprite_scale + coin_quad.dimentions.y + 3
 				},
 				.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale },
@@ -559,6 +561,8 @@ void hud_system(struct world* world, struct renderer* renderer) {
 				.color = make_color(0xffffffff, 255),
 			};
 			renderer_push(renderer, &num_quad);
+
+			xpos += rect.w + 1;
 		}
 	}
 }
@@ -669,13 +673,15 @@ entity new_damage_number(struct world* world, v2f position, i32 number) {
 entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 	entity e = new_entity(world);
 	
-	struct sprite sprite = get_sprite(sprid_coin);
+	struct animated_sprite sprite = get_animated_sprite(animsprid_coin);
+
+	struct rect rect = sprite.frames[0];
 
 	add_componentv(world, e, struct transform, .position = position,
-		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
-	add_component(world, e, struct sprite, sprite);
+		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
+	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct coin_pickup,
-		.collider = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+		.collider = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
 	return e;
 }

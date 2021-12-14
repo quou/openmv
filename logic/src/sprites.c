@@ -172,6 +172,18 @@ struct animated_sprite anim_sprites[] = {
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	},
+	[animsprid_coin] = {
+		.id = animsprid_coin,
+		.texture = texid_icon,
+		.frames = {
+			{ 60, 7, 6, 6 }, { 66, 7, 6, 6 }, { 72, 7, 6, 6 },
+			{ 78, 7, 6, 6 }, { 84, 7, 6, 6 }
+		},
+		.speed = 25,
+		.frame_count = 5,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	}
 };
 
 void preload_sprites() {
