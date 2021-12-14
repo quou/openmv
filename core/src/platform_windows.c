@@ -87,6 +87,9 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			return 0;
 		};
 		case WM_KEYDOWN: {
+			if (((29 << 30) & lparam) != 0) { /* Ignore repeat */
+				return 0;
+			}
 			i32 key = search_key_table(&window->keymap, wparam);
 			window->held_keys[key] = true;
 			window->pressed_keys[key] = true;

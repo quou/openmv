@@ -44,3 +44,4 @@ tags
 *.sln.docstates
 
 *.tiled-session
+.vscode
