@@ -15,6 +15,20 @@
 #include "savegame.h"
 #include "sprites.h"
 
+static struct rect prim_numbers[] = {
+	{ 66, 0, 4, 5 },
+	{ 19, 0, 4, 5 },
+	{ 24, 0, 1, 5 },
+	{ 26, 0, 4, 5 },
+	{ 31, 0, 4, 5 },
+	{ 36, 0, 4, 5 },
+	{ 41, 0, 4, 5 },
+	{ 46, 0, 4, 5 },
+	{ 51, 0, 4, 5 },
+	{ 56, 0, 4, 5 },
+	{ 61, 0, 4, 5 }
+};
+
 struct player_constants {
 	float move_speed;
 	float jump_force;
@@ -276,6 +290,29 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
+		for (view(world, c_view, type_info(struct transform), type_info(struct coin_pickup))) {
+			struct transform* c_transform = view_get(&c_view, struct transform);
+			struct coin_pickup* coin = view_get(&c_view, struct coin_pickup);
+
+			coin->velocity.y += player_constants.gravity * ts;
+
+			c_transform->position = v2f_add(c_transform->position, v2f_mul(coin->velocity, make_v2f(ts, ts)));
+	
+			handle_body_collisions(room, coin->collider, &c_transform->position, &coin->velocity);
+
+			struct rect c_rect = {
+				c_transform->position.x + coin->collider.x,
+				c_transform->position.y + coin->collider.y,
+				coin->collider.w, coin->collider.h
+			};
+
+			if (rect_overlap(player_rect, c_rect, null)) {
+				player->money++;
+				play_audio_clip(player->heart_sound);
+				destroy_entity(world, c_view.e);
+			}
+		}
+
 		if (!player->invul) {
 			for (view(world, e_view, type_info(struct transform), type_info(struct enemy))) {
 				struct transform* e_transform = view_get(&e_view, struct transform);
@@ -299,8 +336,6 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					new_damage_number(world, transform->position, -enemy->damage);
 
 					play_audio_clip(player->hurt_sound);
-
-					player->hp -= enemy->damage;
 
 					if (player->hp <= 0) {
 						prompt_ask("You have died. Want to retry?", on_player_die);
@@ -468,6 +503,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 
 		struct sprite hp_sprite = get_sprite(sprid_hud_hp);
 		struct sprite hp_bar_sprite = get_sprite(sprid_hud_hp_bar);
+		struct sprite coin_sprite = get_sprite(sprid_coin);
 		struct textured_quad hp_quad = {
 			.texture = hp_sprite.texture,
 			.position = { win_w - (hp_sprite.rect.w + 1) * sprite_scale, sprite_scale },
@@ -488,8 +524,42 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			.rect = hp_bar_sprite.rect,
 			.color = hp_bar_sprite.color,
 		};
+		struct textured_quad coin_quad = {
+			.texture = coin_sprite.texture,
+			.position = { win_w - (coin_sprite.rect.w + 1) * sprite_scale, sprite_scale * 2 + hp_quad.dimentions.y },
+			.dimentions = { coin_sprite.rect.w * sprite_scale, coin_sprite.rect.h * sprite_scale },
+			.rect = coin_sprite.rect,
+			.color = coin_sprite.color,
+		};
 		renderer_push(renderer, &hp_quad);
 		renderer_push(renderer, &hp_bar_quad);
+		renderer_push(renderer, &coin_quad);
+
+		char coin_text[32];
+		sprintf(coin_text, "%d", player->money);
+
+		i32 coin_text_w = 0;
+		for (char* c = coin_text; *c; c++) {	
+			char idx = (*c - '0') + 1;
+			coin_text_w += prim_numbers[idx].w + 1;
+		}
+
+		for (char* c = coin_text; *c; c++) {
+			char idx = (*c - '0') + 1;
+			struct rect rect = prim_numbers[idx];
+
+			struct textured_quad num_quad = {
+				.texture = get_texture(texid_icon),
+				.position = {
+					win_w - (coin_text_w + coin_sprite.rect.w + 1) * sprite_scale,
+					sprite_scale + coin_quad.dimentions.y + 3
+				},
+				.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale },
+				.rect = rect,
+				.color = make_color(0xffffffff, 255),
+			};
+			renderer_push(renderer, &num_quad);
+		}
 	}
 }
 
@@ -545,20 +615,6 @@ void anim_fx_system(struct world* world, double ts) {
 	}
 }
 
-static struct rect damage_numbers[] = {
-	{ 66, 0, 4, 5 },
-	{ 19, 0, 4, 5 },
-	{ 24, 0, 1, 5 },
-	{ 26, 0, 4, 5 },
-	{ 31, 0, 4, 5 },
-	{ 36, 0, 4, 5 },
-	{ 41, 0, 4, 5 },
-	{ 46, 0, 4, 5 },
-	{ 51, 0, 4, 5 },
-	{ 56, 0, 4, 5 },
-	{ 61, 0, 4, 5 }
-};
-
 void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
 	struct texture* atlas = get_texture(texid_icon);
 
@@ -572,9 +628,9 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 
 		for (char* c = d->text; *c; c++) {
 			char idx = (*c - '0') + 1;
-			struct rect rect = damage_numbers[idx];
+			struct rect rect = prim_numbers[idx];
 			if (*c == '-') {
-				rect = damage_numbers[0];
+				rect = prim_numbers[0];
 			}
 
 			struct textured_quad quad = {
@@ -582,7 +638,7 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 				.position = make_v2i(x + d->position.x, d->position.y),
 				.dimentions = make_v2i(rect.w * sprite_scale, rect.h * sprite_scale),
 				.rect = rect,
-				.color = { 255, 255, 255, d->timer > 1.0 ? 255 : (i32)(d->timer * 255) }
+				.color = { 197, 53, 53, d->timer > 1.0 ? 255 : (i32)(d->timer * 255) }
 			};
 
 			x += rect.w * sprite_scale;
@@ -606,6 +662,20 @@ entity new_damage_number(struct world* world, v2f position, i32 number) {
 
 	struct damage_num_fx* d = get_component(world, e, struct damage_num_fx);
 	sprintf(d->text, "%d", number);
+
+	return e;
+}
+
+entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
+	entity e = new_entity(world);
+	
+	struct sprite sprite = get_sprite(sprid_coin);
+
+	add_componentv(world, e, struct transform, .position = position,
+		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+	add_component(world, e, struct sprite, sprite);
+	add_componentv(world, e, struct coin_pickup,
+		.collider = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 
 	return e;
 }

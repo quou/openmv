@@ -150,7 +150,7 @@ API void CALL on_update(double ts) {
 	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (!logic_store->frozen && !logic_store->paused) { player_system(world, renderer, &logic_store->room, timestep); }
-	enemy_system(world, timestep);
+	enemy_system(world, logic_store->room, timestep);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);

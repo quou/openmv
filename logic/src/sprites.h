@@ -37,7 +37,8 @@ enum {
 	sprid_icon_ptr,
 	sprid_projectile,
 	sprid_hud_hp,
-	sprid_hud_hp_bar
+	sprid_hud_hp_bar,
+	sprid_coin,
 };
 
 void preload_sprites();

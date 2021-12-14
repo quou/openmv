@@ -7,6 +7,7 @@
 struct enemy {
 	i32 hp;
 	i32 damage;
+	i32 money_drop;
 	struct rect collider;
 };
 
@@ -30,4 +31,4 @@ struct path_follow {
 
 entity new_bat(struct world* world, struct room* room, v2f position, char* path_name);
 
-void enemy_system(struct world* world, double ts);
+void enemy_system(struct world* world, struct room* room, double ts);

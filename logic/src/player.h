@@ -43,6 +43,8 @@ struct player {
 	i32 hp;
 	i32 max_hp;
 
+	i32 money;
+
 	struct audio_clip* jump_sound;
 	struct audio_clip* shoot_sound;
 	struct audio_clip* hurt_sound;
@@ -69,6 +71,14 @@ struct health_upgrade {
 	u32 id;
 	struct rect collider;
 };
+
+struct coin_pickup {
+	v2f velocity;
+
+	struct rect collider;
+};
+
+entity new_coin_pickup(struct world* world, struct room* room, v2f position);
 
 struct projectile {
 	i32 face;

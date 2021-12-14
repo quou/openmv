@@ -52,13 +52,19 @@ struct sprite sprites[] = {
 	[sprid_hud_hp] = {
 		.texture = texid_icon,
 		.rect = { 19, 7, 36, 5 },
-		.origin = { 0.5f, 0.5f },
+		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	},
 	[sprid_hud_hp_bar] = {
 		.texture = texid_icon,
 		.rect = { 56, 7, 1, 3 },
-		.origin = { 0.5f, 0.5f },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_coin] = {	
+		.texture = texid_icon,
+		.rect = { 60, 7, 6, 6 },
+		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	}
 };

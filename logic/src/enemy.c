@@ -44,7 +44,7 @@ entity new_bat(struct world* world, struct room* room, v2f position, char* path_
 		0, 0,
 		sprite.frames[0].w * sprite_scale,
 		sprite.frames[0].h * sprite_scale },
-		.hp = 1, .damage = 1);
+		.hp = 1, .damage = 1, .money_drop = 1);
 
 	if (path_name) {
 		add_componentv(world, e, struct path_follow, .path_name = path_name, .room = room, .speed = 100.0f);
@@ -53,7 +53,7 @@ entity new_bat(struct world* world, struct room* room, v2f position, char* path_
 	return e;
 }
 
-void enemy_system(struct world* world, double ts) {
+void enemy_system(struct world* world, struct room* room, double ts) {
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct bat* bat = view_get(&view, struct bat);
@@ -123,6 +123,10 @@ void enemy_system(struct world* world, double ts) {
 				destroy_entity(world, p_view.e);
 
 				enemy->hp -= projectile->damage;
+
+				for (i32 i = 0; i < enemy->money_drop; i++) {
+					new_coin_pickup(world, room, transform->position);
+				}
 
 				if (enemy->hp <= 0) {
 					destroy_entity(world, view.e);
