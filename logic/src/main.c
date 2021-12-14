@@ -181,6 +181,9 @@ API void CALL on_update(double ts) {
 		sprintf(buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 		ui_text(ui, buf);
 
+		sprintf(buf, "Entities: %u", get_alive_entity_count(world));
+		ui_text(ui, buf);
+
 		sprintf(buf, "Pools: %u", get_component_pool_count(world));
 		ui_text(ui, buf);
 

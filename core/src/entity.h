@@ -69,6 +69,7 @@ API void destroy_entity(struct world* world, entity e);
 API bool entity_valid(struct world* world, entity e);
 
 API u32 get_component_pool_count(struct world* world);
+API u32 get_alive_entity_count(struct world* world);
 
 API void _set_component_create_func(struct world* world, struct type_info type, component_create_func f);
 API void _set_component_destroy_func(struct world* world, struct type_info type, component_create_func f);

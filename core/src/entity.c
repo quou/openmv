@@ -32,6 +32,8 @@ struct world {
 	u32 entity_count;
 	u32 entity_capacity;
 
+	u32 alive_entity_count;
+
 	entity_id avail_id;
 
 	i32 iteration_scope;
@@ -323,6 +325,8 @@ void free_world(struct world* world) {
 }
 
 entity new_entity(struct world* world) {
+	world->alive_entity_count++;
+	
 	if (world->avail_id == null_entity_id) {
 		return generate_entity(world);
 	} else {
@@ -339,6 +343,8 @@ void destroy_entity(struct world* world, entity e) {
 
 	const entity nv = get_entity_version(e) + 1;
 	release_entity(world, e, nv);
+
+	world->alive_entity_count--;
 }
 
 bool entity_valid(struct world* world, entity e) {
@@ -376,6 +382,10 @@ void* _get_component(struct world* world, entity e, struct type_info type) {
 
 u32 get_component_pool_count(struct world* world) {
 	return world->pool_count;
+}
+
+u32 get_alive_entity_count(struct world* world) {
+	return world->alive_entity_count;
 }
 
 struct single_view _new_single_view(struct world* world, struct type_info type) {
