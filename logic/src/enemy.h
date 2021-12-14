@@ -13,8 +13,21 @@ struct enemy {
 struct bat {
 	v2f old_position;
 	double offset;
+
+	char* path_name;
 };
 
-entity new_bat(struct world* world, struct room* room, v2f position);
+struct path_follow {
+	char* path_name;
+	struct room* room;
+
+	i32 node;
+	float speed;
+	bool reverse;
+
+	bool first_frame;
+};
+
+entity new_bat(struct world* world, struct room* room, v2f position, char* path_name);
 
 void enemy_system(struct world* world, double ts);

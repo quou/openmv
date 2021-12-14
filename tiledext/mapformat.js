@@ -1,3 +1,35 @@
+function fwrite_uint(val, file) {
+	var buf = new ArrayBuffer(4);
+	var view = new Uint32Array(buf);
+	view[0] = val;
+	file.write(buf);
+}
+
+function fwrite_int(val, file) {
+	var buf = new ArrayBuffer(4);
+	var view = new Int32Array(buf);
+	view[0] = val;
+	file.write(buf);
+}
+
+function fwrite_float(val, file) {
+	var buf = new ArrayBuffer(4);
+	var view = new Float32Array(buf);
+	view[0] = val;
+	file.write(buf);
+}
+
+function fwrite_string(string, file) {
+	fwrite_uint(string.length, file);
+
+	var string_buf = new ArrayBuffer(string.length);
+	var string_view = new Uint8Array(string_buf);
+	for (var i = 0; i < string.length; i++) {
+		string_view[i] = string.charCodeAt(i);
+	}
+	file.write(string_buf);
+}
+
 var dat_format = {
 	name: "OpenMV",
 	extension: "dat",
@@ -165,21 +197,9 @@ var dat_format = {
 				for (var ii = 0; ii < layer.objectCount; ii++) {
 					var obj = layer.objects[ii];
 
-					/* Write the object name */
-					var obj_name_len_buf = new ArrayBuffer(4);
-					var obj_name_len_view = new Uint32Array(obj_name_len_buf);
-					obj_name_len_view[0] = obj.name.length;
-					file.write(obj_name_len_buf);
-
-					var obj_name_buf = new ArrayBuffer(obj.name.length);
-					var obj_name_view = new Uint8Array(obj_name_buf);
-					for (var iii = 0; iii < obj.name.length; iii++) {
-						obj_name_view[iii] = obj.name.charCodeAt(iii);
-					}
-					file.write(obj_name_buf);
+					fwrite_string(obj.name, file);
 
 					/* Write the rectangle. */
-
 					if (layer.name == "slopes") {
 						for (var iii = 0; iii < 2; iii += 2) {
 							var rect_buf = new ArrayBuffer(4*4);
@@ -231,11 +251,21 @@ var dat_format = {
 							}
 							file.write(entrance_buf);
 						}
+					} else if (layer.name == "enemies") {
+						if (obj.property("path") != undefined && obj.property("path") != null) {
+							fwrite_string(obj.property("path"), file);
+						} else {
+							fwrite_uint(0, file);
+						}
+					} else if (layer.name == "enemy_paths") {
+						fwrite_uint(obj.polygon.length, file);
+
+						for (var iii = 0; iii < obj.polygon.length; iii++) {
+							fwrite_float(obj.x + obj.polygon[iii].x, file);
+							fwrite_float(obj.y + obj.polygon[iii].y, file);
+						}
 					} else if (obj.name == "health_pack" || obj.name == "health_booster") {
-						var obj_id_buf = new ArrayBuffer(4);
-						var obj_id_view = new Uint32Array(obj_id_buf);
-						obj_id_view[0] = obj.property("id");
-						file.write(obj_id_buf);
+						fwrite_uint(obj.property("id"), file);
 					}
 				}
 			} else {

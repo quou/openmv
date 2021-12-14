@@ -66,6 +66,7 @@ struct room {
 	u32 slope_collider_count;
 
 	struct table* entrances;
+	struct table* paths;
 
 	struct rect camera_bounds;
 
@@ -120,6 +121,7 @@ struct room* load_room(struct world* world, const char* path) {
 	room->path = copy_string(path);
 
 	room->entrances = new_table(sizeof(v2i));
+	room->paths = new_table(sizeof(struct path));
 
 	/* Load the tilesets. */
 	file_read(&room->tileset_count, sizeof(room->tileset_count), 1, &file);
@@ -241,6 +243,28 @@ struct room* load_room(struct world* world, const char* path) {
 
 						core_free(obj_name);
 					}
+				} else if (strcmp(layer->name, "enemy_paths") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						char* obj_name = read_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						struct path p = { 0 };
+						file_read(&p.count, sizeof(p.count), 1, &file);
+						p.points = core_alloc(sizeof(v2f) * p.count);
+
+						for (u32 iii = 0; iii < p.count; iii++) {
+							file_read(&p.points[iii].x, sizeof(float), 1, &file);
+							file_read(&p.points[iii].y, sizeof(float), 1, &file);
+
+							p.points[iii] = v2f_mul(p.points[iii], make_v2f(sprite_scale, sprite_scale));
+						}
+
+						table_set(room->paths, obj_name, &p);
+
+						core_free(obj_name);
+					}
 				} else if (strcmp(layer->name, "enemies") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
@@ -248,8 +272,14 @@ struct room* load_room(struct world* world, const char* path) {
 
 						file_read(&r, sizeof(r), 1, &file);
 
+						char* path_name = read_name(&file);
+						bool has_path = false;
+						if (strlen(path_name) > 0) {
+							has_path = true;
+						}
+
 						if (strcmp(obj_name, "bat") == 0) {
-							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
+							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale), has_path ? path_name : null);
 						}
 
 						core_free(obj_name);
@@ -416,6 +446,12 @@ void free_room(struct room* room) {
 	}
 
 	free_table(room->entrances);
+
+	for (struct table_iter i = new_table_iter(room->paths); table_iter_next(&i);) {
+		struct path* p = i.value;
+		core_free(p->points);
+	}
+	free_table(room->paths);
 
 	core_free(room);
 }
@@ -638,4 +674,8 @@ v2i get_spawn(struct room* room) {
 
 struct rect room_get_camera_bounds(struct room* room) {
 	return room->camera_bounds;
+}
+
+struct path* get_path(struct room* room, const char* name) {
+	return table_get(room->paths, name);
 }

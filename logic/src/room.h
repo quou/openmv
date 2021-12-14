@@ -6,6 +6,11 @@
 struct room;
 struct player;
 
+struct path {
+	v2f* points;
+	u32 count;
+};
+
 struct room* load_room(struct world* world, const char* path);
 void free_room(struct room* room);
 void draw_room(struct room* room, struct renderer* renderer, double ts);
@@ -18,6 +23,7 @@ char* get_room_path(struct room* room);
 
 v2i get_spawn(struct room* room);
 struct rect room_get_camera_bounds(struct room* room);
+struct path* get_path(struct room* room, const char* name);
 
 struct room_child {
 	struct room* parent;

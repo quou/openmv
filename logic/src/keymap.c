@@ -12,7 +12,7 @@
 	do { \
 		i32 k = k_; \
 		table_set(keymap, (n_), &k); \
-	} while (0) \
+	} while (0)
 
 extern struct logic_store* logic_store;
 
@@ -74,7 +74,7 @@ void load_keymap() {
 	while (!feof(file)) {
 		u32 len;
 		fread(&len, sizeof(len), 1, file);
-		char* name = core_alloc(len + 1);
+		char* name = core_calloc(len + 1, 1);
 		name[len] = '\0';
 		fread(name, 1, len, file);
 		i32 key;
