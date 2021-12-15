@@ -1,4 +1,7 @@
 # OpenMV
+
+![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/001.png)
+
 An open source metroidvania.
 
 Created from the ground up in C99.
