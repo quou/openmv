@@ -45,3 +45,5 @@ tags
 
 *.tiled-session
 .vscode
+
+/release/
