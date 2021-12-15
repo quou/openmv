@@ -66,6 +66,18 @@ struct sprite sprites[] = {
 		.rect = { 60, 7, 6, 6 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_door] = {
+		.texture = texid_tsblue,
+		.rect = { 48, 32, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_door_open] = {
+		.texture = texid_tsblue,
+		.rect = { 64, 32, 16, 16 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 

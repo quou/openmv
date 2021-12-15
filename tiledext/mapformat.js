@@ -220,7 +220,7 @@ var dat_format = {
 						file.write(rect_buf);
 					}
 
-					if (layer.name === "transition_triggers") {
+					if (layer.name === "transition_triggers" || layer.name == "doors") {
 						var change_to_prop = obj.property("change_to");
 						var entrance_prop = obj.property("entrance");
 

@@ -8,6 +8,7 @@
 #include "core.h"
 #include "coresys.h"
 #include "enemy.h"
+#include "keymap.h"
 #include "logic_store.h"
 #include "physics.h"
 #include "player.h"
@@ -52,6 +53,12 @@ struct transition_trigger {
 	char* entrance;
 };
 
+struct door {
+	struct rect rect;
+	char* change_to;
+	char* entrance;
+};
+
 struct room {
 	struct layer* layers;
 	u32 layer_count;
@@ -72,6 +79,9 @@ struct room {
 
 	struct transition_trigger* transition_triggers;
 	u32 transition_trigger_count;
+
+	struct door* doors;
+	u32 door_count;
 
 	struct font* name_font;
 
@@ -303,7 +313,26 @@ struct room* load_room(struct world* world, const char* path) {
 							.entrance = entrance
 						};
 					}
-				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
+				} else if (strcmp(layer->name, "doors") == 0) {
+					room->doors = core_alloc(sizeof(struct door) * object_count);
+					room->door_count = object_count;
+
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						char* change_to = read_name(&file);
+						char* entrance = read_name(&file);
+
+						room->doors[ii] = (struct door) {
+							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
+							.change_to = change_to,
+							.entrance = entrance
+						};
+					}
+				}else if (strcmp(layer->name, "upgrade_pickups") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
 						char* obj_name = read_name(&file);
@@ -447,6 +476,15 @@ void free_room(struct room* room) {
 		core_free(room->transition_triggers);
 	}
 
+	if (room->doors) {
+		for (u32 i = 0; i < room->door_count; i++) {
+			core_free(room->doors[i].change_to);
+			core_free(room->doors[i].entrance);
+		}
+
+		core_free(room->doors);
+	}
+
 	free_table(room->entrances);
 
 	for (struct table_iter i = new_table_iter(room->paths); table_iter_next(&i);) {
@@ -500,6 +538,20 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 				}
 			}
 		}
+	}
+
+	for (u32 i = 0; i < room->door_count; i++) {
+		struct sprite sprite = get_sprite(sprid_door);
+
+		struct textured_quad quad = {
+			.texture = sprite.texture,
+			.position = { room->doors[i].rect.x, room->doors[i].rect.y },
+			.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
+			.rect = sprite.rect,
+			.color = sprite.color
+		};
+
+		renderer_push(renderer, &quad);
 	}
 }
 
@@ -592,7 +644,7 @@ char* get_room_path(struct room* room) {
 	return room->path;
 }
 
-void handle_body_transitions(struct room** room_ptr, struct rect collider, entity body) {
+void handle_body_transitions(struct room** room_ptr, struct rect collider, entity body, bool body_on_ground) {
 	struct room* room = *room_ptr;
 
 	assert(has_component(room->world, body, struct transform));
@@ -616,9 +668,30 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, entit
 		}
 	}
 
+	struct door* door = null;
+	if (body_on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
+		for (u32 i = 0; i < room->door_count; i++) {
+			struct rect rect = room->doors[i].rect;
+
+			if (rect_overlap(body_rect, rect, null)) {
+				door = room->doors + i;
+				break;
+			}
+		}
+	}
+
+	char* change_to = null;
+	char* entrance = null;
+
 	if (transition) {
-		char* change_to = copy_string(transition->change_to);
-		char* entrance = copy_string(transition->entrance);
+		change_to = copy_string(transition->change_to);
+		entrance = copy_string(transition->entrance);
+	} else if (door) {
+		change_to = copy_string(door->change_to);
+		entrance = copy_string(door->entrance);
+	}
+
+	if (change_to && entrance) {
 		struct world* world = room->world;
 
 		free_room(room);

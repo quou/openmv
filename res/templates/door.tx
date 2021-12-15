@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object width="16" height="16">
+  <properties>
+   <property name="change_to" value=""/>
+   <property name="entrance" value=""/>
+  </properties>
+ </object>
+</template>
