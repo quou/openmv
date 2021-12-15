@@ -140,6 +140,7 @@ void free_audio_clip(struct audio_clip* clip) {
 
 	ma_decoder_uninit(&clip->decoder);
 
+	core_free(clip->data);
 	core_free(clip);
 }
 
