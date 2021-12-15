@@ -675,6 +675,7 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 	add_componentv(world, e, struct transform, .position = position,
 		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
+	add_componentv(world, e, struct room_child, .parent = room);
 	add_componentv(world, e, struct coin_pickup,
 		.collider = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
