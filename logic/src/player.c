@@ -239,20 +239,27 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			(i32)transform->position.y + player->collider.y,
 			player->collider.w, player->collider.h
 		};
-		for (single_view(world, up_view, struct upgrade)) {
-			struct upgrade* upgrade = single_view_get(&up_view);
+		if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
+			for (single_view(world, up_view, struct upgrade)) {
+				struct upgrade* upgrade = single_view_get(&up_view);
 
-			struct rect up_rect = {
-				upgrade->collider.x * sprite_scale,
-				upgrade->collider.y * sprite_scale,
-				upgrade->collider.w * sprite_scale,
-				upgrade->collider.h * sprite_scale,
-			};
+				struct rect up_rect = {
+					upgrade->collider.x * sprite_scale,
+					upgrade->collider.y * sprite_scale,
+					upgrade->collider.w * sprite_scale,
+					upgrade->collider.h * sprite_scale,
+				};
 
-			if (rect_overlap(player_rect, up_rect, null)) {
-				player->items |= upgrade->id;
-				play_audio_clip(player->upgrade_sound);
-				destroy_entity(world, up_view.e);
+				if (rect_overlap(player_rect, up_rect, null)) {
+					player->items |= upgrade->id;
+					play_audio_clip(player->upgrade_sound);
+
+					char buf[256];
+					sprintf(buf, "Obtained %s %s.", upgrade->prefix, upgrade->name);
+					message_prompt(buf);
+
+					destroy_entity(world, up_view.e);
+				}
 			}
 		}
 
@@ -261,14 +268,18 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			if (rect_overlap(player_rect, upgrade->collider, null)) {
 				if (upgrade->booster) {
-					player->max_hp += player_constants.health_boost_value;
-					player->hp = player->max_hp;
+					if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
+						player->max_hp += player_constants.health_boost_value;
+						player->hp = player->max_hp;
 
-					char buf[256];
-					sprintf(buf, "Max health increased by %d!", player_constants.health_boost_value);
-					message_prompt(buf);
+						char buf[256];
+						sprintf(buf, "Max health increased by %d!", player_constants.health_boost_value);
+						message_prompt(buf);
 
-					play_audio_clip(player->upgrade_sound);
+						play_audio_clip(player->upgrade_sound);
+					} else {
+						continue;
+					}
 				} else {
 					player->hp += upgrade->value == 0 ? player_constants.health_pack_value : upgrade->value;
 
@@ -695,4 +706,11 @@ entity new_heart(struct world* world, struct room* room, v2f position, i32 value
 		.booster = false, .value = value == 0 ? player_constants.health_pack_value : value);
 
 	return pickup;
+}
+
+void on_upgrade_destroy(struct world* world, entity e, void* component) {
+	struct upgrade* upgrade = component;
+
+	core_free(upgrade->name);
+	core_free(upgrade->prefix);
 }

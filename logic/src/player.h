@@ -66,7 +66,12 @@ enum {
 struct upgrade {
 	u32 id;
 	struct rect collider;
+
+	char* prefix;
+	char* name;
 };
+
+void on_upgrade_destroy(struct world* world, entity e, void* component);
 
 struct health_upgrade {
 	bool booster;

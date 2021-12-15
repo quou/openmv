@@ -338,6 +338,8 @@ struct room* load_room(struct world* world, const char* path) {
 						char* obj_name = read_name(&file);
 
 						file_read(&r, sizeof(r), 1, &file);
+						char* item_prefix = read_name(&file);
+						char* item_name = read_name(&file);
 
 						bool hp = false;
 						bool booster = false;
@@ -395,11 +397,14 @@ struct room* load_room(struct world* world, const char* path) {
 									.position = { r.x * sprite_scale, r.y * sprite_scale },
 									.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 								add_component(world, pickup, struct sprite, sprite);
-								add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r);
+								add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r,
+									.prefix = copy_string(item_prefix), .name = copy_string(item_name));
 							}
 						}
 
 						core_free(obj_name);
+						core_free(item_prefix);
+						core_free(item_name);
 					}
 				} else if (strcmp(layer->name, "meta") == 0) {
 					struct rect r;

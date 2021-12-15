@@ -264,8 +264,17 @@ var dat_format = {
 							fwrite_float(obj.x + obj.polygon[iii].x, file);
 							fwrite_float(obj.y + obj.polygon[iii].y, file);
 						}
-					} else if (obj.name == "health_pack" || obj.name == "health_booster") {
-						fwrite_uint(obj.property("id"), file);
+					} else if (layer.name == "upgrade_pickups") {
+						var prefix = obj.property("prefix");
+						var item_name = obj.property("name");
+						if (prefix == undefined || prefix == null) { prefix = "undefined" }
+						if (item_name == undefined || item_name == null) { item_name = "undefined" }
+						fwrite_string(prefix, file);
+						fwrite_string(item_name, file);
+
+						if (obj.name == "health_pack" || obj.name == "health_booster") {
+							fwrite_uint(obj.property("id"), file);
+						}
 					}
 				}
 			} else {

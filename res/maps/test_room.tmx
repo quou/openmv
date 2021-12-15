@@ -157,8 +157,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="5" name="upgrade_pickups" locked="1">
-  <object id="116" name="jetpack" x="176" y="64" width="16" height="16"/>
+ <objectgroup id="5" name="upgrade_pickups">
   <object id="130" template="../templates/health_pack.tx" x="16" y="288">
    <properties>
     <property name="id" type="int" value="2"/>

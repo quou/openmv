@@ -3,6 +3,9 @@
  <editorsettings>
   <export target="test_room3.dat" format="dat"/>
  </editorsettings>
+ <properties>
+  <property name="name" value="Small Room"/>
+ </properties>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
  <tileset firstgid="16" source="../tilesets/backgrounds.tsx"/>
  <layer id="2" name="background" width="9" height="10">

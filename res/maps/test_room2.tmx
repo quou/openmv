@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="55">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="58">
  <editorsettings>
   <export target="test_room2.dat" format="dat"/>
  </editorsettings>
@@ -44,7 +44,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="1" name="forground" width="32" height="32">
+ <layer id="1" name="forground" width="32" height="32" locked="1">
   <data encoding="csv">
 7,7,7,7,7,7,7,7,7,7,7,7,7,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 7,7,7,0,0,0,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -80,10 +80,29 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="9" name="upgrade_pickups" locked="1">
+ <objectgroup id="10" name="enemies" locked="1">
+  <object id="55" name="bat" x="192" y="48">
+   <properties>
+    <property name="path" value="bat_a"/>
+   </properties>
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="11" name="enemy_paths" locked="1">
+  <object id="56" name="bat_a" x="192" y="48">
+   <polyline points="0,0 -48,-16 -111.667,-23 -129.333,-8 -127.333,-3"/>
+  </object>
+ </objectgroup>
+ <objectgroup id="9" name="upgrade_pickups">
   <object id="54" template="../templates/health_booster.tx" x="96" y="96">
    <properties>
     <property name="id" type="int" value="8"/>
+   </properties>
+  </object>
+  <object id="57" name="jetpack" x="176" y="96" width="16" height="16">
+   <properties>
+    <property name="name" value="Rocket Pack"/>
+    <property name="prefix" value="the"/>
    </properties>
   </object>
  </objectgroup>
