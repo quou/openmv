@@ -57,7 +57,7 @@ entity new_player_entity(struct world* world);
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts);
 void hud_system(struct world* world, struct renderer* renderer);
 
-entity new_heart(struct world* world, struct room* room, v2f position);
+entity new_heart(struct world* world, struct room* room, v2f position, i32 value);
 
 enum {
 	upgrade_jetpack = 1 << 0
@@ -71,6 +71,7 @@ struct upgrade {
 struct health_upgrade {
 	bool booster;
 	u32 id;
+	i32 value;
 	struct rect collider;
 };
 

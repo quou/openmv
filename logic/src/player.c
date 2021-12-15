@@ -270,7 +270,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 					play_audio_clip(player->upgrade_sound);
 				} else {
-					player->hp += player_constants.health_pack_value;
+					player->hp += upgrade->value == 0 ? player_constants.health_pack_value : upgrade->value;
 
 					if (player->hp > player->max_hp) {
 						player->hp = player->max_hp;
@@ -681,7 +681,7 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 	return e;
 }
 
-entity new_heart(struct world* world, struct room* room, v2f position) {
+entity new_heart(struct world* world, struct room* room, v2f position, i32 value) {
 	struct sprite sprite = get_sprite(sprid_upgrade_health_pack);
 
 	entity pickup = new_entity(world);
@@ -691,7 +691,7 @@ entity new_heart(struct world* world, struct room* room, v2f position) {
 	add_component(world, pickup, struct sprite, sprite);
 	add_componentv(world, pickup, struct health_upgrade, .id = 0,
 		.collider = { position.x, position.y, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
-		.booster = false);
+		.booster = false, .value = value == 0 ? player_constants.health_pack_value : value);
 
 	return pickup;
 }
