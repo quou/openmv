@@ -23,11 +23,27 @@ struct tile {
 	i16 tileset_id;
 };
 
+#define anim_tile_frame_count 32
+#define anim_tile_max 64
+
+struct animated_tile {
+	bool exists;
+
+	i16 frames[anim_tile_frame_count];
+	double durations[anim_tile_frame_count];
+
+	u32 frame_count;
+	u32 current_frame;
+	double timer;
+};
+
 struct tileset {
 	struct texture* image;
 	char* name;
 	i32 tile_w, tile_h;
 	i32 tile_count;
+
+	struct animated_tile animations[anim_tile_max];
 };
 
 enum {
@@ -159,6 +175,37 @@ struct room* load_room(struct world* world, const char* path) {
 		/* Read the tile width and height */
 		file_read(&current->tile_w, sizeof(current->tile_w), 1, &file);
 		file_read(&current->tile_h, sizeof(current->tile_h), 1, &file);
+
+		for (u32 ii = 0; ii < anim_tile_max; ii++) {
+			current->animations[ii].exists = false;
+		}
+
+		/* Load animations. */
+		u32 animation_count;
+		file_read(&animation_count, sizeof(animation_count), 1, &file);
+		
+		for (u32 ii = 0; ii < animation_count; ii++) {
+			u32 frame_count;
+			u32 id;
+			file_read(&frame_count, sizeof(frame_count), 1, &file);
+			file_read(&id, sizeof(id), 1, &file);
+
+			struct animated_tile* tile = current->animations + id;
+			tile->frame_count = frame_count;
+			tile->timer = 0.0;
+			tile->exists = true;
+			tile->current_frame = 0;
+
+			for (u32 iii = 0; iii < frame_count; iii++) {
+				i32 tile_id;
+				i32 duration;
+				file_read(&tile_id, sizeof(tile_id), 1, &file);
+				file_read(&duration, sizeof(duration), 1, &file);
+				
+				tile->frames[iii] = tile_id;
+				tile->durations[iii] = (double)duration * 0.001;
+			}
+		}
 	}
 
 	/* Load the tile layers */	
@@ -513,83 +560,8 @@ void free_room(struct room* room) {
 	core_free(room);
 }
 
-void draw_room(struct room* room, struct renderer* renderer, double ts) {
-	if (room->name_timer >= 0.0) {
-		room->name_timer -= ts;
-	
-		i32 win_w, win_h;
-		query_window(main_window, &win_w, &win_h);
-
-		i32 text_w = text_width(room->name_font, room->name);
-		i32 text_h = text_height(room->name_font);
-
-		render_text(logic_store->ui_renderer, room->name_font, room->name,
-			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
-	}
-
-	for (u32 i = 0; i < room->layer_count; i++) {
-		struct layer* layer = room->layers + i;
-
-		if (layer->type == layer_tiles && room->forground_index != i) {
-			v2i cam_pos = renderer->camera_pos;
-			v2i cam_top_corner = v2i_sub(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
-			v2i cam_bot_corner = v2i_add(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
-
-			i32 start_x = cam_top_corner.x / (room->tilesets[0].tile_w * sprite_scale);
-			i32 start_y = cam_top_corner.y / (room->tilesets[0].tile_h * sprite_scale);
-			i32 end_x =   (cam_bot_corner.x / (room->tilesets[0].tile_w * sprite_scale)) + 1;
-			i32 end_y =   (cam_bot_corner.y / (room->tilesets[0].tile_h * sprite_scale)) + 1;
-
-			start_x = start_x < 0 ? 0 : start_x;
-			start_y = start_y < 0 ? 0 : start_y;
-			end_x = end_x > layer->as.tile_layer.w ? layer->as.tile_layer.w : end_x;
-			end_y = end_y > layer->as.tile_layer.h ? layer->as.tile_layer.h : end_y;
-
-			for (u32 y = start_y; y < end_y; y++) {
-				for (u32 x = start_x; x < end_x; x++) {
-					struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
-					if (tile.id != -1) {
-						struct tileset* set = room->tilesets + tile.tileset_id;
-
-						struct textured_quad quad = {
-							.texture = set->image,
-							.position = { x * set->tile_w * sprite_scale, y * set->tile_h * sprite_scale },
-							.dimentions = { set->tile_w * sprite_scale, set->tile_h * sprite_scale },
-							.rect = {
-								.x = ((tile.id % (set->image->width  / set->tile_w)) * set->tile_w),
-								.y = ((tile.id / (set->image->width / set->tile_h)) * set->tile_h),
-								.w = set->tile_w,
-								.h = set->tile_h
-							},
-							.color = { 255, 255, 255, 255 }
-						};
-
-						renderer_push(renderer, &quad);
-					}
-				}
-			}
-		}
-	}
-
-	for (u32 i = 0; i < room->door_count; i++) {
-		struct sprite sprite = get_sprite(sprid_door);
-
-		struct textured_quad quad = {
-			.texture = sprite.texture,
-			.position = { room->doors[i].rect.x, room->doors[i].rect.y },
-			.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
-			.rect = sprite.rect,
-			.color = sprite.color
-		};
-
-		renderer_push(renderer, &quad);
-	}
-}
-
-void draw_room_forground(struct room* room, struct renderer* renderer) {
-	struct layer* layer = room->layers + room->forground_index;
-
-	if (layer->type == layer_tiles) {
+static void draw_tile_layer(struct room* room, struct renderer* renderer, struct layer* layer, i32 idx) {
+	if (layer->type == layer_tiles && (idx == -1 || room->forground_index != idx)) {
 		v2i cam_pos = renderer->camera_pos;
 		v2i cam_top_corner = v2i_sub(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
 		v2i cam_bot_corner = v2i_add(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
@@ -623,11 +595,81 @@ void draw_room_forground(struct room* room, struct renderer* renderer) {
 						.color = { 255, 255, 255, 255 }
 					};
 
+					if (set->animations[tile.id].exists) {
+						struct animated_tile* at = set->animations + tile.id;
+
+						quad.rect = (struct rect) {	
+							.x = ((at->frames[at->current_frame] % (set->image->width  / set->tile_w)) * set->tile_w),
+							.y = ((at->frames[at->current_frame] / (set->image->width / set->tile_h)) * set->tile_h),
+							.w = set->tile_w,
+							.h = set->tile_h
+						};
+					}
+
 					renderer_push(renderer, &quad);
 				}
 			}
 		}
 	}
+}
+
+void draw_room(struct room* room, struct renderer* renderer, double ts) {
+	if (room->name_timer >= 0.0) {
+		room->name_timer -= ts;
+	
+		i32 win_w, win_h;
+		query_window(main_window, &win_w, &win_h);
+
+		i32 text_w = text_width(room->name_font, room->name);
+		i32 text_h = text_height(room->name_font);
+
+		render_text(logic_store->ui_renderer, room->name_font, room->name,
+			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
+	}
+
+	/* Update tile animations
+	 *
+	 * TODO: Move this to a separate update function. */
+	for (u32 i = 0; i < room->tileset_count; i++) {
+		for (u32 ii = 0; ii < anim_tile_max; ii++) {
+			struct animated_tile* at = room->tilesets[i].animations + ii;
+
+			at->timer += ts;
+			if (at->timer > at->durations[at->current_frame]) {
+				at->timer = 0.0;
+				at->current_frame++;
+				if (at->current_frame > at->frame_count) {
+					at->current_frame = 0;
+				}
+			}
+		}
+	}
+
+	for (u32 i = 0; i < room->layer_count; i++) {
+		struct layer* layer = room->layers + i;
+
+		draw_tile_layer(room, renderer, layer, i);
+	}
+
+	for (u32 i = 0; i < room->door_count; i++) {
+		struct sprite sprite = get_sprite(sprid_door);
+
+		struct textured_quad quad = {
+			.texture = sprite.texture,
+			.position = { room->doors[i].rect.x, room->doors[i].rect.y },
+			.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
+			.rect = sprite.rect,
+			.color = sprite.color
+		};
+
+		renderer_push(renderer, &quad);
+	}
+}
+
+void draw_room_forground(struct room* room, struct renderer* renderer) {
+	struct layer* layer = room->layers + room->forground_index;
+
+	draw_tile_layer(room, renderer, layer, -1);
 }
 
 void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {

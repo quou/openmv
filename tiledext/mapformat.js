@@ -61,57 +61,48 @@ var dat_format = {
 		var tilesets = map.usedTilesets();
 
 		/* Write the amount of tilesets. */
-		var tileset_count_buf = new ArrayBuffer(4);
-		var tileset_count_view = new Uint32Array(tileset_count_buf);
-		tileset_count_view[0] = tilesets.length;
-		file.write(tileset_count_buf);
+		fwrite_uint(tilesets.length, file);
 
 		/* Write the tilesets */
 		for (var i = 0; i < tilesets.length; i++) {
 			var tileset = tilesets[i];
 
-			/* Write the name length, followed by the name string. */
-			var name_len_buf = new ArrayBuffer(4);
-			var name_len_view = new Uint32Array(name_len_buf);
-			name_len_view[0] = tileset.name.length;
-			file.write(name_len_buf);
-
-			var name_buf = new ArrayBuffer(tileset.name.length);
-			var name_view = new Uint8Array(name_buf);
-			for (var ii = 0; ii < tileset.name.length; ii++) {
-				name_view[ii] = tileset.name.charCodeAt(ii);
-			}
-			file.write(name_buf);
+			fwrite_string(tileset.name, file);
 
 			var image_path = tileset.image.substring(
 					tileset.image.lastIndexOf("res"),
 					tileset.image.length);
 
-			/* Write the image path length, followed by the image path string. */
-			var image_path_len_buf = new ArrayBuffer(4);
-			var image_path_len_view = new Uint32Array(image_path_len_buf);
-			image_path_len_view[0] = image_path.length;
-			file.write(image_path_len_buf);
+			fwrite_string(image_path, file);
 
-			var image_path_buf = new ArrayBuffer(image_path.length);
-			var image_path_view = new Uint8Array(image_path_buf);
-			for (var ii = 0; ii < image_path.length; ii++) {
-				image_path_view[ii] = image_path.charCodeAt(ii);
+			fwrite_uint(tileset.tileCount, file);
+			fwrite_uint(tileset.tileWidth, file);
+			fwrite_uint(tileset.tileHeight, file);
+
+			var animation_count = 0;
+			for (var ii = 0; ii < tileset.tiles.length; ii++) {
+				var tile = tileset.tiles[ii];
+
+				if (tile.animated) {
+					animation_count++;
+				}
 			}
-			file.write(image_path_buf);
 
-			/* Write tile count */
-			var tile_count_buf = new ArrayBuffer(4);
-			var tile_count_view = new Uint32Array(tile_count_buf);
-			tile_count_view[0] = tileset.tileCount;
-			file.write(tile_count_buf);
+			fwrite_uint(animation_count, file);
 
-			/* Write tile size */
-			var size_buf = new ArrayBuffer(8);
-			var size_view = new Uint32Array(size_buf);
-			size_view[0] = tileset.tileSize.width;
-			size_view[1] = tileset.tileSize.height;
-			file.write(size_buf);
+			for (var ii = 0; ii < tileset.tiles.length; ii++) {
+				var tile = tileset.tiles[ii];
+
+				if (tile.animated) {
+					fwrite_uint(tile.frames.length, file);
+					fwrite_uint(tile.id, file);
+				}
+
+				for (var iii = 0; iii < tile.frames.length; iii++) {
+					fwrite_uint(tile.frames[iii].tileId, file);
+					fwrite_uint(tile.frames[iii].duration, file);
+				}
+			}
 		}
 
 		/* Write the layer count */
