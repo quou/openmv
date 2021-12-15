@@ -78,6 +78,12 @@ struct sprite sprites[] = {
 		.rect = { 64, 32, 16, 16 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_terminal] = {
+		.texture = texid_upgrades,
+		.rect = { 48, 11, 16, 21 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 

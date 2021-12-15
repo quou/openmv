@@ -14,6 +14,7 @@
 #include "player.h"
 #include "res.h"
 #include "room.h"
+#include "savegame.h"
 #include "sprites.h"
 #include "table.h"
 
@@ -332,7 +333,18 @@ struct room* load_room(struct world* world, const char* path) {
 							.entrance = entrance
 						};
 					}
-				}else if (strcmp(layer->name, "upgrade_pickups") == 0) {
+				} else if (strcmp(layer->name, "save_points") == 0) {
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						new_save_point(world, room, (struct rect) {
+							r.x * sprite_scale, r.y * sprite_scale,
+							r.w * sprite_scale, r.h * sprite_scale });
+					}
+				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
 					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
 						char* obj_name = read_name(&file);
@@ -649,7 +661,7 @@ char* get_room_path(struct room* room) {
 	return room->path;
 }
 
-void handle_body_transitions(struct room** room_ptr, struct rect collider, entity body, bool body_on_ground) {
+void handle_body_interactions(struct room** room_ptr, struct rect collider, entity body, bool body_on_ground) {
 	struct room* room = *room_ptr;
 
 	assert(has_component(room->world, body, struct transform));
@@ -681,6 +693,14 @@ void handle_body_transitions(struct room** room_ptr, struct rect collider, entit
 			if (rect_overlap(body_rect, rect, null)) {
 				door = room->doors + i;
 				break;
+			}
+		}
+
+		for (single_view(room->world, view, struct save_point)) {
+			struct save_point* sp = single_view_get(&view);
+
+			if (rect_overlap(body_rect, sp->rect, null)) {
+				ask_savegame();
 			}
 		}
 	}
@@ -758,4 +778,18 @@ struct rect room_get_camera_bounds(struct room* room) {
 
 struct path* get_path(struct room* room, const char* name) {
 	return table_get(room->paths, name);
+}
+
+entity new_save_point(struct world* world, struct room* room, struct rect rect) {
+	struct sprite sprite = get_sprite(sprid_terminal);
+
+	entity e = new_entity(world);
+	add_componentv(world, e, struct room_child, .parent = room);
+	add_componentv(world, e, struct transform, .position = { rect.x, rect.y - 5 * sprite_scale },
+		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+	add_component(world, e, struct sprite, sprite);
+	add_componentv(world, e, struct room_child, .parent = room);
+	add_componentv(world, e, struct save_point, .rect = rect);
+
+	return e;
 }

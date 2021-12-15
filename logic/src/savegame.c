@@ -98,3 +98,14 @@ void loadgame() {
 
 	fclose(file);
 }
+
+static void on_save_ask(bool yes) {
+	if (yes) {
+		savegame();
+		message_prompt("Game saved.");
+	}
+}
+
+void ask_savegame() {
+	prompt_ask("Do you want to save?", on_save_ask);
+}

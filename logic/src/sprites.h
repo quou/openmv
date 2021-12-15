@@ -42,7 +42,8 @@ enum {
 	sprid_hud_hp_bar,
 	sprid_coin,
 	sprid_door,
-	sprid_door_open
+	sprid_door_open,
+	sprid_terminal
 };
 
 void preload_sprites();
