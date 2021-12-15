@@ -111,7 +111,7 @@ API void CALL on_init() {
 
 	set_component_destroy_func(world, struct upgrade, on_upgrade_destroy);
 
-	logic_store->room = load_room(world, "res/maps/cave.dat");
+	logic_store->room = load_room(world, "res/maps/test_room.dat");
 
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);

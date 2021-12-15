@@ -531,8 +531,22 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 		struct layer* layer = room->layers + i;
 
 		if (layer->type == layer_tiles && room->forground_index != i) {
-			for (u32 y = 0; y < layer->as.tile_layer.h; y++) {
-				for (u32 x = 0; x < layer->as.tile_layer.w; x++) {
+			v2i cam_pos = renderer->camera_pos;
+			v2i cam_top_corner = v2i_sub(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
+			v2i cam_bot_corner = v2i_add(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
+
+			i32 start_x = cam_top_corner.x / (room->tilesets[0].tile_w * sprite_scale);
+			i32 start_y = cam_top_corner.y / (room->tilesets[0].tile_h * sprite_scale);
+			i32 end_x =   (cam_bot_corner.x / (room->tilesets[0].tile_w * sprite_scale)) + 1;
+			i32 end_y =   (cam_bot_corner.y / (room->tilesets[0].tile_h * sprite_scale)) + 1;
+
+			start_x = start_x < 0 ? 0 : start_x;
+			start_y = start_y < 0 ? 0 : start_y;
+			end_x = end_x > layer->as.tile_layer.w ? layer->as.tile_layer.w : end_x;
+			end_y = end_y > layer->as.tile_layer.h ? layer->as.tile_layer.h : end_y;
+
+			for (u32 y = start_y; y < end_y; y++) {
+				for (u32 x = start_x; x < end_x; x++) {
 					struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
 					if (tile.id != -1) {
 						struct tileset* set = room->tilesets + tile.tileset_id;
@@ -576,8 +590,22 @@ void draw_room_forground(struct room* room, struct renderer* renderer) {
 	struct layer* layer = room->layers + room->forground_index;
 
 	if (layer->type == layer_tiles) {
-		for (u32 y = 0; y < layer->as.tile_layer.h; y++) {
-			for (u32 x = 0; x < layer->as.tile_layer.w; x++) {
+		v2i cam_pos = renderer->camera_pos;
+		v2i cam_top_corner = v2i_sub(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
+		v2i cam_bot_corner = v2i_add(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
+
+		i32 start_x = cam_top_corner.x / (room->tilesets[0].tile_w * sprite_scale);
+		i32 start_y = cam_top_corner.y / (room->tilesets[0].tile_h * sprite_scale);
+		i32 end_x =   (cam_bot_corner.x / (room->tilesets[0].tile_w * sprite_scale)) + 1;
+		i32 end_y =   (cam_bot_corner.y / (room->tilesets[0].tile_h * sprite_scale)) + 1;
+
+		start_x = start_x < 0 ? 0 : start_x;
+		start_y = start_y < 0 ? 0 : start_y;
+		end_x = end_x > layer->as.tile_layer.w ? layer->as.tile_layer.w : end_x;
+		end_y = end_y > layer->as.tile_layer.h ? layer->as.tile_layer.h : end_y;
+
+		for (u32 y = start_y; y < end_y; y++) {
+			for (u32 x = start_x; x < end_x; x++) {
 				struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
 				if (tile.id != -1) {
 					struct tileset* set = room->tilesets + tile.tileset_id;
