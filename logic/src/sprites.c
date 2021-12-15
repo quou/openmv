@@ -183,6 +183,18 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 5,
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_blood] = {
+		.id = animsprid_coin,
+		.texture = texid_fx,
+		.frames = {
+			{ 0, 24, 16, 16 }, { 16, 24, 16, 16 }, { 0, 40, 16, 16 },
+			{ 16, 40, 16, 16 }, { 0, 56, 16, 16 }, { 16, 56, 16, 16 }
+		},
+		.speed = 25,
+		.frame_count = 6,
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }	
 	}
 };
 

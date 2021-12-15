@@ -584,20 +584,20 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			};
 
 			if (rect_room_overlap(room, rect, null)) {
-				new_impact_effect(world, transform->position);
+				new_impact_effect(world, transform->position, animsprid_projectile_impact);
 				destroy_entity(world, view.e);
 			}
 		}
 	}
 }
 
-entity new_impact_effect(struct world* world, v2f position) {
-	struct animated_sprite f_sprite = get_animated_sprite(animsprid_projectile_impact);
+entity new_impact_effect(struct world* world, v2f position, u32 anim_id) {
+	struct animated_sprite f_sprite = get_animated_sprite(anim_id);
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform,
 		.z = 100,
 		.position = position,
-		.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
+		.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(f_sprite.frames[0].w, f_sprite.frames[0].h)));
 	add_component(world, e, struct animated_sprite, f_sprite);
 	add_componentv(world, e, struct anim_fx);
 	return e;

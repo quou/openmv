@@ -100,7 +100,7 @@ struct anim_fx {
 
 void anim_fx_system(struct world* world, double ts);
 
-entity new_impact_effect(struct world* world, v2f position);
+entity new_impact_effect(struct world* world, v2f position, u32 anim_id);
 
 struct damage_num_fx {
 	char text[32];

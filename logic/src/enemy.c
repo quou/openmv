@@ -116,7 +116,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			};
 
 			if (rect_overlap(e_rect, p_rect, null)) {
-				new_impact_effect(world, p_transform->position);
+				new_impact_effect(world, p_transform->position, animsprid_blood);
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }
 				new_damage_number(world, transform->position, -dmg);

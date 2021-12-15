@@ -29,6 +29,7 @@ enum {
 	animsprid_player_idle_left,
 	animsprid_muzzle_flash,
 	animsprid_projectile_impact,
+	animsprid_blood,
 	animsprid_bat,
 	animsprid_coin,
 	sprid_upgrade_jetpack,
