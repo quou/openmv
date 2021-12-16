@@ -56,9 +56,10 @@ format. An extension for Tiled to add this format can be found in
 
 ## Stuff by Other People
 Below is a list of pieces of code that I didn't write:
+ - [Lua](https://lua.org).
  - [glad](https://github.com/Dav1dde/glad).
  - [miniaudio](https://miniaud.io/index.html).
- - [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h)
- - [stb_rect_pack](https://github.com/nothings/stb/blob/master/stb_rect_pack.h)
+ - [stb_rect_pack](https://github.com/nothings/stb/blob/master/stb_rect_pack.h).
+ - [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h).
 
 Everything else was written by me, from scratch.

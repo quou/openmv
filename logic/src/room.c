@@ -7,6 +7,7 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
+#include "dialogue.h"
 #include "enemy.h"
 #include "keymap.h"
 #include "logic_store.h"
@@ -76,6 +77,11 @@ struct door {
 	char* entrance;
 };
 
+struct dialogue {
+	struct dialogue_script* script;
+	struct rect rect;
+};
+
 struct room {
 	struct layer* layers;
 	u32 layer_count;
@@ -99,6 +105,9 @@ struct room {
 
 	struct door* doors;
 	u32 door_count;
+
+	struct dialogue* dialogue;
+	u32 dialogue_count;
 
 	struct font* name_font;
 
@@ -481,6 +490,25 @@ struct room* load_room(struct world* world, const char* path) {
 
 						core_free(obj_name);
 					}
+				} else if (strcmp(layer->name, "dialogue_triggers") == 0) {
+					room->dialogue = core_alloc(object_count * sizeof(struct dialogue));
+					room->dialogue_count = object_count;
+					
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						char* source = read_name(&file);
+
+						room->dialogue[ii] = (struct dialogue) {
+							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
+							.script = new_dialogue_script(source)
+						};
+
+						core_free(source);
+					}
 				}
 			} break;
 			default: break;
@@ -547,6 +575,14 @@ void free_room(struct room* room) {
 		}
 
 		core_free(room->doors);
+	}
+
+	if (room->dialogue) {
+		for (u32 i = 0; i < room->dialogue_count; i++) {
+			free_dialogue_script(room->dialogue[i].script);
+		}
+		
+		core_free(room->dialogue);
 	}
 
 	free_table(room->entrances);
@@ -643,6 +679,10 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 				}
 			}
 		}
+	}
+
+	for (u32 i = 0; i < room->dialogue_count; i++) {
+		update_dialogue(room->dialogue[i].script);
 	}
 
 	for (u32 i = 0; i < room->layer_count; i++) {
@@ -773,6 +813,12 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 				ask_savegame();
 			}
 		}
+
+		for (u32 i = 0; i < room->dialogue_count; i++) {
+			if (rect_overlap(body_rect, room->dialogue[i].rect, null)) {
+				play_dialogue(room->dialogue[i].script);
+			}
+		}
 	}
 
 	char* change_to = null;
@@ -807,7 +853,7 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 
 		core_free(change_to);
 		core_free(entrance);
-	}
+	}	
 }
 
 bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {

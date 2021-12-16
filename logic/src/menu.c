@@ -221,6 +221,9 @@ struct prompt_ctx {
 	bool nullify;
 
 	prompt_submit_func on_submit;
+	prompt_finish_func on_finish;
+
+	void *udata;
 };
 
 void prompts_init(struct font* font) {
@@ -243,6 +246,10 @@ void prompts_deinit() {
 }
 
 void message_prompt(const char* text) {
+	message_prompt_ex(text, null, null);
+}
+
+void message_prompt_ex(const char* text, prompt_finish_func on_finish, void* udata) {
 	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
 
 	if (ctx->message) {
@@ -259,6 +266,9 @@ void message_prompt(const char* text) {
 	ctx->on_submit = null;
 
 	ctx->timer = 0.0;
+
+	ctx->udata = udata;
+	ctx->on_finish = on_finish;
 
 	logic_store->frozen = true;
 }
@@ -371,6 +381,11 @@ void prompts_update(double ts) {
 
 		if (!ctx->on_submit && ctx->current_character >= ctx->message_len - 1 && 
 				(key_just_pressed(main_window, mapped_key("submit")) || key_just_pressed(main_window, mapped_key("jump")))) {
+
+			if (ctx->on_finish) {
+				ctx->on_finish(ctx->udata);
+			}
+
 			ctx->message = null;
 			logic_store->frozen = false;
 		}

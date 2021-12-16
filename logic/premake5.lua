@@ -17,10 +17,12 @@ project "logic"
 
 	includedirs {
 		"src",
-		"../core/src"
+		"../core/src",
+		"../lua54/src"
 	}
 
 	links {
+		"lua54",
 		"core"
 	}
 

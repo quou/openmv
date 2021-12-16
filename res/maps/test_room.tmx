@@ -149,7 +149,7 @@
    <polyline points="0,0 -62.6667,19 -38.3333,64.3333 -34.3333,105.333 -20,160.667"/>
   </object>
  </objectgroup>
- <objectgroup color="#ff0000" id="3" name="transition_triggers" locked="1">
+ <objectgroup color="#ff0000" id="3" name="transition_triggers">
   <object id="26" template="../templates/transition_trigger.tx" x="272" y="48">
    <properties>
     <property name="change_to" value="res/maps/test_room2.dat"/>
@@ -157,7 +157,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="5" name="upgrade_pickups">
+ <objectgroup id="5" name="upgrade_pickups" locked="1">
   <object id="130" template="../templates/health_pack.tx" x="16" y="288">
    <properties>
     <property name="id" type="int" value="2"/>

@@ -266,6 +266,8 @@ var dat_format = {
 						if (obj.name == "health_pack" || obj.name == "health_booster") {
 							fwrite_uint(obj.property("id"), file);
 						}
+					} else if (layer.name == "dialogue_triggers") {
+						fwrite_string(obj.property("script"), file);
 					}
 				}
 			} else {
