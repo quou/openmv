@@ -9,6 +9,8 @@ struct dialogue_script {
 	lua_State* L;
 
 	bool want_next;
+
+	char* ask_name;
 };
 
 static void check_lua(lua_State* L, int r) {
@@ -77,6 +79,48 @@ static i32 l_message(lua_State* L) {
 	return 0;
 }
 
+static void on_ask(bool yes, void* udata) {
+	struct dialogue_script* script = udata;
+
+	script->want_next = true;
+
+	lua_State* L = script->L;
+	lua_getglobal(L, script->ask_name);
+
+	if (lua_isnil(L, -1)) { goto end; }
+
+	if (lua_isfunction(L, -1)) {
+		lua_pushboolean(L, yes);
+		check_lua(L, lua_pcall(L, 1, 1, 0));
+	} else {
+		luaL_error(L, "`%s' must be a function.\n", script->ask_name);
+	}
+
+end:
+	lua_pop(L, 1);
+
+	lua_settop(L, 0);
+
+}
+
+static i32 l_ask(lua_State* L) {
+	lua_getglobal(L, "_g_script");
+	struct dialogue_script* script = *((struct dialogue_script**)lua_touserdata(L, -1));
+
+	if (script->ask_name) {
+		core_free(script->ask_name);
+	}
+
+	script->ask_name = copy_string(luaL_checkstring(L, 2));
+
+	const char* text = luaL_checkstring(L, 1);
+	prompt_ask(text, on_ask, script);
+
+	script->want_next = false;
+
+	return 0;
+}
+
 struct dialogue_script* new_dialogue_script(const char* source) {
 	struct dialogue_script* script = core_calloc(1, sizeof(struct dialogue_script));
 
@@ -91,6 +135,9 @@ struct dialogue_script* new_dialogue_script(const char* source) {
 
 	lua_pushcfunction(L, l_message);
 	lua_setglobal(L, "message");
+
+	lua_pushcfunction(L, l_ask);
+	lua_setglobal(L, "ask");
 
 	check_lua(L, luaL_dostring(L, source));
 

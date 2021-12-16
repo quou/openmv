@@ -103,7 +103,7 @@ const struct player_constants player_constants = {
 	.left_collider =  { 3 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale }
 };
 
-static void on_player_die(bool yes) {
+static void on_player_die(bool yes, void* udata) {
 	if (yes) {
 		loadgame();
 	} else {
@@ -345,7 +345,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					play_audio_clip(player->hurt_sound);
 
 					if (player->hp <= 0) {
-						prompt_ask("You have died. Want to retry?", on_player_die);
+						prompt_ask("You have died. Want to retry?", on_player_die, null);
 					}
 
 					break;

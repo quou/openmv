@@ -40,14 +40,14 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 	ui_text_input_event(ui, text);
 }
 
-static void on_save_ask(bool yes) {
+static void on_save_ask(bool yes, void* udata) {
 	if (yes) {
 		savegame();
 		message_prompt("Game saved.");
 	}
 }
 
-static void on_load_ask(bool yes) {
+static void on_load_ask(bool yes, void* udata) {
 	if (yes) {
 		loadgame();
 	}
@@ -58,25 +58,25 @@ static void on_resume(struct menu* menu) {
 }
 
 static void on_save(struct menu* menu) {
-	prompt_ask("Do you want to save?", on_save_ask);
+	prompt_ask("Do you want to save?", on_save_ask, null);
 
 	logic_store->paused = false;
 }
 
 static void on_load(struct menu* menu) {
-	prompt_ask("Do you want to load?", on_load_ask);
+	prompt_ask("Do you want to load?", on_load_ask, null);
 
 	logic_store->paused = false;
 }
 
-static void on_quit_ask(bool yes) {
+static void on_quit_ask(bool yes, void* udata) {
 	if (yes) {
 		set_window_should_close(main_window, true);
 	}
 }
 
 static void on_quit(struct menu* menu) {
-	prompt_ask("Do you want to stop playing? Unsaved progress will be lost!", on_quit_ask);
+	prompt_ask("Do you want to stop playing? Unsaved progress will be lost!", on_quit_ask, null);
 	logic_store->paused = false;
 }
 

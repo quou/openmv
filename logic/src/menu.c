@@ -273,7 +273,7 @@ void message_prompt_ex(const char* text, prompt_finish_func on_finish, void* uda
 	logic_store->frozen = true;
 }
 
-void prompt_ask(const char* text, prompt_submit_func on_submit) {
+void prompt_ask(const char* text, prompt_submit_func on_submit, void* udata) {
 	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
 
 	if (ctx->message) {
@@ -289,6 +289,7 @@ void prompt_ask(const char* text, prompt_submit_func on_submit) {
 	ctx->current_character = 0;
 	ctx->on_submit = on_submit;
 	ctx->selected = false;
+	ctx->udata = udata;
 
 	ctx->timer = 0.0;
 
@@ -369,7 +370,7 @@ void prompts_update(double ts) {
 
 			if (key_just_pressed(main_window, mapped_key("submit"))) {
 				ctx->nullify = true;
-				ctx->on_submit(ctx->selected);
+				ctx->on_submit(ctx->selected, ctx->udata);
 
 				if (ctx->nullify) {
 					ctx->message = null;

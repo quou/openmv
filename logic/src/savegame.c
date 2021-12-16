@@ -99,7 +99,7 @@ void loadgame() {
 	fclose(file);
 }
 
-static void on_save_ask(bool yes) {
+static void on_save_ask(bool yes, void* udata) {
 	if (yes) {
 		savegame();
 		message_prompt("Game saved.");
@@ -107,5 +107,5 @@ static void on_save_ask(bool yes) {
 }
 
 void ask_savegame() {
-	prompt_ask("Do you want to save?", on_save_ask);
+	prompt_ask("Do you want to save?", on_save_ask, null);
 }
