@@ -19,4 +19,6 @@ res/bmp/tsblue.bmp
 res/maps/overworld_test.dat
 res/maps/test_room.dat
 res/maps/test_room2.dat
+res/maps/test_room3.dat
+res/maps/cave.dat
 res/shaders/sprite.glsl
