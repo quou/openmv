@@ -114,7 +114,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="10" name="dialogue_triggers" locked="1">
+ <objectgroup id="10" name="dialogue_triggers">
   <object id="41" x="304" y="96" width="16" height="16">
    <properties>
     <property name="script">function on_ask(yes)
@@ -126,14 +126,24 @@
 end
 
 function play()
-    message(&quot;Hello!&quot;)
-    coroutine.yield()
-    message(&quot;I'm looking for coal.&quot;)
-    coroutine.yield()
-    ask(&quot;Would you like some coal? There's plenty to go around.&quot;, &quot;on_ask&quot;)
+    if not interacted then
+        message(&quot;Hello!&quot;)
+        coroutine.yield()
+        message(&quot;I'm looking for coal.&quot;)
+        coroutine.yield()
+        ask(&quot;Would you like some coal? There's plenty to go around.&quot;, &quot;on_ask&quot;)
+        interacted = true
+    else
+        message(&quot;You already talked to me!&quot;)
+        coroutine.yield()
+    end
 end
 
 function on_init()
+   interacted = false
+end
+
+function on_play()
    co = coroutine.create(play)
 end
 

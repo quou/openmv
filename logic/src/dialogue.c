@@ -15,7 +15,7 @@ struct dialogue_script {
 
 static void check_lua(lua_State* L, int r) {
 	if (r != LUA_OK) {
-		luaL_error(L, "%s\n", lua_tostring(L, -1));
+		fprintf(stderr, "%s\n", lua_tostring(L, -1));
 	}
 }
 
@@ -27,7 +27,24 @@ static void call_on_init(lua_State* L) {
 	if (lua_isfunction(L, -1)) {
 		check_lua(L, lua_pcall(L, 0, 1, 0));
 	} else {
-		luaL_error(L, "`on_init' must be a function.\n");
+		fprintf(stderr, "`on_init' must be a function.\n");
+	}
+
+end:
+	lua_pop(L, 1);
+
+	lua_settop(L, 0);
+}
+
+static void call_on_play(lua_State* L) {
+	lua_getglobal(L, "on_play");
+
+	if (lua_isnil(L, -1)) { goto end; }
+
+	if (lua_isfunction(L, -1)) {
+		check_lua(L, lua_pcall(L, 0, 1, 0));
+	} else {
+		fprintf(stderr, "`on_play' must be a function.\n");
 	}
 
 end:
@@ -44,7 +61,7 @@ static void call_on_next(lua_State* L) {
 	if (lua_isfunction(L, -1)) {
 		check_lua(L, lua_pcall(L, 0, 1, 0));
 	} else {
-		luaL_error(L, "`on_next_message' must be a function.\n");
+		fprintf(stderr, "`on_next_message' must be a function.\n");
 	}
 
 end:
@@ -93,7 +110,7 @@ static void on_ask(bool yes, void* udata) {
 		lua_pushboolean(L, yes);
 		check_lua(L, lua_pcall(L, 1, 1, 0));
 	} else {
-		luaL_error(L, "`%s' must be a function.\n", script->ask_name);
+		fprintf(stderr, "`%s' must be a function.\n", script->ask_name);
 	}
 
 end:
@@ -138,6 +155,8 @@ struct dialogue_script* new_dialogue_script(const char* source) {
 
 	check_lua(L, luaL_dostring(L, source));
 
+	call_on_init(script->L);
+
 	return script;
 }
 
@@ -148,7 +167,7 @@ void free_dialogue_script(struct dialogue_script* script) {
 }
 
 void play_dialogue(struct dialogue_script* script) {
-	call_on_init(script->L);
+	call_on_play(script->L);
 
 	script->want_next = true;
 }

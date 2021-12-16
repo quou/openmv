@@ -12,11 +12,4 @@
    <frame tileid="6" duration="100"/>
   </animation>
  </tile>
- <tile id="2">
-  <animation>
-   <frame tileid="0" duration="100"/>
-   <frame tileid="1" duration="100"/>
-   <frame tileid="2" duration="100"/>
-  </animation>
- </tile>
 </tileset>
