@@ -138,8 +138,6 @@ void free_audio_clip(struct audio_clip* clip) {
 		stop_audio_clip(clip);
 	}
 
-	ma_decoder_uninit(&clip->decoder);
-
 	core_free(clip->data);
 	core_free(clip);
 }
@@ -169,6 +167,9 @@ void play_audio_clip(struct audio_clip* clip) {
 
 void stop_audio_clip(struct audio_clip* clip) {
 	clip->playing = false;
+
+	ma_decoder_uninit(&clip->decoder);
+
 	audio.clips[clip->id]     = audio.clips[audio.clip_count - 1];
 	audio.clips[clip->id]->id = clip->id;
 	audio.clip_count--;
