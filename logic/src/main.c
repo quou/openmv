@@ -156,6 +156,7 @@ API void CALL on_update(double ts) {
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
+	update_room(logic_store->room, timestep);
 	draw_room(logic_store->room, renderer, timestep);
 	damage_fx_system(world, renderer, timestep);
 

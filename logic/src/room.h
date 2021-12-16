@@ -13,6 +13,7 @@ struct path {
 
 struct room* load_room(struct world* world, const char* path);
 void free_room(struct room* room);
+void update_room(struct room* room, double ts);
 void draw_room(struct room* room, struct renderer* renderer, double ts);
 void draw_room_forground(struct room* room, struct renderer* renderer);
 void handle_body_collisions(struct room** room, struct rect rect, v2f* position, v2f* velocity);

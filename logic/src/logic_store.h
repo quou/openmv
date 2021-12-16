@@ -1,10 +1,10 @@
 #pragma once
 
 #include "entity.h"
+#include "menu.h"
 #include "room.h"
 #include "ui.h"
 #include "video.h"
-#include "menu.h"
 
 struct logic_store {
 	double fps_timer;

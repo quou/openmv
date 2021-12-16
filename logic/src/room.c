@@ -663,28 +663,6 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
 	}
 
-	/* Update tile animations
-	 *
-	 * TODO: Move this to a separate update function. */
-	for (u32 i = 0; i < room->tileset_count; i++) {
-		for (u32 ii = 0; ii < anim_tile_max; ii++) {
-			struct animated_tile* at = room->tilesets[i].animations + ii;
-
-			at->timer += ts;
-			if (at->timer > at->durations[at->current_frame]) {
-				at->timer = 0.0;
-				at->current_frame++;
-				if (at->current_frame > at->frame_count) {
-					at->current_frame = 0;
-				}
-			}
-		}
-	}
-
-	for (u32 i = 0; i < room->dialogue_count; i++) {
-		update_dialogue(room->dialogue[i].script);
-	}
-
 	for (u32 i = 0; i < room->layer_count; i++) {
 		struct layer* layer = room->layers + i;
 
@@ -703,6 +681,28 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 		};
 
 		renderer_push(renderer, &quad);
+	}
+}
+
+void update_room(struct room* room, double ts) {
+	/* Update tile animations */
+	for (u32 i = 0; i < room->tileset_count; i++) {
+		for (u32 ii = 0; ii < anim_tile_max; ii++) {
+			struct animated_tile* at = room->tilesets[i].animations + ii;
+
+			at->timer += ts;
+			if (at->timer > at->durations[at->current_frame]) {
+				at->timer = 0.0;
+				at->current_frame++;
+				if (at->current_frame > at->frame_count) {
+					at->current_frame = 0;
+				}
+			}
+		}
+	}
+
+	for (u32 i = 0; i < room->dialogue_count; i++) {
+		update_dialogue(room->dialogue[i].script);
 	}
 }
 
