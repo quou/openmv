@@ -24,14 +24,6 @@
 #define has_component(w_, e_, t_) \
 	_has_component((w_), (e_), type_info(t_))
 
-#define new_single_view(w_, t_) \
-	_new_single_view(w_, type_info(t_))
-
-#define single_view(w_, v_, t_) \
-	struct single_view v_ = new_single_view((w_), t_); \
-	single_view_valid(&(v_)); \
-	single_view_next(&(v_))
-
 #define view(w_, v_, ...) \
 	struct view v_ = new_view((w_), count_va_args(__VA_ARGS__), (struct type_info[]) { __VA_ARGS__ }); \
 	view_valid(&(v_)); \
@@ -79,19 +71,6 @@ API void* _add_component(struct world* world,    entity e, struct type_info type
 API void  _remove_component(struct world* world, entity e, struct type_info type);
 API bool  _has_component(struct world* world,    entity e, struct type_info type);
 API void* _get_component(struct world* world,    entity e, struct type_info type);
-
-struct single_view {
-	void* pool;
-	u32 idx;
-	entity e;
-
-	struct world* world;
-};
-
-API struct single_view _new_single_view(struct world* world, struct type_info type);
-API bool single_view_valid(struct single_view* view);
-API void* single_view_get(struct single_view* view);
-API void single_view_next(struct single_view* view);
 
 #define view_max 16
 struct view {

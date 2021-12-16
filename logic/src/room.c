@@ -431,8 +431,8 @@ struct room* load_room(struct world* world, const char* path) {
 						}
 
 						bool has_upgrade = false;
-						for (single_view(world, view, struct player)) {
-							struct player* player = single_view_get(&view);
+						for (view(world, view, type_info(struct player))) {
+							struct player* player = view_get(&view, struct player);
 							
 							if (hp && player->hp_ups & upgrade_id) {
 								has_upgrade = true;
@@ -524,8 +524,8 @@ void free_room(struct room* room) {
 	core_free(room->path);
 	core_free(room->name);
 
-	for (single_view(room->world, view, struct room_child)) {
-		struct room_child* rc = single_view_get(&view);
+	for (view(room->world, view, type_info(struct room_child))) {
+		struct room_child* rc = view_get(&view, struct room_child);
 		
 		if (rc->parent == room) {
 			destroy_entity(room->world, view.e);
@@ -806,8 +806,8 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 			}
 		}
 
-		for (single_view(room->world, view, struct save_point)) {
-			struct save_point* sp = single_view_get(&view);
+		for (view(room->world, view, type_info(struct save_point))) {
+			struct save_point* sp = view_get(&view, struct save_point);
 
 			if (rect_overlap(body_rect, sp->rect, null)) {
 				ask_savegame();

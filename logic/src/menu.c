@@ -373,6 +373,9 @@ void prompts_update(double ts) {
 				ctx->on_submit(ctx->selected, ctx->udata);
 
 				if (ctx->nullify) {
+					if (ctx->message) {
+						core_free(ctx->message);
+					}
 					ctx->message = null;
 					ctx->on_submit = null;
 					logic_store->frozen = false;
@@ -387,7 +390,11 @@ void prompts_update(double ts) {
 				ctx->on_finish(ctx->udata);
 			}
 
+			if (ctx->message) {
+				core_free(ctx->message);
+			}
 			ctx->message = null;
+			ctx->on_finish = null;
 			logic_store->frozen = false;
 		}
 	}

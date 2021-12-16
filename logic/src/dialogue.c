@@ -101,15 +101,12 @@ end:
 
 	lua_settop(L, 0);
 
+	core_free(script->ask_name);
 }
 
 static i32 l_ask(lua_State* L) {
 	lua_getglobal(L, "_g_script");
 	struct dialogue_script* script = *((struct dialogue_script**)lua_touserdata(L, -1));
-
-	if (script->ask_name) {
-		core_free(script->ask_name);
-	}
 
 	script->ask_name = copy_string(luaL_checkstring(L, 2));
 

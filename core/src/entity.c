@@ -388,52 +388,6 @@ u32 get_alive_entity_count(struct world* world) {
 	return world->alive_entity_count;
 }
 
-struct single_view _new_single_view(struct world* world, struct type_info type) {
-	struct single_view v = { 0 };
-	v.world = world;
-	v.pool = get_pool_no_create(world, type);
-
-	struct pool* pool = (struct pool*)v.pool;
-	if (pool && pool->count != 0) {
-		v.idx = pool->count - 1;
-		v.e = pool->dense[v.idx];
-	} else {
-		v.idx = 0;
-		v.e = null_entity;
-	}
-
-	world->iteration_scope++;
-
-	return v;
-}
-
-bool single_view_valid(struct single_view* view) {
-	bool valid = view->e != null_entity;
-
-	if (!valid) {
-		view->world->iteration_scope--;
-		
-		if (view->world->iteration_scope <= 0) {
-			world_clear_free_queue(view->world);
-		}
-	}
-
-	return valid;
-}
-
-void* single_view_get(struct single_view* view) {
-	return pool_get_by_idx(view->pool, view->idx);
-}
-
-void single_view_next(struct single_view* view) {
-	if (view->idx) {
-		view->idx--;
-		view->e = ((struct pool*)view->pool)->dense[view->idx];
-	} else {
-		view->e = null_entity;
-	}
-}
-
 static bool view_contains(struct view* view, entity e) {
 	for (u32 i = 0; i < view->pool_count; i++) {
 		if (!pool_has(view->pools[i], e)) {

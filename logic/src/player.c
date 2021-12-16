@@ -240,8 +240,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			player->collider.w, player->collider.h
 		};
 		if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
-			for (single_view(world, up_view, struct upgrade)) {
-				struct upgrade* upgrade = single_view_get(&up_view);
+			for (view(world, up_view, type_info(struct upgrade))) {
+				struct upgrade* upgrade = view_get(&up_view, struct upgrade);
 
 				struct rect up_rect = {
 					upgrade->collider.x * sprite_scale,
@@ -263,8 +263,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
-		for (single_view(world, up_view, struct health_upgrade)) {
-			struct health_upgrade* upgrade = single_view_get(&up_view);
+		for (view(world, up_view, type_info(struct health_upgrade))) {
+			struct health_upgrade* upgrade = view_get(&up_view, struct health_upgrade);
 
 			if (rect_overlap(player_rect, upgrade->collider, null)) {
 				if (upgrade->booster) {
@@ -505,8 +505,8 @@ void hud_system(struct world* world, struct renderer* renderer) {
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
 
-	for (single_view(world, view, struct player)) {
-		struct player* player = single_view_get(&view);
+	for (view(world, view, type_info(struct player))) {
+		struct player* player = view_get(&view, struct player);
 
 		struct sprite hp_sprite = get_sprite(sprid_hud_hp);
 		struct sprite hp_bar_sprite = get_sprite(sprid_hud_hp_bar);
@@ -628,8 +628,8 @@ void anim_fx_system(struct world* world, double ts) {
 void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
 	struct texture* atlas = get_texture(texid_icon);
 
-	for (single_view(world, view, struct damage_num_fx)) {
-		struct damage_num_fx* d = single_view_get(&view);
+	for (view(world, view, type_info(struct damage_num_fx))) {
+		struct damage_num_fx* d = view_get(&view, struct damage_num_fx);
 
 		d->velocity += 30.0 * ts;
 		d->position.y -= d->velocity * ts;
