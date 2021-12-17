@@ -85,7 +85,7 @@ void* core_realloc(void* p, u64 size) {
 		memory_usage -= *old_size;
 	}
 
-	void* new_ptr = realloc(ptr ? ptr - sizeof(u64) : null, sizeof(u64) + size);
+	u8* new_ptr = realloc(ptr ? ptr - sizeof(u64) : null, sizeof(u64) + size);
 
 	if (!new_ptr) {
 		fprintf(stderr, "Out of memory.\n");
@@ -100,6 +100,8 @@ void* core_realloc(void* p, u64 size) {
 }
 
 void core_free(void* p) {
+	if (!p) { return; }
+	
 	u8* ptr = p;
 
 	u64* old_size = (u64*)(ptr - sizeof(u64));
