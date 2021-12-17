@@ -30,6 +30,12 @@ function fwrite_string(string, file) {
 	file.write(string_buf);
 }
 
+function get_local_fp(fp) {
+	return fp.substring(
+		fp.lastIndexOf("res"),
+		fp.length);
+}
+
 var dat_format = {
 	name: "OpenMV",
 	extension: "dat",
@@ -69,10 +75,7 @@ var dat_format = {
 
 			fwrite_string(tileset.name, file);
 
-			var image_path = tileset.image.substring(
-					tileset.image.lastIndexOf("res"),
-					tileset.image.length);
-
+			var image_path = get_local_fp(tileset.image);
 			fwrite_string(image_path, file);
 
 			fwrite_uint(tileset.tileCount, file);

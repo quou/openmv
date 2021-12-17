@@ -487,11 +487,14 @@ struct room* load_room(struct world* world, const char* path) {
 
 						file_read(&r, sizeof(r), 1, &file);
 
-						char* source = read_name(&file);
+						char* script_path = read_name(&file);
+
+						u8* source;
+						read_raw(script_path, &source, null, true);
 
 						room->dialogue[ii] = (struct dialogue) {
 							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-							.script = new_dialogue_script(source)
+							.script = new_dialogue_script((char*)source)
 						};
 
 						core_free(source);

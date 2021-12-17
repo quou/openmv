@@ -119,58 +119,14 @@
 </data>
  </layer>
  <objectgroup id="10" name="dialogue_triggers">
-  <object id="41" x="304" y="96" width="16" height="16">
+  <object id="41" name="dialogue_trigger_a" x="304" y="96" width="16" height="16">
    <properties>
-    <property name="script">persist_name = &quot;npc_miner_interacted&quot;
-
-function on_ask(yes)
-    if yes then
-        message(&quot;Here's some coal!&quot;)
-    else
-        message(&quot;No coal for you!&quot;)
-    end
-end
-
-function play()
-    if not interacted then
-        message(&quot;Hello!&quot;)
-        coroutine.yield()
-        message(&quot;I'm looking for coal.&quot;)
-
-        interacted = true
-        set_persistent(persist_name, interacted)
-
-        coroutine.yield()
-    else
-        message(&quot;Oh, you again.&quot;)
-        coroutine.yield()
-    end
-
-    ask(&quot;Would you like some coal? I'll give you some for 10 %c.&quot;, &quot;on_ask&quot;)
-end
-
-function on_init()
-end
-
-function on_play()
-   co = coroutine.create(play)
-
-   interacted = get_persistent(persist_name)
-   if interacted == nil then
-       interacted = falsem
-   end
-end
-
-function on_next_message()
-    if coroutine.status(co) ~= &quot;dead&quot; then
-        coroutine.resume(co)
-    end
-end</property>
+    <property name="script" value="res/scripts/npc_miner_dialogue.lua"/>
    </properties>
   </object>
  </objectgroup>
  <objectgroup id="11" name="doors" locked="1">
-  <object id="50" x="176" y="160" width="16" height="16">
+  <object id="50" name="door_a_trigger" x="176" y="160" width="16" height="16">
    <properties>
     <property name="change_to" value="res/maps/test_room.dat"/>
     <property name="entrance" value="door_a"/>
@@ -178,7 +134,7 @@ end</property>
   </object>
  </objectgroup>
  <objectgroup id="7" name="save_points" locked="1">
-  <object id="49" x="32" y="128" width="16" height="16"/>
+  <object id="49" name="save_point_a" x="32" y="128" width="16" height="16"/>
  </objectgroup>
  <objectgroup color="#00aa00" id="3" name="collisions" locked="1">
   <object id="8" x="0" y="16" width="352" height="16"/>
@@ -218,7 +174,7 @@ end</property>
    <polyline points="0,0 -39.9961,-40"/>
   </object>
  </objectgroup>
- <objectgroup color="#00007f" id="4" name="entrances">
+ <objectgroup color="#00007f" id="4" name="entrances" locked="1">
   <object id="2" name="spawn" x="112" y="160">
    <point/>
   </object>
