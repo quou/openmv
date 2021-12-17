@@ -425,3 +425,47 @@ i32 render_text_n(struct renderer* renderer, struct font* font,
 
 	return x;
 }
+
+i32 render_text_fancy(struct renderer* renderer, struct font* font,
+		const char* text, u32 n, i32 x, i32 y, struct color color,
+		struct textured_quad* coin) {
+	const char* p;
+	u32 codepoint;
+	struct glyph_set* set;
+	stbtt_bakedchar* g;
+
+	p = text;
+	for (u32 i = 0; i < n && *p; i++) {
+		if (*p == '%' && *(p + 1) == 'c') {
+			p += 2;
+
+			coin->position.x = x;
+			coin->position.y = y;
+			coin->color = color;
+			renderer_push(renderer, coin);
+
+			x += coin->dimentions.x;
+		} else {
+			p = utf8_to_codepoint(p, &codepoint);
+
+			set = get_glyph_set(font, codepoint);
+			g = &set->glyphs[codepoint & 0xff];
+
+			i32 w = g->x1 - g->x0;
+			i32 h = g->y1 - g->y0;
+			
+			struct textured_quad quad = {
+				.texture = &set->atlas,
+				.position = { x + g->xoff, y + g->yoff },
+				.dimentions = { w, h },
+				.rect = { g->x0, g->y0, w, h },
+				.color = color
+			};
+
+			renderer_push(renderer, &quad);
+			x += (i32)g->xadvance;
+		}
+	}
+
+	return x;
+}

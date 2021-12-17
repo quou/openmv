@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "consts.h"
 #include "core.h"
 #include "keymap.h"
 #include "logic_store.h"
@@ -339,8 +340,16 @@ void prompts_update(double ts) {
 
 		i32 h = text_height(ctx->font);
 
-		render_text_n(ctx->renderer, ctx->font, ctx->message,
-			ctx->current_character, 20, win_h - h - (back.dimentions.y / 2), make_color(0xffffff, 255));
+		struct sprite coin_sprite = get_sprite(sprid_coin);
+		struct textured_quad coin_quad = {
+			.texture = coin_sprite.texture,
+			.dimentions = { coin_sprite.rect.w * sprite_scale, coin_sprite.rect.h * sprite_scale },
+			.rect = coin_sprite.rect,
+			.color = { 255, 255, 255, 255 }
+		};
+
+		render_text_fancy(ctx->renderer, ctx->font, ctx->message,
+			ctx->current_character, 20, win_h - h - (back.dimentions.y / 2), make_color(0xffffff, 255), &coin_quad);
 
 		if (ctx->on_submit && ctx->current_character >= ctx->message_len) {
 			const char* text = "Yes / No";
