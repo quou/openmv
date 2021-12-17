@@ -130,6 +130,16 @@ struct audio_clip* new_audio_clip(u8* data, u64 size) {
 	clip->data = data;
 	clip->data_size = size;
 
+	clip->decoder_config = ma_decoder_config_init(sample_format, channel_count, sample_rate);
+	ma_result r = ma_decoder_init_memory(clip->data, clip->data_size, &clip->decoder_config, &clip->decoder);
+	if (r != MA_SUCCESS) {
+		fprintf(stderr, "Failed to create audio clip.\n");
+		ma_decoder_uninit(&clip->decoder);
+		core_free(clip);
+
+		return null;
+	}
+
 	return clip;
 }
 
@@ -137,6 +147,8 @@ void free_audio_clip(struct audio_clip* clip) {
 	if (clip->playing) {
 		stop_audio_clip(clip);
 	}
+
+	ma_decoder_uninit(&clip->decoder);
 
 	core_free(clip->data);
 	core_free(clip);
@@ -150,15 +162,7 @@ void play_audio_clip(struct audio_clip* clip) {
 		}
 	}
 
-	clip->decoder_config = ma_decoder_config_init(sample_format, channel_count, sample_rate);
-	ma_result r = ma_decoder_init_memory(clip->data, clip->data_size, &clip->decoder_config, &clip->decoder);
-	if (r != MA_SUCCESS) {
-		fprintf(stderr, "Failed to create audio clip.\n");
-		ma_decoder_uninit(&clip->decoder);
-		core_free(clip);
-
-		return;
-	}
+	ma_decoder_seek_to_pcm_frame(&clip->decoder, 0);
 
 	clip->playing = true;
 	audio.clips[audio.clip_count] = clip;
@@ -167,8 +171,6 @@ void play_audio_clip(struct audio_clip* clip) {
 
 void stop_audio_clip(struct audio_clip* clip) {
 	clip->playing = false;
-
-	ma_decoder_uninit(&clip->decoder);
 
 	audio.clips[clip->id]     = audio.clips[audio.clip_count - 1];
 	audio.clips[clip->id]->id = clip->id;
