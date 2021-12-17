@@ -137,7 +137,7 @@ void* core_calloc(u64 count, u64 size) {
 void* core_realloc(void* p, u64 size) {
 	void* ptr = realloc(p, size);
 
-	if (!ptr) {
+	if (!ptr && size != 0) {
 		fprintf(stderr, "Out of memory.\n");
 		abort();
 	}
@@ -146,7 +146,7 @@ void* core_realloc(void* p, u64 size) {
 }
 
 void core_free(void* p) {
-	free(p);
+	if (p) { free(p); }
 }
 
 u64 core_get_memory_usage() {
