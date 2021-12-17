@@ -4,8 +4,11 @@ res/aud/fly.wav
 res/aud/heart.wav
 res/aud/hurt.wav
 res/aud/jump.wav
+res/aud/select.wav
 res/aud/shoot.wav
+res/aud/type.wav
 res/aud/upgrade.wav
+res/aud/decline.wav
 res/bmp/arms.bmp
 res/bmp/back.bmp
 res/bmp/bad.bmp
