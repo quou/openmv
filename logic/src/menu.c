@@ -304,6 +304,7 @@ void prompt_ask(const char* text, prompt_submit_func on_submit, void* udata) {
 	ctx->message_len = (u32)strlen(text);
 	ctx->current_character = 0;
 	ctx->on_submit = on_submit;
+	ctx->on_finish = null;
 	ctx->selected = false;
 	ctx->udata = udata;
 

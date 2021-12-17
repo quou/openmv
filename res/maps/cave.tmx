@@ -121,7 +121,9 @@
  <objectgroup id="10" name="dialogue_triggers">
   <object id="41" x="304" y="96" width="16" height="16">
    <properties>
-    <property name="script">function on_ask(yes)
+    <property name="script">persist_name = &quot;npc_miner_interacted&quot;
+
+function on_ask(yes)
     if yes then
         message(&quot;Here's some coal!&quot;)
     else
@@ -136,7 +138,7 @@ function play()
         message(&quot;I'm looking for coal.&quot;)
 
         interacted = true
-        set_persistent(&quot;interacted&quot;, interacted)
+        set_persistent(persist_name, interacted)
 
         coroutine.yield()
     else
@@ -153,9 +155,9 @@ end
 function on_play()
    co = coroutine.create(play)
 
-   interacted = get_persistent(&quot;interacted&quot;)
+   interacted = get_persistent(persist_name)
    if interacted == nil then
-       interacted = false
+       interacted = falsem
    end
 end
 
