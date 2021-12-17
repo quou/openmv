@@ -36,6 +36,8 @@ struct menu {
 	u32 item_capacity;
 
 	i32 selected_item;
+
+	struct audio_clip* select_sound;
 };
 
 struct menu* new_menu(struct font* font) {
@@ -43,6 +45,8 @@ struct menu* new_menu(struct font* font) {
 
 	menu->font = font;
 	menu->renderer = logic_store->ui_renderer;
+
+	menu->select_sound = load_audio_clip("res/aud/select.wav");
 
 	return menu;
 }
@@ -98,6 +102,7 @@ void menu_update(struct menu* menu) {
 	}
 
 	if (key_just_pressed(main_window, mapped_key("submit")) && menu->items[menu->selected_item].type == menu_item_selectable) {
+		play_audio_clip(menu->select_sound);
 		menu->items[menu->selected_item].as.selectable.on_select(menu);
 	}
 
@@ -224,6 +229,10 @@ struct prompt_ctx {
 	prompt_finish_func on_finish;
 
 	void *udata;
+
+	struct audio_clip* type_sound;
+	struct audio_clip* select_sound;
+	struct audio_clip* decline_sound;
 };
 
 void prompts_init(struct font* font) {
@@ -233,6 +242,12 @@ void prompts_init(struct font* font) {
 
 	ctx->font = font;
 	ctx->renderer = logic_store->ui_renderer;
+
+	ctx->type_speed = 20.0;
+
+	ctx->type_sound = load_audio_clip("res/aud/type.wav");
+	ctx->select_sound = load_audio_clip("res/aud/select.wav");
+	ctx->decline_sound = load_audio_clip("res/aud/decline.wav");
 }
 
 void prompts_deinit() {
@@ -314,16 +329,12 @@ void prompts_update(double ts) {
 
 		renderer_push(ctx->renderer, &back);
 
-		if (key_pressed(main_window, mapped_key("submit")) || key_pressed(main_window, mapped_key("jump"))) {
-			ctx->type_speed = 200.0;
-		} else {
-			ctx->type_speed = 20.0;
-		}
-
 		ctx->timer += ctx->type_speed * ts;
 		if (ctx->timer > 1.0 && ctx->current_character < ctx->message_len) {
 			ctx->timer = 0.0;
 			ctx->current_character++;
+
+			play_audio_clip(ctx->type_sound);
 		}
 
 		i32 h = text_height(ctx->font);
@@ -370,7 +381,14 @@ void prompts_update(double ts) {
 
 			if (key_just_pressed(main_window, mapped_key("submit"))) {
 				ctx->nullify = true;
-				ctx->on_submit(ctx->selected, ctx->udata);
+				
+				if (ctx->selected) {
+					play_audio_clip(ctx->select_sound);
+				} else {
+					play_audio_clip(ctx->decline_sound);
+				}
+
+				ctx->on_submit(ctx->selected, ctx->udata);	
 
 				if (ctx->nullify) {
 					if (ctx->message) {
@@ -397,6 +415,11 @@ void prompts_update(double ts) {
 			ctx->on_finish = null;
 			logic_store->frozen = false;
 		}
+	}
+
+	if (key_just_pressed(main_window, mapped_key("submit")) || key_just_pressed(main_window, mapped_key("jump"))) {
+		ctx->current_character = ctx->message_len - 1;
+		return;
 	}
 
 	renderer_flush(ctx->renderer);
