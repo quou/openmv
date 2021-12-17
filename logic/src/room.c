@@ -427,18 +427,8 @@ struct room* load_room(struct world* world, const char* path) {
 							file_read(&upgrade_id, sizeof(upgrade_id), 1, &file);
 						}
 
-						bool has_upgrade = false;
-						for (view(world, view, type_info(struct player))) {
-							struct player* player = view_get(&view, struct player);
-							
-							if (hp && player->hp_ups & upgrade_id) {
-								has_upgrade = true;
-								break;
-							} else if (player->items & upgrade_id) {
-								has_upgrade = true;
-								break;
-							}
-						}
+						struct player* player = get_component(world, logic_store->player, struct player);
+						bool has_upgrade = (hp && player->hp_ups & upgrade_id) || (player->items & upgrade_id);
 
 						if (!has_upgrade) {
 							if (hp && sprite_id != -1) {
