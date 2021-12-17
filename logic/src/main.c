@@ -40,13 +40,6 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 	ui_text_input_event(ui, text);
 }
 
-static void on_save_ask(bool yes, void* udata) {
-	if (yes) {
-		savegame();
-		message_prompt("Game saved.");
-	}
-}
-
 static void on_load_ask(bool yes, void* udata) {
 	if (yes) {
 		loadgame();
@@ -54,12 +47,6 @@ static void on_load_ask(bool yes, void* udata) {
 }
 
 static void on_resume(struct menu* menu) {
-	logic_store->paused = false;
-}
-
-static void on_save(struct menu* menu) {
-	prompt_ask("Do you want to save?", on_save_ask, null);
-
 	logic_store->paused = false;
 }
 
@@ -97,7 +84,6 @@ API void CALL on_init() {
 	logic_store->pause_menu = new_menu(load_font("res/DejaVuSansMono.ttf", 35.0f));
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
-	menu_add_selectable(logic_store->pause_menu, "Save Game", on_save);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
