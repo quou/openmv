@@ -3,6 +3,9 @@
  <editorsettings>
   <export target="cave.dat" format="dat"/>
  </editorsettings>
+ <properties>
+  <property name="name" value="Mine Shaft"/>
+ </properties>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
  <tileset firstgid="66" source="../tilesets/npc.tsx"/>
  <tileset firstgid="78" source="../tilesets/backgrounds.tsx"/>
