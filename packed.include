@@ -1,5 +1,6 @@
 res/DejaVuSans.ttf
 res/DejaVuSansMono.ttf
+res/aud/decline.wav
 res/aud/fly.wav
 res/aud/heart.wav
 res/aud/hurt.wav
@@ -8,7 +9,6 @@ res/aud/select.wav
 res/aud/shoot.wav
 res/aud/type.wav
 res/aud/upgrade.wav
-res/aud/decline.wav
 res/bmp/arms.bmp
 res/bmp/back.bmp
 res/bmp/bad.bmp
@@ -19,9 +19,10 @@ res/bmp/item.bmp
 res/bmp/npc.bmp
 res/bmp/overworld.bmp
 res/bmp/tsblue.bmp
+res/maps/cave.dat
 res/maps/overworld_test.dat
 res/maps/test_room.dat
 res/maps/test_room2.dat
 res/maps/test_room3.dat
-res/maps/cave.dat
+res/scripts/npc_miner_dialogue.lua
 res/shaders/sprite.glsl
