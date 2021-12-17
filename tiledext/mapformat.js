@@ -92,6 +92,7 @@ var dat_format = {
 
 			for (var ii = 0; ii < tileset.tiles.length; ii++) {
 				var tile = tileset.tiles[ii];
+				if (tile == null) { continue; }
 
 				if (tile.animated) {
 					fwrite_uint(tile.frames.length, file);

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="43">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="52">
  <editorsettings>
   <export target="cave.dat" format="dat"/>
  </editorsettings>
  <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
  <tileset firstgid="66" source="../tilesets/npc.tsx"/>
  <tileset firstgid="78" source="../tilesets/backgrounds.tsx"/>
+ <tileset firstgid="86" source="../tilesets/item.tsx"/>
  <layer id="2" name="background" width="32" height="32" locked="1">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -114,7 +115,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="10" name="dialogue_triggers">
+ <objectgroup id="10" name="dialogue_triggers" locked="1">
   <object id="41" x="304" y="96" width="16" height="16">
    <properties>
     <property name="script">function on_ask(yes)
@@ -155,8 +156,16 @@ end</property>
    </properties>
   </object>
  </objectgroup>
+ <objectgroup id="11" name="doors" locked="1">
+  <object id="50" x="176" y="160" width="16" height="16">
+   <properties>
+    <property name="change_to" value="res/maps/test_room.dat"/>
+    <property name="entrance" value="door_a"/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="7" name="save_points" locked="1">
-  <object id="39" x="32" y="128" width="16" height="16"/>
+  <object id="49" x="32" y="128" width="16" height="16"/>
  </objectgroup>
  <objectgroup color="#00aa00" id="3" name="collisions" locked="1">
   <object id="8" x="0" y="16" width="352" height="16"/>
@@ -196,8 +205,11 @@ end</property>
    <polyline points="0,0 -39.9961,-40"/>
   </object>
  </objectgroup>
- <objectgroup color="#00007f" id="4" name="entrances" locked="1">
+ <objectgroup color="#00007f" id="4" name="entrances">
   <object id="2" name="spawn" x="112" y="160">
+   <point/>
+  </object>
+  <object id="51" name="door_a" x="184" y="176">
    <point/>
   </object>
  </objectgroup>

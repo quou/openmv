@@ -234,6 +234,11 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		handle_body_collisions(room, player->collider, &transform->position, &player->velocity);
 		handle_body_interactions(room, player->collider, view.e, player->on_ground);
 
+		/* Update pointers because the pools might have been reallocated. */
+		transform = view_get(&view, struct transform);
+		player = view_get(&view, struct player);
+		sprite = view_get(&view, struct animated_sprite);
+
 		struct rect player_rect = {
 			(i32)transform->position.x + player->collider.x,
 			(i32)transform->position.y + player->collider.y,
@@ -364,6 +369,11 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				player->visible = true;
 			}
 		}
+
+		/* Update pointers because the pools might have been reallocated. */
+		transform = view_get(&view, struct transform);
+		player = view_get(&view, struct player);
+		sprite = view_get(&view, struct animated_sprite);
 		
 		player->shoot_timer -= ts;
 		if (key_just_pressed(main_window, mapped_key("fire")) && player->shoot_timer <= 0.0) {

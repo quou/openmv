@@ -341,7 +341,7 @@ void destroy_entity(struct world* world, entity e) {
 		}
 	}
 
-	const entity nv = get_entity_version(e) + 1;
+	const entity_version nv = get_entity_version(e) + 1;
 	release_entity(world, e, nv);
 
 	world->alive_entity_count--;
