@@ -25,7 +25,6 @@ struct tile {
 };
 
 #define anim_tile_frame_count 32
-#define anim_tile_max 64
 
 struct animated_tile {
 	bool exists;
@@ -44,7 +43,7 @@ struct tileset {
 	i32 tile_w, tile_h;
 	i32 tile_count;
 
-	struct animated_tile animations[anim_tile_max];
+	struct animated_tile* animations;
 };
 
 enum {
@@ -185,9 +184,7 @@ struct room* load_room(struct world* world, const char* path) {
 		file_read(&current->tile_w, sizeof(current->tile_w), 1, &file);
 		file_read(&current->tile_h, sizeof(current->tile_h), 1, &file);
 
-		for (u32 ii = 0; ii < anim_tile_max; ii++) {
-			current->animations[ii].exists = false;
-		}
+		current->animations = core_calloc(current->tile_count, sizeof(struct animated_tile));
 
 		/* Load animations. */
 		u32 animation_count;
@@ -535,7 +532,11 @@ void free_room(struct room* room) {
 	if (room->tilesets) {
 		for (u32 i = 0; i < room->tileset_count; i++) {
 			core_free(room->tilesets[i].name);
-		}
+
+			if (room->tilesets[i].animations) {
+				core_free(room->tilesets[i].animations);
+			}
+		}	
 
 		core_free(room->tilesets);
 	}
@@ -687,15 +688,16 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 void update_room(struct room* room, double ts) {
 	/* Update tile animations */
 	for (u32 i = 0; i < room->tileset_count; i++) {
-		for (u32 ii = 0; ii < anim_tile_max; ii++) {
+		for (u32 ii = 0; ii < room->tilesets[i].tile_count; ii++) {
 			struct animated_tile* at = room->tilesets[i].animations + ii;
-
-			at->timer += ts;
-			if (at->timer > at->durations[at->current_frame]) {
-				at->timer = 0.0;
-				at->current_frame++;
-				if (at->current_frame > at->frame_count) {
-					at->current_frame = 0;
+			if (at->exists) {
+				at->timer += ts;
+				if (at->timer > at->durations[at->current_frame]) {
+					at->timer = 0.0;
+					at->current_frame++;
+					if (at->current_frame > at->frame_count) {
+						at->current_frame = 0;
+					}
 				}
 			}
 		}
