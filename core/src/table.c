@@ -171,6 +171,10 @@ void table_delete(struct table* table, const char* key) {
 	el->val_idx = -2;
 }
 
+u32 get_table_count(struct table* table) {
+	return table->count;
+}
+
 /* Iterator. */
 struct table_iter new_table_iter(struct table* table) {
 	if (table->count == 0) {

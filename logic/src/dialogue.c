@@ -1,5 +1,6 @@
 #include "dialogue.h"
 #include "menu.h"
+#include "savegame.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -96,6 +97,53 @@ static i32 l_message(lua_State* L) {
 	return 0;
 }
 
+static i32 l_set_persistent(lua_State* L) {
+	const char* key = luaL_checkstring(L, 1);
+
+	if (lua_isnumber(L, 2)) {
+		double v = lua_tonumber(L, 2);
+		set_persistent(key, persist_float, &v);
+	} else if (lua_isboolean(L, 2)) {
+		bool v = lua_toboolean(L, 2);
+		set_persistent(key, persist_bool, &v);
+	} else if (lua_isstring(L, 2)) {
+		set_persistent(key, persist_str, lua_tostring(L, 2));
+	}
+
+	return 0;
+}
+
+static i32 l_get_persistent(lua_State* L) {
+	const char* key = luaL_checkstring(L, 1);
+
+	struct persistent* p = get_persistent(key);
+	if (!p) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	switch (p->type) {
+		case persist_i32:
+			lua_pushnumber(L, p->as.i);
+			break;
+		case persist_u32:
+			lua_pushnumber(L, p->as.u);
+			break;
+		case persist_float:
+			lua_pushnumber(L, p->as.f);
+			break;
+		case persist_bool:
+			lua_pushboolean(L, p->as.b);
+			break;
+		case persist_str:
+			lua_pushstring(L, p->as.str);
+			break;
+		default: break;
+	}
+
+	return 1;
+}
+
 static void on_ask(bool yes, void* udata) {
 	struct dialogue_script* script = udata;
 
@@ -152,6 +200,12 @@ struct dialogue_script* new_dialogue_script(const char* source) {
 
 	lua_pushcfunction(L, l_ask);
 	lua_setglobal(L, "ask");
+
+	lua_pushcfunction(L, l_set_persistent);
+	lua_setglobal(L, "set_persistent");
+
+	lua_pushcfunction(L, l_get_persistent);
+	lua_setglobal(L, "get_persistent");
 
 	check_lua(L, luaL_dostring(L, source));
 

@@ -426,7 +426,7 @@ void prompts_update(double ts) {
 		}
 	}
 
-	if (key_just_pressed(main_window, mapped_key("submit")) || key_just_pressed(main_window, mapped_key("jump"))) {
+	if (key_just_pressed(main_window, mapped_key("jump"))) {
 		ctx->current_character = ctx->message_len - 1;
 		return;
 	}

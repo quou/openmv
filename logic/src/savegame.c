@@ -6,6 +6,56 @@
 #include "coresys.h"
 #include "logic_store.h"
 #include "player.h"
+#include "savegame.h"
+#include "table.h"
+
+struct table* savegame_persist;
+
+void savegame_init() {
+	savegame_persist = new_table(sizeof(struct persistent));
+}
+
+void savegame_deinit() {
+	for (struct table_iter i = new_table_iter(savegame_persist); table_iter_next(&i);) {
+		struct persistent* p = i.value;
+		if (p->type == persist_str) {
+			core_free(p->as.str);
+		}
+	}
+
+	free_table(savegame_persist);
+}
+
+void set_persistent(const char* name, u32 type, const void* val) {
+	struct persistent p = {
+		.type = type
+	};
+
+	switch (type) {
+		case persist_i32:
+			p.as.i = *(i32*)val;
+			break;
+		case persist_u32:
+			p.as.u = *(u32*)val;
+			break;
+		case persist_bool:
+			p.as.b = *(bool*)val;
+			break;
+		case persist_float:
+			p.as.f = *(double*)val;
+			break;
+		case persist_str:
+			p.as.str = copy_string(val);
+			break;
+		default: break;
+	}
+
+	table_set(savegame_persist, name, &p);
+}
+
+struct persistent* get_persistent(const char* name) {
+	return (struct persistent*)table_get(savegame_persist, name);
+}
 
 static void write_player(FILE* file) {
 	struct world* world = logic_store->world;
@@ -41,6 +91,9 @@ static void read_player(FILE* file) {
 
 	fread(&player->items, sizeof(player->items), 1, file);
 	fread(&player->hp_ups, sizeof(player->hp_ups), 1, file);
+
+	savegame_deinit();
+	savegame_init();
 }
 
 static void write_string(FILE* file, const char* str) {
@@ -73,6 +126,39 @@ void savegame() {
 	/* Write the current room path*/
 	write_string(file, get_room_path(logic_store->room));
 
+	u32 table_count = get_table_count(savegame_persist);
+	fwrite(&table_count, sizeof(table_count), 1, file);
+
+	for (struct table_iter i = new_table_iter(savegame_persist); table_iter_next(&i);) {
+		u32 key_len = (u32)strlen(i.key);
+		fwrite(&key_len, sizeof(key_len), 1, file);
+		fwrite(i.key, 1, key_len, file);
+		
+		struct persistent* p = i.value;
+		fwrite(&p->type, sizeof(p->type), 1, file);
+
+		switch (p->type) {
+			case persist_i32:
+				fwrite(&p->as.i, sizeof(p->as.i), 1, file);
+				break;
+			case persist_u32:
+				fwrite(&p->as.u, sizeof(p->as.u), 1, file);
+				break;
+			case persist_bool:
+				fwrite(&p->as.b, sizeof(p->as.b), 1, file);
+				break;
+			case persist_float:
+				fwrite(&p->as.f, sizeof(p->as.f), 1, file);
+				break;
+			case persist_str: {
+				u32 len = (u32)strlen(p->as.str);
+				fwrite(&len, sizeof(len), 1, file);
+				fwrite(&p->as.str, 1, len, file);
+			} break;
+			default: break;
+		}
+	}
+
 	fclose(file);
 }
 
@@ -95,6 +181,47 @@ void loadgame() {
 	}
 	logic_store->room = load_room(world, room_path);
 	core_free(room_path);
+
+	u32 persist_count = 0;
+	fread(&persist_count, sizeof(persist_count), 1, file);
+
+	for (u32 i = 0; i < persist_count; i++) {
+		u32 key_len = 0;
+		fread(&key_len, sizeof(key_len), 1, file);
+		char* key = core_alloc(key_len);
+		key[key_len] = '\0';
+		fread(key, 1, key_len, file);
+		
+		struct persistent p = { 0 };
+		fread(&p.type, sizeof(p.type), 1, file);
+
+		switch (p.type) {
+			case persist_i32:
+				fread(&p.as.i, sizeof(p.as.i), 1, file);
+				break;
+			case persist_u32:
+				fread(&p.as.u, sizeof(p.as.u), 1, file);
+				break;
+			case persist_bool:
+				fread(&p.as.b, sizeof(p.as.b), 1, file);
+				break;
+			case persist_float:
+				fread(&p.as.f, sizeof(p.as.f), 1, file);
+				break;
+			case persist_str: {
+				u32 len = 0;
+				fread(&len, sizeof(len), 1, file);
+				p.as.str = core_alloc(len);
+				p.as.str[len] = '\0';
+				fread(p.as.str, len, 1, file);
+			} break;
+			default: break;
+		}
+
+		table_set(savegame_persist, key, &p);
+
+		core_free(key);
+	}
 
 	fclose(file);
 }

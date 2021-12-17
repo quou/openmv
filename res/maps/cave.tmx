@@ -134,21 +134,29 @@ function play()
         message(&quot;Hello!&quot;)
         coroutine.yield()
         message(&quot;I'm looking for coal.&quot;)
-        coroutine.yield()
-        ask(&quot;Would you like some coal? I'll give you some for 10 %c.&quot;, &quot;on_ask&quot;)
+
         interacted = true
+        set_persistent(&quot;interacted&quot;, interacted)
+
+        coroutine.yield()
     else
-        message(&quot;You already talked to me!&quot;)
+        message(&quot;Oh, you again.&quot;)
         coroutine.yield()
     end
+
+    ask(&quot;Would you like some coal? I'll give you some for 10 %c.&quot;, &quot;on_ask&quot;)
 end
 
 function on_init()
-   interacted = false
 end
 
 function on_play()
    co = coroutine.create(play)
+
+   interacted = get_persistent(&quot;interacted&quot;)
+   if interacted == nil then
+       interacted = false
+   end
 end
 
 function on_next_message()

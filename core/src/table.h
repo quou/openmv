@@ -20,6 +20,8 @@ API void* table_get(struct table* table, const char* key);
 API void* table_set(struct table* table, const char* key, const void* val);
 API void table_delete(struct table* table, const char* key);
 
+API u32 get_table_count(struct table* table);
+
 API const char* table_get_key(struct table* table, const char* key);
 
 struct table_iter {

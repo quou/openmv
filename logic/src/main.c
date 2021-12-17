@@ -72,6 +72,8 @@ API void CALL on_init() {
 	default_keymap();
 	load_keymap();
 
+	savegame_init();
+
 	struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 	logic_store->renderer->camera_enable = true;
