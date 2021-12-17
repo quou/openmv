@@ -154,7 +154,6 @@ static void ui_draw_rect(struct ui_context* ui, struct rect rect, u32 col_idx) {
 		.position = make_v2i(rect.x, rect.y),
 		.dimentions = make_v2i(rect.w, rect.h),
 		.rect = { 0, 0, 0, 0 },
-		.rotation = 0.0f,
 		.origin = make_v2f(0.0f, 0.0f),
 		.color = ui->style_colors[col_idx]
 	};

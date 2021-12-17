@@ -6,12 +6,9 @@ layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 uv;
 layout (location = 2) in vec4 color;
 layout (location = 3) in float texture_id;
-layout (location = 4) in float transform_id;
 
 uniform mat4 camera = mat4(1.0);
 uniform mat4 view = mat4(1.0);
-
-uniform mat4 transforms[100];
 
 out VS_OUT {
 	vec4 color;
@@ -24,7 +21,7 @@ void main() {
 	vs_out.uv = uv;
 	vs_out.texture_id = texture_id;
 
-	gl_Position = camera * view * transforms[int(transform_id)] * vec4(position, 0.0, 1.0);
+	gl_Position = camera * view * vec4(position, 0.0, 1.0);
 }
 
 #end VERTEX

@@ -86,7 +86,6 @@ struct textured_quad {
 	struct rect rect;
 	struct color color;
 
-	float rotation;
 	v2f origin;
 };
 
@@ -107,9 +106,6 @@ struct renderer {
 
 	v2i camera_pos;
 	m4f camera;
-
-	m4f transforms[100];
-	u32 transform_count;
 };
 
 API struct renderer* new_renderer(struct shader shader, v2i dimentions);

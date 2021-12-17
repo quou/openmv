@@ -8,7 +8,6 @@ struct transform {
 	const char* name;
 	v2f position;
 	v2i dimentions;
-	i32 rotation;
 	i32 z;
 };
 

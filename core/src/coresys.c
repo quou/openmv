@@ -55,7 +55,6 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
-			.rotation = t->rotation,
 			.origin = s->origin
 		};
 
@@ -86,7 +85,6 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
-			.rotation = t->rotation,
 			.origin = s->origin
 		};
 
