@@ -178,6 +178,12 @@ API void CALL on_update(double ts) {
 		sprintf(buf, "Pools: %u", get_component_pool_count(world));
 		ui_text(ui, buf);
 
+		if (ui_button(ui, "Give Coin")) {
+			struct player* player = get_component(world, logic_store->player, struct player);
+
+			player->money += 1;
+		}
+
 		ui_end_window(ui);
 	}
 

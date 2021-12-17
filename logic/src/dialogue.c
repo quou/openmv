@@ -1,5 +1,9 @@
+#include <string.h>
+
 #include "dialogue.h"
+#include "logic_store.h"
 #include "menu.h"
+#include "player.h"
 #include "savegame.h"
 
 #include <lua.h>
@@ -144,6 +148,69 @@ static i32 l_get_persistent(lua_State* L) {
 	return 1;
 }
 
+static i32 l_get_money(lua_State* L) {
+	lua_pushnumber(L, get_component(logic_store->world, logic_store->player, struct player)->money);
+
+	return 1;
+}
+
+static i32 l_deduct_money(lua_State* L) {
+	i32 money = (i32)luaL_checknumber(L, 1);
+
+	get_component(logic_store->world, logic_store->player, struct player)->money -= money;
+
+	return 0;
+}
+
+static i32 l_add_money(lua_State* L) {
+	i32 money = (i32)luaL_checknumber(L, 1);
+
+	get_component(logic_store->world, logic_store->player, struct player)->money += money;
+
+	return 0;
+}
+
+static i32 l_give_item(lua_State* L) {
+	const char* name = luaL_checkstring(L, 1);
+	
+	struct player* player = get_component(logic_store->world, logic_store->player, struct player);
+
+	if (strcmp(name, "jetpack") == 0) {
+		player->items |= upgrade_jetpack;
+	} if (strcmp(name, "coal_lump") == 0) {
+		player->items |= item_coal_lump;
+	} else {
+		luaL_error(L, "No item with name `%s'.", name);
+	}
+
+	play_audio_clip(player->upgrade_sound);
+
+	return 0;
+}
+
+static i32 l_has_item(lua_State* L) {
+	const char* name = luaL_checkstring(L, 1);
+
+	struct player* player = get_component(logic_store->world, logic_store->player, struct player);
+	
+	u32 item = 0;
+	if (strcmp(name, "jetpack") == 0) {
+		item = upgrade_jetpack;
+	} else if (strcmp(name, "coal_lump") == 0) {
+		item = item_coal_lump;
+	} else {
+		luaL_error(L, "No item with name `%s'.", name);
+	}
+
+	if (item) {
+		lua_pushboolean(L, player->items & item);
+	} else {
+		lua_pushboolean(L, false);
+	}
+
+	return 1;
+}
+
 static void on_ask(bool yes, void* udata) {
 	struct dialogue_script* script = udata;
 
@@ -206,6 +273,21 @@ struct dialogue_script* new_dialogue_script(const char* source) {
 
 	lua_pushcfunction(L, l_get_persistent);
 	lua_setglobal(L, "get_persistent");
+
+	lua_pushcfunction(L, l_get_money);
+	lua_setglobal(L, "get_money");
+
+	lua_pushcfunction(L, l_deduct_money);
+	lua_setglobal(L, "deduct_money");
+
+	lua_pushcfunction(L, l_add_money);
+	lua_setglobal(L, "add_money");
+
+	lua_pushcfunction(L, l_give_item);
+	lua_setglobal(L, "give_item");
+
+	lua_pushcfunction(L, l_has_item);
+	lua_setglobal(L, "has_item");
 
 	check_lua(L, luaL_dostring(L, source));
 

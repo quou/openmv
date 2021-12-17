@@ -29,6 +29,11 @@ static struct rect prim_numbers[] = {
 	{ 61, 0, 4, 5 }
 };
 
+static u32 item_sprites[] = {
+	[upgrade_jetpack] = sprid_upgrade_jetpack,
+	[item_coal_lump] = sprid_coal_lump
+};
+
 struct player_constants {
 	float move_speed;
 	float jump_force;
@@ -551,6 +556,24 @@ void hud_system(struct world* world, struct renderer* renderer) {
 		renderer_push(renderer, &hp_quad);
 		renderer_push(renderer, &hp_bar_quad);
 		renderer_push(renderer, &coin_quad);
+
+		for (u32 i = upgrade_jetpack, c = 0; i <= item_coal_lump; i *= 2) {
+			if (player->items & i) {
+				struct sprite sprite = get_sprite(item_sprites[i]);
+
+				struct textured_quad item_quad = {
+					.texture = sprite.texture,
+					.position = { win_w - ((sprite.rect.w + 1) + c) * sprite_scale,
+						sprite_scale * 3 + hp_quad.dimentions.y + coin_quad.dimentions.y },
+					.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
+					.rect = sprite.rect,
+					.color = sprite.color
+				};
+				renderer_push(renderer, &item_quad);
+
+				c += sprite.rect.w;
+			}
+		}
 
 		char coin_text[32];
 		sprintf(coin_text, "%d", player->money);

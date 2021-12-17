@@ -96,3 +96,4 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 
 	render_queue_flush(&queue, renderer);
 }
+

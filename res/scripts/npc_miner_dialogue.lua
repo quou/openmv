@@ -2,7 +2,17 @@ persist_name = "npc_miner_interacted"
 
 function on_ask(yes)
     if yes then
-        message("Here's some coal!")
+    	if get_money() > 10 then
+    		if not has_item("coal_lump") then
+        		message("Here's some coal!")
+        		deduct_money(10)
+        		give_item("coal_lump")
+        	else
+        		message("It looks like you already have some coal!")
+        	end
+        else
+        	message("You don't have enough %c. Come back when you have 10 %c.")
+        end
     else
         message("No coal for you!")
     end
@@ -12,6 +22,7 @@ function play()
     if not interacted then
         message("Hello!")
         coroutine.yield()
+
         message("I'm looking for coal.")
 
         interacted = true

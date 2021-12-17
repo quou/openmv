@@ -60,7 +60,8 @@ void hud_system(struct world* world, struct renderer* renderer);
 entity new_heart(struct world* world, struct room* room, v2f position, i32 value);
 
 enum {
-	upgrade_jetpack = 1 << 0
+	upgrade_jetpack = 1 << 1,
+	item_coal_lump = 1 << 2,
 };
 
 struct upgrade {
