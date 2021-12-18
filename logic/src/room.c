@@ -271,13 +271,37 @@ struct room* load_room(struct world* world, const char* path) {
 						room->box_colliders[ii].h *= sprite_scale;
 					}
 				} else if (strcmp(layer->name, "slopes") == 0) {
-					room->slope_collider_count = object_count;
-					room->slope_colliders = core_alloc(sizeof(*room->slope_colliders) * object_count);
+					room->slope_collider_count = 0;
+					room->slope_colliders = null;
 					for (u32 ii = 0; ii < object_count; ii++) {
 						skip_name(&file);
 
-						file_read(room->slope_colliders + ii, sizeof(*room->slope_colliders), 1, &file);
+						u32 point_count = 0;
+						file_read(&point_count, sizeof(point_count), 1, &file);
+						v2i* points = core_alloc(point_count * sizeof(v2i));
 
+						for (u32 iii = 0; iii < point_count; iii++) {
+							file_read(&points[iii].x, sizeof(points[iii].x), 1, &file);
+							file_read(&points[iii].y, sizeof(points[iii].y), 1, &file);
+						}
+
+						room->slope_colliders = core_realloc(room->slope_colliders,
+							sizeof(*room->slope_colliders) * (room->slope_collider_count + point_count));
+						for (u32 iii = 0; iii < point_count; iii += 2) {
+							u32 idx = iii < 2 ? iii : iii - 1;
+
+							v2i start = make_v2i(points[idx].x, points[idx].y);
+
+							idx = iii < 2 ? iii + 1 : iii;
+							v2i end   = make_v2i(points[idx].x, points[idx].y);
+
+							room->slope_colliders[room->slope_collider_count++] = make_v4i(start.x, start.y, end.x, end.y);
+						}
+
+						core_free(points);
+					}
+
+					for (u32 ii = 0; ii < room->slope_collider_count; ii++) {
 						/* Ensure that the start of the slope is alway smaller than the end on the `x' axis. */
 						v2i start = make_v2i(room->slope_colliders[ii].x * sprite_scale, room->slope_colliders[ii].y * sprite_scale);
 						v2i end = make_v2i(room->slope_colliders[ii].z * sprite_scale, room->slope_colliders[ii].w * sprite_scale);

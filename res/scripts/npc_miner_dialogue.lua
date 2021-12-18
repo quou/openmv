@@ -4,7 +4,7 @@ function on_ask(yes)
     if yes then
     	if get_money() > 10 then
     		if not has_item("coal_lump") then
-        		message("Here's some coal!")
+        		message("Obtained a Lump of Coal!")
         		deduct_money(10)
         		give_item("coal_lump")
         	else

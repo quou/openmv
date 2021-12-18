@@ -196,13 +196,13 @@ var dat_format = {
 
 					/* Write the rectangle. */
 					if (layer.name == "slopes") {
-						for (var iii = 0; iii < 2; iii += 2) {
-							var rect_buf = new ArrayBuffer(4*4);
+						fwrite_uint(obj.polygon.length, file);
+
+						for (var iii = 0; iii < obj.polygon.length; iii++) {
+							var rect_buf = new ArrayBuffer(4*2);
 							var rect_view = new Int32Array(rect_buf);
 							rect_view[0] = obj.x + obj.polygon[iii].x;
 							rect_view[1] = obj.y + obj.polygon[iii].y;
-							rect_view[2] = obj.x + obj.polygon[iii + 1].x;
-							rect_view[3] = obj.y + obj.polygon[iii + 1].y;
 							file.write(rect_buf);
 						}
 					} else {
