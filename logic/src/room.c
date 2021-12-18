@@ -118,6 +118,20 @@ struct room {
 	double name_timer;
 
 	struct world* world;
+
+	bool transitioning_out;
+	bool transitioning_in;
+
+	double transition_timer;
+	double transition_speed;
+
+	char* transition_to;
+	char* entrance;
+
+	entity body;
+	struct rect collider;
+
+	struct room** ptr;
 };
 
 static char* read_name(struct file* file) {
@@ -147,6 +161,10 @@ struct room* load_room(struct world* world, const char* path) {
 		core_free(room);
 		return null;
 	}
+
+	room->transitioning_in = true;
+	room->transition_timer = 1.0;
+	room->transition_speed = 5.0;
 
 	room->name_font = load_font("res/DejaVuSansMono.ttf", 25.0f);
 	room->name_timer = 3.0;
@@ -702,7 +720,7 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	}
 }
 
-void update_room(struct room* room, double ts) {
+void update_room(struct room* room, double ts, double actual_ts) {
 	/* Update tile animations */
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		for (u32 ii = 0; ii < room->tilesets[i].tile_count; ii++) {
@@ -723,12 +741,66 @@ void update_room(struct room* room, double ts) {
 	for (u32 i = 0; i < room->dialogue_count; i++) {
 		update_dialogue(room->dialogue[i].script);
 	}
+
+	if (room->transitioning_in) {
+		logic_store->frozen = true;
+
+		room->transition_timer -= actual_ts * room->transition_speed;
+		if (room->transition_timer <= 0.0) {
+			room->transitioning_in = false;
+		}
+	} else if (room->transitioning_out) {
+		logic_store->frozen = true;
+
+		room->transition_timer += actual_ts * room->transition_speed;
+		if (room->transition_timer >= 1.0) {
+			free_room(room);
+			struct room** ptr = room->ptr;
+
+			struct world* world = room->world;
+
+			entity body = room->body;
+			struct rect collider = room->collider;
+			char* change_to = room->transition_to;
+			char* entrance = room->entrance;
+
+			*ptr = load_room(world, change_to);
+			room = *ptr;
+
+			v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
+			if (entrance_pos) {
+				v2f* position = &get_component(room->world, body, struct transform)->position;
+
+				position->x = entrance_pos->x - (collider.w / 2);
+				position->y = entrance_pos->y - collider.h;
+
+				logic_store->camera_position = *position;
+			} else {
+				fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
+			}
+
+			core_free(change_to);
+			core_free(entrance);
+		}
+	} else {
+		logic_store->frozen = false;
+	}
 }
 
-void draw_room_forground(struct room* room, struct renderer* renderer) {
+void draw_room_forground(struct room* room, struct renderer* renderer, struct renderer* transition_renderer) {
 	struct layer* layer = room->layers + room->forground_index;
 
 	draw_tile_layer(room, renderer, layer, -1);
+
+	if (room->transitioning_in || room->transitioning_out) {
+		struct textured_quad quad = {
+			.position = { 0, 0 },
+			.dimentions = renderer->dimentions,
+			.color = { 0, 0, 0, room->transition_timer > 1.0 ? 255 : (u8)(room->transition_timer * 255.0) },
+		};
+
+		renderer_push(transition_renderer, &quad);
+	}
 }
 
 void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {
@@ -788,6 +860,18 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 
 char* get_room_path(struct room* room) {
 	return room->path;
+}
+
+void room_transition_to(struct room** room, entity body, struct rect collider, const char* path, const char* entrance) {
+	(*room)->transition_to = copy_string(path);
+	(*room)->entrance = copy_string(entrance);
+	(*room)->ptr = room;
+
+	(*room)->transitioning_out = true;
+	(*room)->transition_timer = 0.0;
+
+	(*room)->body = body;
+	(*room)->collider = collider;
 }
 
 void handle_body_interactions(struct room** room_ptr, struct rect collider, entity body, bool body_on_ground) {
@@ -854,21 +938,7 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 	if (change_to && entrance) {
 		struct world* world = room->world;
 
-		free_room(room);
-		*room_ptr = load_room(world, change_to);
-		room = *room_ptr;
-
-		v2i* entrance_pos = (v2i*)table_get(room->entrances, entrance);
-		if (entrance_pos) {
-			position = &get_component(room->world, body, struct transform)->position;
-
-			position->x = entrance_pos->x - (collider.w / 2);
-			position->y = entrance_pos->y - collider.h;
-
-			logic_store->camera_position = *position;
-		} else {
-			fprintf(stderr, "Failed to locate entrance with name `%s'\n", entrance);
-		}
+		room_transition_to(room_ptr, body, collider, change_to, entrance);
 
 		core_free(change_to);
 		core_free(entrance);

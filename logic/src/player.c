@@ -478,6 +478,16 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		sprite->hidden = !player->visible;
+	}
+}
+
+void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts) {
+	for (view(world, view,
+			type_info(struct transform),
+			type_info(struct player))) {
+
+		struct transform* transform = view_get(&view, struct transform);
+		struct player* player = view_get(&view, struct player);
 
 		/* Camera movement. */
 		float distance_to_player = sqrtf(powf(logic_store->camera_position.x - transform->position.x, 2)
@@ -491,7 +501,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		renderer->camera_pos = make_v2i((i32)logic_store->camera_position.x, (i32)logic_store->camera_position.y);
 
 		v2i camera_corner = v2i_sub(renderer->camera_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
-		struct rect camera_bounds = room_get_camera_bounds(*room);
+		struct rect camera_bounds = room_get_camera_bounds(room);
 		if (camera_corner.x < camera_bounds.x) {
 			renderer->camera_pos.x = camera_bounds.x + renderer->dimentions.x / 2;
 		} else if (camera_corner.x + renderer->dimentions.x > camera_bounds.w)  {

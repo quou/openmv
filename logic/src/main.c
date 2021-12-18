@@ -140,20 +140,23 @@ API void CALL on_update(double ts) {
 	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (!logic_store->frozen && !logic_store->paused) { player_system(world, renderer, &logic_store->room, timestep); }
+	camera_system(world, renderer, logic_store->room, ts);
 	enemy_system(world, logic_store->room, timestep);
 	projectile_system(world, logic_store->room, timestep);
 	fx_system(world, timestep);
 	anim_fx_system(world, timestep);
-	update_room(logic_store->room, timestep);
+	update_room(logic_store->room, timestep, ts);
 	draw_room(logic_store->room, renderer, timestep);
 	damage_fx_system(world, renderer, timestep);
 
 	render_system(world, renderer, timestep);
-	draw_room_forground(logic_store->room, renderer);
+
+	hud_system(world, logic_store->ui_renderer);
+
+	draw_room_forground(logic_store->room, renderer, logic_store->ui_renderer);
 
 	renderer_flush(renderer);
 
-	hud_system(world, logic_store->ui_renderer);
 
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
