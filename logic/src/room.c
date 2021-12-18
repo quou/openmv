@@ -748,6 +748,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 		room->transition_timer -= actual_ts * room->transition_speed;
 		if (room->transition_timer <= 0.0) {
 			room->transitioning_in = false;
+			logic_store->frozen = false;
 		}
 	} else if (room->transitioning_out) {
 		logic_store->frozen = true;
@@ -781,9 +782,10 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 			core_free(change_to);
 			core_free(entrance);
+
+			room->transitioning_out = false;
+			logic_store->frozen = false;
 		}
-	} else {
-		logic_store->frozen = false;
 	}
 }
 
