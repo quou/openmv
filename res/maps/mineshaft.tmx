@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="12" nextobjectid="79">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="13" nextobjectid="81">
  <editorsettings>
-  <export target="cave.dat" format="dat"/>
+  <export target="mineshaft.dat" format="dat"/>
  </editorsettings>
  <properties>
   <property name="name" value="Mine Shaft"/>
@@ -85,8 +85,8 @@
  <layer id="1" name="forground" width="32" height="32" locked="1">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,22,0,0,0,0,0,0,0,0,0,0,
-22,18,18,18,18,18,18,18,18,18,30,35,0,0,25,18,18,18,18,18,18,22,0,0,0,0,0,0,0,0,0,0,
+22,22,22,22,22,22,22,22,22,22,22,0,0,0,22,22,22,22,22,22,22,22,0,0,0,0,0,0,0,0,0,0,
+22,18,18,18,18,18,18,18,18,18,30,0,0,0,25,18,18,18,18,18,18,22,0,0,0,0,0,0,0,0,0,0,
 22,18,18,30,0,0,0,0,0,0,0,0,0,0,0,0,0,25,18,18,18,22,0,0,0,0,0,0,0,0,0,0,
 22,18,35,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,25,18,22,0,0,0,0,0,0,0,0,0,0,
 22,18,21,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,22,0,0,0,0,0,0,0,0,0,0,
@@ -136,14 +136,13 @@
  <objectgroup id="7" name="save_points" locked="1">
   <object id="49" name="save_point_a" x="32" y="128" width="16" height="16"/>
  </objectgroup>
- <objectgroup color="#00aa00" id="3" name="collisions">
+ <objectgroup color="#00aa00" id="3" name="collisions" locked="1">
   <object id="53" x="0" y="176" width="352" height="32"/>
   <object id="54" x="320" y="16" width="32" height="160"/>
   <object id="57" x="240" y="16" width="80" height="32"/>
   <object id="58" x="0" y="16" width="160" height="32"/>
   <object id="60" x="160" y="16" width="16" height="22.5"/>
   <object id="62" x="224" y="16" width="15.8182" height="24.1818"/>
-  <object id="63" x="176" y="16" width="48" height="16"/>
   <object id="66" x="0" y="48" width="32" height="128"/>
   <object id="67" x="32" y="144" width="16" height="16"/>
   <object id="68" x="32" y="160" width="112" height="16"/>
@@ -174,6 +173,17 @@
   </object>
   <object id="51" name="door_a" x="184" y="176">
    <point/>
+  </object>
+  <object id="79" name="top_entrance" x="200" y="48">
+   <point/>
+  </object>
+ </objectgroup>
+ <objectgroup id="12" name="transition_triggers">
+  <object id="80" template="../templates/transition_trigger.tx" x="173.875" y="5.875" width="50.875" height="11.625">
+   <properties>
+    <property name="change_to" value="res/maps/village.dat"/>
+    <property name="entrance" value="shaft_top"/>
+   </properties>
   </object>
  </objectgroup>
  <objectgroup id="5" name="meta" visible="0" locked="1">

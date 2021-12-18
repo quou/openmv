@@ -80,10 +80,10 @@
 15,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="13" name="doors" locked="1">
+ <objectgroup id="13" name="doors">
   <object id="136" template="../templates/door.tx" x="64" y="96">
    <properties>
-    <property name="change_to" value="res/maps/cave.dat"/>
+    <property name="change_to" value="res/maps/mineshaft.dat"/>
     <property name="entrance" value="door_a"/>
    </properties>
   </object>
@@ -157,7 +157,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="14" name="save_points">
+ <objectgroup id="14" name="save_points" locked="1">
   <object id="137" x="256" y="160" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="5" name="upgrade_pickups" locked="1">

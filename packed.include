@@ -19,7 +19,8 @@ res/bmp/item.bmp
 res/bmp/npc.bmp
 res/bmp/overworld.bmp
 res/bmp/tsblue.bmp
-res/maps/cave.dat
+res/maps/mineshaft.dat
+res/maps/village.dat
 res/maps/overworld_test.dat
 res/maps/test_room.dat
 res/maps/test_room2.dat
