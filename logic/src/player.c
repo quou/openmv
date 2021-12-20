@@ -394,12 +394,17 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.position = v2f_add(transform->position,
 					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
+			get_component(world, projectile, struct transform)->position.x += player->face == player_face_left ?
+				-10 : 10;
 			add_component(world, projectile, struct sprite, sprite);
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
-				.damage = 4);
+				.damage = 4,
+				.collider = {
+					0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale
+				});
 
 			/* Spawn the muzzle flash */
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);

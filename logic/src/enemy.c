@@ -63,6 +63,7 @@ entity new_spider(struct world* world, struct room* room, v2f position) {
 		.position = position,
 		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 	add_component(world, e, struct sprite, sprite);
+	add_componentv(world, e, struct room_child, .parent = room);
 	add_componentv(world, e, struct enemy, .collider = {
 		0, 0,
 		sprite.rect.w * sprite_scale,
@@ -179,10 +180,16 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				enemy->hp -= projectile->damage;
 
 				if (random_chance(30)) {
-					new_heart(world, room, transform->position, 1);
+					struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
+
+					new_heart(world, room, v2f_sub(transform->position,
+						make_v2f((heart_rect.w * sprite_scale) / 2, (heart_rect.h * sprite_scale) / 2)), 1);
 				} else {
+					struct rect coin_rect = get_sprite(sprid_coin).rect;
+
 					for (i32 i = 0; i < enemy->money_drop; i++) {
-						new_coin_pickup(world, room, transform->position);
+						new_coin_pickup(world, room, v2f_sub(transform->position,
+							make_v2f((coin_rect.w * sprite_scale) / 2, (coin_rect.h * sprite_scale) / 2)));
 					}
 				}
 
