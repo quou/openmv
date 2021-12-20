@@ -145,7 +145,9 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 					spider->velocity.x = 100;
 				}
 			} else {
-				handle_body_collisions(spider->room, enemy->collider, &transform->position, &spider->velocity);
+				if (handle_body_collisions(spider->room, enemy->collider, &transform->position, &spider->velocity)) {
+					spider->velocity.x = 0.0;
+				}
 			}
 		}
 	}
@@ -179,7 +181,15 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				enemy->hp -= projectile->damage;
 
-				if (random_chance(30)) {
+				struct player* player = get_component(world, logic_store->player, struct player);
+
+				/* Chance to get a heart is much higher if the player has low hp. */
+				double chance = 5;
+				if (player->hp < player->max_hp) {
+					chance = 30;
+				}
+
+				if (random_chance(chance)) {
 					struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
 
 					new_heart(world, room, v2f_sub(transform->position,

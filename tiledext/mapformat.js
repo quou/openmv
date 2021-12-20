@@ -36,6 +36,181 @@ function get_local_fp(fp) {
 		fp.length);
 }
 
+function write_layer(tilesets, layer, file) {
+	if (!layer.isGroupLayer) {
+		fwrite_string(layer.name, file);
+	} else {
+		for (var i = 0; i < layer.layerCount; i++) {
+			write_layer(tilesets, layer.layerAt(i), file);
+		}
+
+		return;
+	}
+
+	if (layer.isTileLayer) {
+		fwrite_uint(0, file);
+
+		/* Write the width and height */
+		var size_buf = new ArrayBuffer(8);
+		var size_view = new Uint32Array(size_buf);
+		size_view[0] = layer.width;
+		size_view[1] = layer.height;
+		file.write(size_buf);
+
+		for (var y = 0; y < layer.height; y++) {
+			for (var x = 0; x < layer.width; x++) {
+				var tile_id = -1;
+				var tile = layer.tileAt(x, y);
+				if (tile) {
+					tile_id = tile.id;
+				}
+				var tileset_idx = 0;
+				if (tile_id >= 0) {
+					for (var ii = 0; ii < tilesets.length; ii++) {
+						if (tile.tileset == tilesets[ii]) {
+							tileset_idx = ii;
+							break;
+						}
+					}
+				}
+
+				/* Write the ID */
+				var id_buf = new ArrayBuffer(2);
+				var id_view = new Int16Array(id_buf);
+				id_view[0] = tile_id;
+
+				var set_id_buf = new ArrayBuffer(2);
+				var set_id_view = new Int16Array(set_id_buf);
+				set_id_view[0] = tileset_idx;
+
+				file.write(id_buf);
+				file.write(set_id_buf);
+			}
+		}
+	} else if (layer.isObjectLayer) {
+		/* Write the layer type ID */
+		var type_buf = new ArrayBuffer(4);
+		var type_view = new Int32Array(type_buf);
+		type_view[0] = 1;
+		file.write(type_buf);
+
+		/* Write the object count */
+		var obj_count_buf = new ArrayBuffer(4);
+		var obj_count_view = new Uint32Array(obj_count_buf);
+		obj_count_view[0] = layer.objectCount;
+		file.write(obj_count_buf);
+
+		for (var ii = 0; ii < layer.objectCount; ii++) {
+			var obj = layer.objects[ii];
+
+			fwrite_string(obj.name, file);
+
+			/* Write the rectangle. */
+			if (layer.name == "slopes") {
+				fwrite_uint(obj.polygon.length, file);
+
+				for (var iii = 0; iii < obj.polygon.length; iii++) {
+					var rect_buf = new ArrayBuffer(4*2);
+					var rect_view = new Int32Array(rect_buf);
+					rect_view[0] = obj.x + obj.polygon[iii].x;
+					rect_view[1] = obj.y + obj.polygon[iii].y;
+					file.write(rect_buf);
+				}
+			} else {
+				var rect_buf = new ArrayBuffer(4*4);
+				var rect_view = new Int32Array(rect_buf);
+				rect_view[0] = obj.x;
+				rect_view[1] = obj.y;
+				rect_view[2] = obj.size.width;
+				rect_view[3] = obj.size.height;
+				file.write(rect_buf);
+			}
+
+			if (layer.name === "transition_triggers" || layer.name == "doors") {
+				var change_to_prop = obj.property("change_to");
+				var entrance_prop = obj.property("entrance");
+
+				if (!change_to_prop || !entrance_prop) {
+					print("Object `" + obj.name + "' doesn't have the correct properties to be a transition trigger.");
+				} else {
+					var change_to_len_buf = new ArrayBuffer(4);
+					var change_to_len_view = new Uint32Array(change_to_len_buf);
+					change_to_len_view[0] = change_to_prop.length;
+					file.write(change_to_len_buf);
+
+					var change_to_buf = new ArrayBuffer(change_to_prop.length);
+					var change_to_view = new Uint8Array(change_to_buf);
+					for (var iii = 0; iii < change_to_prop.length; iii++) {
+						change_to_view[iii] = change_to_prop.charCodeAt(iii);
+					}
+					file.write(change_to_buf);
+
+					var entrance_len_buf = new ArrayBuffer(4);
+					var entrance_len_view = new Uint32Array(entrance_len_buf);
+					entrance_len_view[0] = entrance_prop.length;
+					file.write(entrance_len_buf);
+
+					var entrance_buf = new ArrayBuffer(entrance_prop.length);
+					var entrance_view = new Uint8Array(entrance_buf);
+					for (var iii = 0; iii < entrance_prop.length; iii++) {
+						entrance_view[iii] = entrance_prop.charCodeAt(iii);
+					}
+					file.write(entrance_buf);
+				}
+			} else if (layer.name == "enemies") {
+				if (obj.property("path") != undefined && obj.property("path") != null) {
+					fwrite_string(obj.property("path"), file);
+				} else {
+					fwrite_uint(0, file);
+				}
+			} else if (layer.name == "enemy_paths") {
+				fwrite_uint(obj.polygon.length, file);
+
+				for (var iii = 0; iii < obj.polygon.length; iii++) {
+					fwrite_float(obj.x + obj.polygon[iii].x, file);
+					fwrite_float(obj.y + obj.polygon[iii].y, file);
+				}
+			} else if (layer.name == "upgrade_pickups") {
+				var prefix = obj.property("prefix");
+				var item_name = obj.property("name");
+				if (prefix == undefined || prefix == null) { prefix = "undefined" }
+				if (item_name == undefined || item_name == null) { item_name = "undefined" }
+				fwrite_string(prefix, file);
+				fwrite_string(item_name, file);
+
+				if (obj.name == "health_pack" || obj.name == "health_booster") {
+					fwrite_uint(obj.property("id"), file);
+				}
+			} else if (layer.name == "dialogue_triggers") {
+				fwrite_string(obj.property("script"), file);
+			}
+		}
+	} else {
+		/* Layer type ID is -1 because it's an unknown type */
+		var type_buf = new ArrayBuffer(4);
+		var type_view = new Int32Array(type_buf);
+		type_view[0] = -1;
+		file.write(type_buf);
+	}
+}
+
+/* Recurses the layers inside groups. */
+function count_layers(map) {
+	var count = 0;
+
+	for (var i = 0; i < map.layerCount; i++) {
+		var layer = map.layerAt(i);
+
+		if (layer.isGroupLayer) {
+			count += count_layers(layer);
+		}
+	}
+
+	count += map.layerCount;
+
+	return count;
+}
+
 var dat_format = {
 	name: "OpenMV",
 	extension: "dat",
@@ -110,177 +285,11 @@ var dat_format = {
 		}
 
 		/* Write the layer count */
-		var layer_count_buf = new ArrayBuffer(4);
-		var layer_count_view = new Uint32Array(layer_count_buf);
-		layer_count_view[0] = map.layerCount;
-		file.write(layer_count_buf);
+		fwrite_uint(count_layers(map), file);
 
 		/* Write the layers */
 		for (var i = 0; i < map.layerCount; i++) {
-			var layer = map.layerAt(i);
-
-			/* Write the layer name length, followed by the bytes of the layer name string. */
-			var name_len_buf = new ArrayBuffer(4);
-			var name_len_view = new Uint32Array(name_len_buf);
-			name_len_view[0] = layer.name.length;
-			file.write(name_len_buf);
-
-			var name_buf = new ArrayBuffer(layer.name.length);
-			var name_view = new Uint8Array(name_buf);
-			for (var ii = 0; ii < layer.name.length; ii++) {
-				name_view[ii] = layer.name.charCodeAt(ii);
-			}
-			file.write(name_buf);
-
-			if (layer.isTileLayer) {
-				/* Write the layer type ID */
-				var type_buf = new ArrayBuffer(4);
-				var type_view = new Int32Array(type_buf);
-				type_view[0] = 0;
-				file.write(type_buf);
-
-				/* Write the width and height */
-				var size_buf = new ArrayBuffer(8);
-				var size_view = new Uint32Array(size_buf);
-				size_view[0] = layer.width;
-				size_view[1] = layer.height;
-				file.write(size_buf);
-
-				for (var y = 0; y < layer.height; y++) {
-					for (var x = 0; x < layer.width; x++) {
-						var tile_id = -1;
-						var tile = layer.tileAt(x, y);
-						if (tile) {
-							tile_id = tile.id;
-						}
-						var tileset_idx = 0;
-						if (tile_id >= 0) {
-							for (var ii = 0; ii < tilesets.length; ii++) {
-								if (tile.tileset == tilesets[ii]) {
-									tileset_idx = ii;
-									break;
-								}
-							}
-						}
-
-						/* Write the ID */
-						var id_buf = new ArrayBuffer(2);
-						var id_view = new Int16Array(id_buf);
-						id_view[0] = tile_id;
-
-						var set_id_buf = new ArrayBuffer(2);
-						var set_id_view = new Int16Array(set_id_buf);
-						set_id_view[0] = tileset_idx;
-
-						file.write(id_buf);
-						file.write(set_id_buf);
-					}
-				}
-			} else if (layer.isObjectLayer) {
-				/* Write the layer type ID */
-				var type_buf = new ArrayBuffer(4);
-				var type_view = new Int32Array(type_buf);
-				type_view[0] = 1;
-				file.write(type_buf);
-
-				/* Write the object count */
-				var obj_count_buf = new ArrayBuffer(4);
-				var obj_count_view = new Uint32Array(obj_count_buf);
-				obj_count_view[0] = layer.objectCount;
-				file.write(obj_count_buf);
-
-				for (var ii = 0; ii < layer.objectCount; ii++) {
-					var obj = layer.objects[ii];
-
-					fwrite_string(obj.name, file);
-
-					/* Write the rectangle. */
-					if (layer.name == "slopes") {
-						fwrite_uint(obj.polygon.length, file);
-
-						for (var iii = 0; iii < obj.polygon.length; iii++) {
-							var rect_buf = new ArrayBuffer(4*2);
-							var rect_view = new Int32Array(rect_buf);
-							rect_view[0] = obj.x + obj.polygon[iii].x;
-							rect_view[1] = obj.y + obj.polygon[iii].y;
-							file.write(rect_buf);
-						}
-					} else {
-						var rect_buf = new ArrayBuffer(4*4);
-						var rect_view = new Int32Array(rect_buf);
-						rect_view[0] = obj.x;
-						rect_view[1] = obj.y;
-						rect_view[2] = obj.size.width;
-						rect_view[3] = obj.size.height;
-						file.write(rect_buf);
-					}
-
-					if (layer.name === "transition_triggers" || layer.name == "doors") {
-						var change_to_prop = obj.property("change_to");
-						var entrance_prop = obj.property("entrance");
-
-						if (!change_to_prop || !entrance_prop) {
-							print("Object `" + obj.name + "' doesn't have the correct properties to be a transition trigger.");
-						} else {
-							var change_to_len_buf = new ArrayBuffer(4);
-							var change_to_len_view = new Uint32Array(change_to_len_buf);
-							change_to_len_view[0] = change_to_prop.length;
-							file.write(change_to_len_buf);
-
-							var change_to_buf = new ArrayBuffer(change_to_prop.length);
-							var change_to_view = new Uint8Array(change_to_buf);
-							for (var iii = 0; iii < change_to_prop.length; iii++) {
-								change_to_view[iii] = change_to_prop.charCodeAt(iii);
-							}
-							file.write(change_to_buf);
-
-							var entrance_len_buf = new ArrayBuffer(4);
-							var entrance_len_view = new Uint32Array(entrance_len_buf);
-							entrance_len_view[0] = entrance_prop.length;
-							file.write(entrance_len_buf);
-
-							var entrance_buf = new ArrayBuffer(entrance_prop.length);
-							var entrance_view = new Uint8Array(entrance_buf);
-							for (var iii = 0; iii < entrance_prop.length; iii++) {
-								entrance_view[iii] = entrance_prop.charCodeAt(iii);
-							}
-							file.write(entrance_buf);
-						}
-					} else if (layer.name == "enemies") {
-						if (obj.property("path") != undefined && obj.property("path") != null) {
-							fwrite_string(obj.property("path"), file);
-						} else {
-							fwrite_uint(0, file);
-						}
-					} else if (layer.name == "enemy_paths") {
-						fwrite_uint(obj.polygon.length, file);
-
-						for (var iii = 0; iii < obj.polygon.length; iii++) {
-							fwrite_float(obj.x + obj.polygon[iii].x, file);
-							fwrite_float(obj.y + obj.polygon[iii].y, file);
-						}
-					} else if (layer.name == "upgrade_pickups") {
-						var prefix = obj.property("prefix");
-						var item_name = obj.property("name");
-						if (prefix == undefined || prefix == null) { prefix = "undefined" }
-						if (item_name == undefined || item_name == null) { item_name = "undefined" }
-						fwrite_string(prefix, file);
-						fwrite_string(item_name, file);
-
-						if (obj.name == "health_pack" || obj.name == "health_booster") {
-							fwrite_uint(obj.property("id"), file);
-						}
-					} else if (layer.name == "dialogue_triggers") {
-						fwrite_string(obj.property("script"), file);
-					}
-				}
-			} else {
-				/* Layer type ID is -1 because it's an unknown type */
-				var type_buf = new ArrayBuffer(4);
-				var type_view = new Int32Array(type_buf);
-				type_view[0] = -1;
-				file.write(type_buf);
-			}
+			write_layer(tilesets, map.layerAt(i), file);
 		}
 
 		file.commit();

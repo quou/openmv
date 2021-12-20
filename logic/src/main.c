@@ -194,6 +194,14 @@ API void CALL on_update(double ts) {
 			core_free(path);
 		}
 
+		if (ui_button(ui, "Save Game")) {
+			savegame();
+		}
+
+		if (ui_button(ui, "Load Game")) {
+			loadgame();
+		}
+
 		ui_end_window(ui);
 	}
 
