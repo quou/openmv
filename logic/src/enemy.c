@@ -2,6 +2,7 @@
 
 #include "consts.h"
 #include "enemy.h"
+#include "logic_store.h"
 #include "physics.h"
 #include "player.h"
 #include "sprites.h"
@@ -53,6 +54,25 @@ entity new_bat(struct world* world, struct room* room, v2f position, char* path_
 	return e;
 }
 
+entity new_spider(struct world* world, struct room* room, v2f position) {
+	entity e = new_entity(world);
+
+	struct sprite sprite = get_sprite(sprid_spider);
+
+	add_componentv(world, e, struct transform,
+		.position = position,
+		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+	add_component(world, e, struct sprite, sprite);
+	add_componentv(world, e, struct enemy, .collider = {
+		0, 0,
+		sprite.rect.w * sprite_scale,
+		sprite.rect.h * sprite_scale },
+		.hp = 1, .damage = 1, .money_drop = 1);
+	add_componentv(world, e, struct spider, .room = room);
+
+	return e;
+}
+
 void enemy_system(struct world* world, struct room* room, double ts) {
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
 		struct transform* transform = view_get(&view, struct transform);
@@ -91,6 +111,40 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			} else if (follow->reverse && follow->node < 0) {
 				follow->reverse = false;
 				follow->node = 0;
+			}
+		}
+	}
+
+	for (view(world, view, type_info(struct transform), type_info(struct spider), type_info(struct enemy))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct spider* spider = view_get(&view, struct spider);
+		struct enemy* enemy = view_get(&view, struct enemy);
+
+		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
+
+		float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+		if (dist_sqrd < 1865956) { /* (screen width x sprite scale)^2  */
+			spider->velocity.y += g_gravity * ts; 
+
+			transform->position = v2f_add(transform->position, v2f_mul(spider->velocity, make_v2f(ts, ts)));
+
+			struct rect e_rect = {
+				transform->position.x + enemy->collider.x,
+				transform->position.y + enemy->collider.y,
+				enemy->collider.w, enemy->collider.h
+			};
+
+			v2i normal;
+			if (dist_sqrd < 100000 && rect_room_overlap(spider->room, e_rect, &normal) && normal.y == 1) {
+				spider->velocity.y = -800;
+
+				if (p_transform->position.x < transform->position.x) {
+					spider->velocity.x = -100;
+				} else {
+					spider->velocity.x = 100;
+				}
+			} else {
+				handle_body_collisions(spider->room, enemy->collider, &transform->position, &spider->velocity);
 			}
 		}
 	}

@@ -74,7 +74,7 @@ struct player_constants {
 const struct player_constants player_constants = {
 	.move_speed = 300,
 	.jump_force = -800,
-	.gravity = 1500,
+	.gravity = g_gravity,
 	.accel = 2000,
 	.friction = 800,
 	.slow_friction = 100,
@@ -236,7 +236,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		transform->position = v2f_add(transform->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
-		handle_body_collisions(room, player->collider, &transform->position, &player->velocity);
+		handle_body_collisions(*room, player->collider, &transform->position, &player->velocity);
 		handle_body_interactions(room, player->collider, view.e, player->on_ground);
 
 		/* Update pointers because the pools might have been reallocated. */
@@ -314,7 +314,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			c_transform->position = v2f_add(c_transform->position, v2f_mul(coin->velocity, make_v2f(ts, ts)));
 	
-			handle_body_collisions(room, coin->collider, &c_transform->position, &coin->velocity);
+			handle_body_collisions(*room, coin->collider, &c_transform->position, &coin->velocity);
 
 			struct rect c_rect = {
 				c_transform->position.x + coin->collider.x,

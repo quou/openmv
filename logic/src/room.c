@@ -386,6 +386,8 @@ struct room* load_room(struct world* world, const char* path) {
 
 						if (strcmp(obj_name, "bat") == 0) {
 							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale), has_path ? path_name : null);
+						} else if (strcmp(obj_name, "spider") == 0) {
+							new_spider(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
 						}
 
 						core_free(obj_name);
@@ -808,14 +810,14 @@ void draw_room_forground(struct room* room, struct renderer* renderer, struct re
 	}
 }
 
-void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* position, v2f* velocity) {
-	struct room* room = *room_ptr;
-
+bool handle_body_collisions(struct room* room, struct rect collider, v2f* position, v2f* velocity) {
 	struct rect body_rect = {
 		.x = collider.x + position->x,
 		.y = collider.y + position->y,
 		.w = collider.w, .h = collider.h
 	};
+
+	bool collided = false;
 
 	/* Resolve rectangle collisions, using a basic AABB vs AABB method. */
 	for (u32 i = 0; i < room->box_collider_count; i++) {
@@ -823,6 +825,7 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 
 		v2i normal;
 		if (rect_overlap(body_rect, rect, &normal)) {
+			collided = true;
 			if (normal.x == 1) {
 				position->x = ((float)rect.x - body_rect.w) - collider.x;
 				velocity->x = 0.0f;
@@ -859,8 +862,12 @@ void handle_body_collisions(struct room** room_ptr, struct rect collider, v2f* p
 		 	/* y = mx + b */
 			position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;
 			velocity->y = 0.0f;
+
+			collided = true;
 		}
 	}
+
+	return collided;
 }
 
 char* get_room_path(struct room* room) {
@@ -966,6 +973,7 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
 
 		if (point_vs_rtri(check_point, start, end)) {
+			if (normal) { *normal = make_v2i(0, 1); }
 			return true;
 		}
 	}

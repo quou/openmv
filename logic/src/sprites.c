@@ -90,6 +90,12 @@ struct sprite sprites[] = {
 		.rect = { 0, 16, 16, 16 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_spider] = {
+		.texture = texid_bad,
+		.rect = { 0, 7, 11, 5 },
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 
