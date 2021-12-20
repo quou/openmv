@@ -632,6 +632,7 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 
 		projectile->lifetime -= ts;
 		if (projectile->lifetime <= 0.0) {
+			new_impact_effect(world, transform->position, animsprid_projectile_impact);
 			destroy_entity(world, view.e);
 		} else {
 			struct rect rect = {
