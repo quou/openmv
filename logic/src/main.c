@@ -187,6 +187,13 @@ API void CALL on_update(double ts) {
 			player->money += 1;
 		}
 
+		if (ui_button(ui, "Reload Room")) {
+			char* path = copy_string(get_room_path(logic_store->room));
+			free_room(logic_store->room);
+			logic_store->room = load_room(world, path);
+			core_free(path);
+		}
+
 		ui_end_window(ui);
 	}
 

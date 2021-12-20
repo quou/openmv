@@ -9,7 +9,7 @@
 #include "util/stb_truetype.h"
 #include "video.h"
 
-#define batch_size 100
+#define batch_size 1000
 #define els_per_vert 9
 #define verts_per_quad 4
 #define indices_per_quad 6

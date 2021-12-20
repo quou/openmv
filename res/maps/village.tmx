@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="89">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="90">
  <editorsettings>
   <export target="village.dat" format="dat"/>
  </editorsettings>
@@ -134,7 +134,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup color="#00aa00" id="3" name="slopes" locked="1">
+ <objectgroup color="#00aa00" id="3" name="slopes">
   <object id="74" x="144" y="432">
    <polyline points="0,0 -16,-6.3125"/>
   </object>
