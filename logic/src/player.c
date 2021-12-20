@@ -395,7 +395,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
 			get_component(world, projectile, struct transform)->position.x += player->face == player_face_left ?
-				-10 : 10;
+				-20 : 20;
 			add_component(world, projectile, struct sprite, sprite);
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
