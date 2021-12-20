@@ -521,8 +521,6 @@ void camera_system(struct world* world, struct renderer* renderer, struct room* 
 				renderer->camera_pos.y = camera_bounds.y + renderer->dimentions.y / 2;
 			}
 		}
-
-		logic_store->camera_position = make_v2f(renderer->camera_pos.x, renderer->camera_pos.y);
 	}
 }
 

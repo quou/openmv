@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="7" height="5" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="17">
+ <editorsettings>
+  <export target="desert_house_b.dat" format="dat"/>
+ </editorsettings>
+ <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
+ <tileset firstgid="131" source="../tilesets/npc.tsx"/>
+ <layer id="2" name="background" width="7" height="5" locked="1">
+  <data encoding="csv">
+0,102,102,102,102,102,0,
+0,102,102,102,102,102,0,
+0,102,93,102,102,102,0,
+0,102,102,102,102,102,0,
+0,0,0,0,0,0,0
+</data>
+ </layer>
+ <layer id="1" name="forground" width="7" height="5" locked="1">
+  <data encoding="csv">
+101,0,0,0,0,0,101,
+101,0,0,0,0,0,101,
+101,0,0,0,0,0,101,
+101,0,0,0,0,0,101,
+106,106,106,106,106,106,106
+</data>
+ </layer>
+ <layer id="9" name="midground" width="7" height="5" locked="1">
+  <data encoding="csv">
+0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,
+0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="6" name="meta" locked="1">
+  <object id="8" name="camera_bounds" x="-110.833" y="-57.6667" width="146.833" height="117.333"/>
+ </objectgroup>
+ <objectgroup id="3" name="doors" locked="1">
+  <object id="1" template="../templates/door.tx" name="main_door_trigger" x="64" y="48">
+   <properties>
+    <property name="change_to" value="res/maps/village.dat"/>
+    <property name="entrance" value="house_b_door"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="5" name="collisions" locked="1">
+  <object id="13" x="0" y="0" width="16" height="64"/>
+  <object id="14" x="96" y="0" width="16" height="64"/>
+  <object id="15" x="0" y="64" width="112" height="16"/>
+  <object id="16" x="0" y="-16" width="112" height="16"/>
+ </objectgroup>
+ <objectgroup id="4" name="entrances" locked="1">
+  <object id="2" name="main_door" x="72" y="64">
+   <point/>
+  </object>
+ </objectgroup>
+</map>

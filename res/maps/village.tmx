@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="87">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="89">
  <editorsettings>
   <export target="village.dat" format="dat"/>
  </editorsettings>
@@ -67,10 +67,10 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,97,97,97,97,97,97,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,94,92,92,92,92,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,92,92,92,92,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,97,97,97,97,97,97,97,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,92,92,92,92,91,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,94,92,92,92,91,0,
-0,0,0,0,76,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,92,92,92,92,91,0,
+0,97,97,97,97,97,97,97,98,0,0,0,0,0,0,0,0,0,0,0,0,0,0,96,97,97,97,97,97,97,97,0,
+0,91,92,92,92,92,92,91,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,92,92,92,92,91,0,
+0,91,92,94,92,92,92,91,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,94,92,92,92,91,0,
+0,91,92,92,92,92,92,91,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,91,92,92,92,92,92,91,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -79,7 +79,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="1" name="forground" width="32" height="32">
+ <layer id="1" name="forground" width="32" height="32" locked="1">
   <data encoding="csv">
 67,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,67,
 67,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,67,
@@ -155,21 +155,30 @@
   </object>
  </objectgroup>
  <objectgroup id="9" name="doors" locked="1">
-  <object id="85" template="../templates/door.tx" name="house_door_a_trigger" x="432" y="400">
+  <object id="85" template="../templates/door.tx" name="house_a_door_trigger" x="432" y="400">
    <properties>
     <property name="change_to" value="res/maps/desert_house_a.dat"/>
     <property name="entrance" value="main_door"/>
    </properties>
   </object>
+  <object id="87" name="house_b_door_trigger" x="80" y="400" width="16" height="16">
+   <properties>
+    <property name="change_to" value="res/maps/desert_house_b.dat"/>
+    <property name="entrance" value="main_door"/>
+   </properties>
+  </object>
  </objectgroup>
- <objectgroup color="#0000ff" id="4" name="entrances">
+ <objectgroup color="#0000ff" id="4" name="entrances" locked="1">
   <object id="64" name="spawn" x="48" y="416">
    <point/>
   </object>
   <object id="82" name="shaft_top" x="264" y="480">
    <point/>
   </object>
-  <object id="86" name="house_door_a" x="440" y="416">
+  <object id="86" name="house_a_door" x="440" y="416">
+   <point/>
+  </object>
+  <object id="88" name="house_b_door" x="88" y="416">
    <point/>
   </object>
  </objectgroup>

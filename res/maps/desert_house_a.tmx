@@ -55,7 +55,7 @@
   <object id="1" template="../templates/door.tx" name="main_door_trigger" x="48" y="96">
    <properties>
     <property name="change_to" value="res/maps/village.dat"/>
-    <property name="entrance" value="house_door_a"/>
+    <property name="entrance" value="house_a_door"/>
    </properties>
   </object>
  </objectgroup>

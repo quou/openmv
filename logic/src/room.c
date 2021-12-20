@@ -571,7 +571,7 @@ void free_room(struct room* room) {
 			if (room->tilesets[i].animations) {
 				core_free(room->tilesets[i].animations);
 			}
-		}	
+		}
 
 		core_free(room->tilesets);
 	}
@@ -795,9 +795,12 @@ void draw_room_forground(struct room* room, struct renderer* renderer, struct re
 	draw_tile_layer(room, renderer, layer, -1);
 
 	if (room->transitioning_in || room->transitioning_out) {
+		i32 win_w, win_h;
+		query_window(main_window, &win_w, &win_h);
+
 		struct textured_quad quad = {
 			.position = { 0, 0 },
-			.dimentions = renderer->dimentions,
+			.dimentions = { win_w, win_h },
 			.color = { 0, 0, 0, room->transition_timer > 1.0 ? 255 : (u8)(room->transition_timer * 255.0) },
 		};
 
