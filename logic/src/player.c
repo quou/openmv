@@ -403,7 +403,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.speed = player_constants.projectile_speed,
 				.damage = 4,
 				.collider = {
-					0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale
+					(-sprite.rect.w / 2) * sprite_scale, /* Because the projectile sprite has an origin of 0.5, 0.5. */
+					(-sprite.rect.h / 2) * sprite_scale,
+					sprite.rect.w * sprite_scale,
+					sprite.rect.h * sprite_scale
 				});
 
 			/* Spawn the muzzle flash */
