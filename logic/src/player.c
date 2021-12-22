@@ -595,7 +595,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 		sprintf(coin_text, "%d", player->money);
 
 		i32 coin_text_w = 0;
-		for (char* c = coin_text; *c; c++) {	
+		for (char* c = coin_text; *c; c++) {
 			char idx = (*c - '0') + 1;
 			coin_text_w += prim_numbers[idx].w + 1;
 		}

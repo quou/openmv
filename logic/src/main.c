@@ -219,5 +219,7 @@ API void CALL on_deinit() {
 	free_ui_context(logic_store->ui);
 	free_world(logic_store->world);
 
+	savegame_deinit();
+
 	keymap_deinit();
 }

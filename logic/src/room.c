@@ -597,6 +597,10 @@ void free_room(struct room* room) {
 		core_free(room->box_colliders);
 	}
 
+	if (room->slope_colliders) {
+		core_free(room->slope_colliders);
+	}
+
 	if (room->transition_triggers) {
 		for (u32 i = 0; i < room->transition_trigger_count; i++) {
 			core_free(room->transition_triggers[i].change_to);
