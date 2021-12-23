@@ -38,6 +38,7 @@ struct player_constants {
 	float move_speed;
 	float jump_force;
 	float gravity;
+	float max_gravity;
 	float accel;
 	float friction;
 	float slow_friction;
@@ -75,6 +76,7 @@ const struct player_constants player_constants = {
 	.move_speed = 300,
 	.jump_force = -800,
 	.gravity = g_gravity,
+	.max_gravity = 800,
 	.accel = 2000,
 	.friction = 800,
 	.slow_friction = 100,
@@ -150,6 +152,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		if (!player->dashing) {
 			player->velocity.y += player_constants.gravity * ts;
+		}
+
+		if (player->velocity.y > player_constants.max_gravity) {
+			player->velocity.y = player_constants.max_gravity;
 		}
 
 		if (key_pressed(main_window, mapped_key("right"))) {

@@ -114,6 +114,7 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 		for (u32 i = 0; i < renderer->texture_count; i++) {
 			if (renderer->textures[i] == quad->texture) {
 				tidx = (i32)i;
+				break;
 			}
 		}
 
