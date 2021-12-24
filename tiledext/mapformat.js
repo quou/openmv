@@ -185,6 +185,10 @@ function write_layer(tilesets, layer, file) {
 				}
 			} else if (layer.name == "dialogue_triggers") {
 				fwrite_string(obj.property("script"), file);
+			} else if (layer.name == "entity_spawners") {	
+				fwrite_string(obj.property("entity_type"), file);
+				fwrite_float(obj.property("max_increment"), file);
+				fwrite_float(obj.property("min_increment"), file);
 			}
 		}
 	} else {

@@ -96,6 +96,18 @@ struct sprite sprites[] = {
 		.rect = { 0, 7, 11, 5 },
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_broken_robot] = {
+		.texture = texid_upgrades,
+		.rect = { 32, 16, 16, 16 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[sprid_lava_particle] = {
+		.texture = texid_fx,
+		.rect = { 9, 0, 2, 2 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 

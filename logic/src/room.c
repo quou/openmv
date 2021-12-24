@@ -563,6 +563,44 @@ struct room* load_room(struct world* world, const char* path) {
 							r.h * sprite_scale
 						};
 					}
+				} else if (strcmp(layer->name, "entity_spawners") == 0) {
+					struct rect r;
+
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						char* entity_type = read_name(&file);
+						float min, max;
+						file_read(&max, sizeof(max), 1, &file);
+						file_read(&min, sizeof(min), 1, &file);
+
+						u32 spawn_type = 0;
+						if (strcmp(entity_type, "broken_robot") == 0) {
+							spawn_type = spawn_type_broken_robot;
+						}
+
+						entity e = new_entity(world);
+						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
+						add_componentv(world, e, struct entity_spawner, .spawn_type = spawn_type,
+							.next_spawn = (double)max, .max_increment = (double)max, .min_increment = (double)min);
+						add_componentv(world, e, struct room_child, .parent = room);
+					}
+				} else if (strcmp(layer->name, "lava") == 0) {
+					struct rect r;
+
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						entity e = new_entity(world);
+						add_componentv(world, e, struct lava, .collider = {
+							r.x * sprite_scale, r.y * sprite_scale,
+							r.w * sprite_scale, r.h * sprite_scale});
+						add_componentv(world, e, struct room_child, .parent = room);
+					}
 				} else {
 					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
 
@@ -774,6 +812,94 @@ void update_room(struct room* room, double ts, double actual_ts) {
 					}
 				}
 			}
+		}
+	}
+
+	/* Update spawners */
+	for (view(room->world, view, type_info(struct transform), type_info(struct entity_spawner))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct entity_spawner* spawner = view_get(&view, struct entity_spawner);
+
+		spawner->next_spawn -= ts;
+		if (spawner->next_spawn <= 0.0) {
+			spawner->next_spawn = random_double(spawner->min_increment, spawner->max_increment);
+
+			switch (spawner->spawn_type) {
+				case spawn_type_broken_robot: {
+					struct sprite sprite = get_sprite(sprid_broken_robot);
+
+					entity e = new_entity(room->world);
+					add_componentv(room->world, e, struct transform, .position = transform->position,
+						.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+					add_component(room->world, e, struct sprite, sprite);
+					add_componentv(room->world, e, struct lava_interact,
+						.collider = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+					add_componentv(room->world, e, struct room_child, .parent = room);
+					add_componentv(room->world, e, struct fall, .mul = 1.0);
+				} break;
+				default: break;
+			}
+		}
+	}
+
+	/* TODO: Make a separate system function for this. */
+	for (view(room->world, view, type_info(struct transform), type_info(struct fall))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct fall* fall = view_get(&view, struct fall);
+
+		fall->velocity.y += g_gravity * ts * fall->mul;
+
+		if (fall->velocity.y > g_max_gravity) {
+			fall->velocity.y = g_max_gravity;
+		}
+
+		transform->position = v2f_add(transform->position, v2f_mul(fall->velocity, make_v2f(ts, ts)));
+	}
+
+	/* TODO: As above, same here. */
+	for (view(room->world, view, type_info(struct lava))) {
+		struct lava* lava = view_get(&view, struct lava);
+
+		for (view(room->world, view, type_info(struct transform), type_info(struct lava_interact))) {
+			struct transform* transform = view_get(&view, struct transform);
+			struct lava_interact* inter = view_get(&view, struct lava_interact);
+
+			struct rect rect = {
+				.x = transform->position.x + inter->collider.x,
+				.y = transform->position.y + inter->collider.y,
+				.w = inter->collider.w,
+				.h = inter->collider.h,
+			};
+	
+			if (rect_overlap(lava->collider, rect, null)) {
+				struct sprite sprite = get_sprite(sprid_lava_particle);
+
+				for (u32 i = 0; i < random_int(10, 20); i++) {
+					entity e = new_entity(room->world);
+					add_componentv(room->world, e, struct transform, .position = transform->position,
+						.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+					add_component(room->world, e, struct sprite, sprite);
+					add_componentv(room->world, e, struct lava_particle,
+						.velocity = { random_double(-100, 100), random_double(-600, -300) },
+						.lifetime = 1.0);
+				}
+
+				destroy_entity(room->world, view.e);
+			}
+		}
+	}
+
+	for (view(room->world, view, type_info(struct transform), type_info(struct lava_particle))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct lava_particle* particle = view_get(&view, struct lava_particle);
+
+		particle->velocity.y += g_gravity * ts;
+
+		transform->position = v2f_add(transform->position, v2f_mul(particle->velocity, make_v2f(ts, ts)));
+
+		particle->lifetime -= ts;
+		if (particle->lifetime <= 0.0) {
+			destroy_entity(room->world, view.e);
 		}
 	}
 

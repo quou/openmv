@@ -45,7 +45,9 @@ enum {
 	sprid_door_open,
 	sprid_terminal,
 	sprid_coal_lump,
-	sprid_spider
+	sprid_spider,
+	sprid_broken_robot,
+	sprid_lava_particle
 };
 
 void preload_sprites();

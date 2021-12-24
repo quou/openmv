@@ -37,4 +37,5 @@ API void core_free(void* ptr);
 API u64 core_get_memory_usage();
 
 API i32 random_int(i32 min, i32 max);
+API double random_double(double min, double max);
 API bool random_chance(double chance);

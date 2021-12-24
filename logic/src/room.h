@@ -36,3 +36,32 @@ struct save_point {
 };
 
 entity new_save_point(struct world* world, struct room* room, struct rect rect);
+
+enum {
+	spawn_type_broken_robot = 0
+};
+
+struct entity_spawner {
+	u32 spawn_type;
+	double next_spawn;
+	double max_increment;
+	double min_increment;
+};
+
+struct fall {
+	double mul;
+	v2f velocity;
+};
+
+struct lava_interact {
+	struct rect collider;
+};
+
+struct lava {
+	struct rect collider;
+};
+
+struct lava_particle {
+	v2f velocity;
+	double lifetime;
+};

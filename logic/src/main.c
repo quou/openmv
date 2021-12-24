@@ -139,7 +139,10 @@ API void CALL on_update(double ts) {
 	query_window(main_window, &win_w, &win_h);
 	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
 
-	if (!logic_store->frozen && !logic_store->paused) { player_system(world, renderer, &logic_store->room, timestep); }
+	if (!logic_store->frozen && !logic_store->paused) {
+		player_system(world, renderer, &logic_store->room, timestep);
+	}
+
 	camera_system(world, renderer, logic_store->room, ts);
 	enemy_system(world, logic_store->room, timestep);
 	projectile_system(world, logic_store->room, timestep);
