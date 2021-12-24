@@ -103,6 +103,8 @@ function write_layer(tilesets, layer, file) {
 		for (var ii = 0; ii < layer.objectCount; ii++) {
 			var obj = layer.objects[ii];
 
+			if (!obj) { continue; }
+
 			fwrite_string(obj.name, file);
 
 			/* Write the rectangle. */

@@ -17,15 +17,7 @@ res/bmp/fx.bmp
 res/bmp/icon.bmp
 res/bmp/item.bmp
 res/bmp/npc.bmp
-res/bmp/overworld.bmp
 res/bmp/tsblue.bmp
-res/maps/mineshaft.dat
-res/maps/village.dat
-res/maps/desert_house_a.dat
-res/maps/overworld_test.dat
-res/maps/test_room.dat
-res/maps/test_room2.dat
-res/maps/test_room3.dat
-res/scripts/npc_miner_dialogue.lua
-res/scripts/npc_miner_village.lua
+res/maps/quality_ctrl.dat
+res/scripts/npc_broken_robot.lua
 res/shaders/sprite.glsl

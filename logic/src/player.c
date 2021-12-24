@@ -361,7 +361,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					play_audio_clip(player->hurt_sound);
 
 					if (player->hp <= 0) {
-						prompt_ask("You have died. Want to retry?", on_player_die, null);
+						kill_player(world, view.e);
 					}
 
 					break;
@@ -493,6 +493,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		sprite->hidden = !player->visible;
 	}
+}
+
+void kill_player(struct world* world, entity player_handle) {
+	prompt_ask("You have died. Want to retry?", on_player_die, null);
 }
 
 void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts) {

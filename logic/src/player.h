@@ -54,6 +54,7 @@ struct player {
 };
 
 entity new_player_entity(struct world* world);
+void kill_player(struct world* world, entity player_handle);
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts);
 void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts);
 void hud_system(struct world* world, struct renderer* renderer);

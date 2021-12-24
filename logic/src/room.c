@@ -91,6 +91,9 @@ struct room {
 	struct rect* box_colliders;
 	u32 box_collider_count;
 
+	struct rect* killzones;
+	u32 killzone_count;
+
 	v4i* slope_colliders;
 	u32 slope_collider_count;
 
@@ -543,6 +546,32 @@ struct room* load_room(struct world* world, const char* path) {
 
 						core_free(source);
 					}
+				} else if (strcmp(layer->name, "killzones") == 0) {
+					struct rect r;
+
+					room->killzones = core_alloc(object_count * sizeof(struct rect));
+					room->killzone_count = object_count;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						room->killzones[ii] = (struct rect) {
+							r.x * sprite_scale,
+							r.y * sprite_scale,
+							r.w * sprite_scale,
+							r.h * sprite_scale
+						};
+					}
+				} else {
+					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
+
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+					}
 				}
 			} break;
 			default: break;
@@ -599,6 +628,10 @@ void free_room(struct room* room) {
 
 	if (room->slope_colliders) {
 		core_free(room->slope_colliders);
+	}
+
+	if (room->killzones) {
+		core_free(room->killzones);
 	}
 
 	if (room->transition_triggers) {
@@ -736,7 +769,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 				if (at->timer > at->durations[at->current_frame]) {
 					at->timer = 0.0;
 					at->current_frame++;
-					if (at->current_frame > at->frame_count) {
+					if (at->current_frame >= at->frame_count) {
 						at->current_frame = 0;
 					}
 				}
@@ -907,10 +940,18 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 	for (u32 i = 0; i < room->transition_trigger_count; i++) {
 		struct rect rect = room->transition_triggers[i].rect;
 
-		v2i normal;
-		if (rect_overlap(body_rect, rect, &normal)) {
+		if (rect_overlap(body_rect, rect, null)) {
 			transition = room->transition_triggers + i;
 			break;
+		}
+	}
+
+	for (u32 i = 0; i < room->killzone_count; i++) {
+		struct rect rect = room->killzones[i];
+
+		if (rect_overlap(body_rect, rect, null)) {
+			kill_player(room->world, body);
+			return;
 		}
 	}
 
