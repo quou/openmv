@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="1" nextlayerid="13" nextobjectid="25">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="1" nextlayerid="13" nextobjectid="26">
  <editorsettings>
   <export target="quality_ctrl.dat" format="dat"/>
  </editorsettings>
@@ -133,8 +133,8 @@
   <object id="17" name="scrap_spawner" x="240" y="0">
    <properties>
     <property name="entity_type" value="broken_robot"/>
-    <property name="max_increment" type="float" value="2"/>
-    <property name="min_increment" type="float" value="0"/>
+    <property name="max_increment" type="float" value="5"/>
+    <property name="min_increment" type="float" value="1"/>
    </properties>
    <point/>
   </object>
@@ -151,6 +151,7 @@
   <object id="9" x="112" y="160" width="16" height="32"/>
   <object id="22" x="192" y="96" width="80" height="8.18182"/>
   <object id="24" x="128" y="112" width="47.5" height="8.5"/>
+  <object id="25" x="16" y="0" width="464.25" height="8.5"/>
  </objectgroup>
  <objectgroup color="#00aa00" id="6" name="slopes" locked="1">
   <object id="10" x="16" y="128">

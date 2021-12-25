@@ -45,7 +45,7 @@ struct player {
 
 	i32 money;
 
-	struct audio_clip* jump_sound;
+	struct audio_clip* land_sound;
 	struct audio_clip* shoot_sound;
 	struct audio_clip* hurt_sound;
 	struct audio_clip* fly_sound;

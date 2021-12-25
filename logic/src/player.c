@@ -130,7 +130,7 @@ entity new_player_entity(struct world* world) {
 		.hp = player_constants.default_hp,
 		.max_hp = player_constants.default_hp,
 
-		.jump_sound = load_audio_clip("res/aud/jump.wav"),
+		.land_sound = load_audio_clip("res/aud/land.wav"),
 		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
 		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
 		.fly_sound = load_audio_clip("res/aud/fly.wav"),
@@ -443,12 +443,15 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			};
 
 			v2i normal;
+			bool old_on_ground = player->on_ground;
 			player->on_ground = rect_room_overlap(*room, ground_test_rect, &normal);
+			if (player->velocity.y > 300 && player->on_ground && !old_on_ground) {
+				play_audio_clip(player->land_sound);
+			}
 		}
 
 		if (key_just_pressed(main_window, mapped_key("jump")) && player->on_ground) {
 			player->velocity.y = player_constants.jump_force;
-			play_audio_clip(player->jump_sound);
 		}
 		
 		if (!player->on_ground && player->velocity.y < 0.0f && !key_pressed(main_window, mapped_key("jump"))) {
