@@ -81,15 +81,17 @@ API void CALL on_init() {
 
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
 
+	logic_store->explosion_sound = load_audio_clip("res/aud/explosion.wav");
+
 	logic_store->paused = false;
 	logic_store->frozen = false;
-	logic_store->pause_menu = new_menu(load_font("res/DejaVuSansMono.ttf", 35.0f));
+	logic_store->pause_menu = new_menu(load_font("res/CourierPrime.ttf", 35.0f));
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
-	prompts_init(load_font("res/DejaVuSansMono.ttf", 25.0f));
+	prompts_init(load_font("res/CourierPrime.ttf", 25.0f));
 
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);

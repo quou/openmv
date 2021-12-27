@@ -27,6 +27,8 @@ struct logic_store {
 	v2f camera_position;
 
 	entity player;
+
+	struct audio_clip* explosion_sound;
 };
 
 extern struct logic_store* logic_store;

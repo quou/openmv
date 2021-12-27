@@ -34,7 +34,7 @@ int main() {
 
 		u8* raw;
 		u64 raw_size;
-		read_raw("res/DejaVuSansMono.ttf", &raw, &raw_size, false);
+		read_raw("res/CourierPrime.ttf", &raw, &raw_size, false);
 
 		struct font* font = load_font_from_memory(raw, raw_size, 20.0f);
 

@@ -237,6 +237,20 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 6,
 		.origin = { 0.5f, 0.5f },
 		.color = { 255, 255, 255, 255 }	
+	},
+	[animsprid_poof] = {
+		.id = animsprid_poof,
+		.texture = texid_fx,
+		.frames = {
+			{ 0, 72,  16, 16 }, { 16, 72,  16, 16 },
+			{ 0, 88,  16, 16 }, { 16, 88,  16, 16 },
+			{ 0, 104, 16, 16 }, { 16, 104, 16, 16 },
+			{ 0, 120, 16, 16 }, { 16, 120, 16, 16 }
+		},
+		.speed = 25,
+		.frame_count = 8,
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 }	
 	}
 };
 

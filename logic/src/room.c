@@ -169,7 +169,7 @@ struct room* load_room(struct world* world, const char* path) {
 	room->transition_timer = 1.0;
 	room->transition_speed = 5.0;
 
-	room->name_font = load_font("res/DejaVuSansMono.ttf", 25.0f);
+	room->name_font = load_font("res/CourierPrime.ttf", 25.0f);
 	room->name_timer = 3.0;
 
 	room->name = read_name(&file);
@@ -584,7 +584,7 @@ struct room* load_room(struct world* world, const char* path) {
 						entity e = new_entity(world);
 						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
 						add_componentv(world, e, struct entity_spawner, .spawn_type = spawn_type,
-							.next_spawn = (double)max, .max_increment = (double)max, .min_increment = (double)min);
+							.next_spawn = random_double(min, max), .max_increment = (double)max, .min_increment = (double)min);
 						add_componentv(world, e, struct room_child, .parent = room);
 					}
 				} else if (strcmp(layer->name, "lava") == 0) {
@@ -872,6 +872,8 @@ void update_room(struct room* room, double ts, double actual_ts) {
 			};
 	
 			if (rect_overlap(lava->collider, rect, null)) {
+				play_audio_clip(logic_store->explosion_sound);
+
 				struct sprite sprite = get_sprite(sprid_lava_particle);
 
 				for (u32 i = 0; i < random_int(10, 20); i++) {

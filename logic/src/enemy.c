@@ -183,27 +183,28 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				struct player* player = get_component(world, logic_store->player, struct player);
 
-				/* Chance to get a heart is much higher if the player has low hp. */
-				double chance = 5;
-				if (player->hp < player->max_hp) {
-					chance = 30;
-				}
-
-				if (random_chance(chance)) {
-					struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
-
-					new_heart(world, room, v2f_sub(transform->position,
-						make_v2f((heart_rect.w * sprite_scale) / 2, (heart_rect.h * sprite_scale) / 2)), 1);
-				} else {
-					struct rect coin_rect = get_sprite(sprid_coin).rect;
-
-					for (i32 i = 0; i < enemy->money_drop; i++) {
-						new_coin_pickup(world, room, v2f_sub(transform->position,
-							make_v2f((coin_rect.w * sprite_scale) / 2, (coin_rect.h * sprite_scale) / 2)));
-					}
-				}
-
 				if (enemy->hp <= 0) {
+					/* Chance to get a heart is much higher if the player has low hp. */
+					double chance = 5;
+					if (player->hp < player->max_hp) {
+						chance = 30;
+					}
+
+					if (random_chance(chance)) {
+						struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
+
+						new_heart(world, room, v2f_sub(transform->position,
+							make_v2f((heart_rect.w * sprite_scale) / 2, (heart_rect.h * sprite_scale) / 2)), 1);
+					} else {
+						struct rect coin_rect = get_sprite(sprid_coin).rect;
+
+						for (i32 i = 0; i < enemy->money_drop; i++) {
+							new_coin_pickup(world, room, v2f_sub(transform->position,
+								make_v2f((coin_rect.w * sprite_scale) / 2, (coin_rect.h * sprite_scale) / 2)));
+						}
+					}
+
+					new_impact_effect(world, p_transform->position, animsprid_poof);
 					destroy_entity(world, view.e);
 				}
 			}

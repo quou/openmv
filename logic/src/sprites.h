@@ -32,6 +32,7 @@ enum {
 	animsprid_blood,
 	animsprid_bat,
 	animsprid_coin,
+	animsprid_poof,
 	sprid_upgrade_jetpack,
 	sprid_upgrade_health_pack,
 	sprid_upgrade_health_booster,
