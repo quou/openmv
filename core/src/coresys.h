@@ -18,6 +18,7 @@ struct sprite {
 	struct color color;
 
 	bool hidden;
+	bool inverted;
 };
 
 #define animated_sprite_max_frames 16
@@ -34,6 +35,7 @@ struct animated_sprite {
 	struct color color;
 
 	bool hidden;
+	bool inverted;
 };
 
 /* Process all the entities in the world that have a sprite and a transform,

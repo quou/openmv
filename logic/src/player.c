@@ -494,7 +494,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
-		sprite->hidden = !player->visible;
+		sprite->inverted = !player->visible;
 	}
 }
 

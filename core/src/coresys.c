@@ -55,7 +55,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
-			.origin = s->origin
+			.origin = s->origin,
+			.inverted = s->inverted
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {
@@ -85,7 +86,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.position = make_v2i(t->position.x, t->position.y),
 			.dimentions = t->dimentions,
 			.color = s->color,
-			.origin = s->origin
+			.origin = s->origin,
+			.inverted = s->inverted
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {

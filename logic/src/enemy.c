@@ -183,6 +183,9 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				struct player* player = get_component(world, logic_store->player, struct player);
 
+				enemy->invul = true;
+				enemy->invul_timer = 0.1;
+
 				if (enemy->hp <= 0) {
 					/* Chance to get a heart is much higher if the player has low hp. */
 					double chance = 5;
@@ -209,5 +212,19 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				}
 			}
 		}
+	}
+
+	for (view(world, view, type_info(struct enemy), type_info(struct animated_sprite))) {
+		struct enemy* enemy = view_get(&view, struct enemy);
+		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+
+		if (enemy->invul) {
+			enemy->invul_timer -= ts;
+			if (enemy->invul_timer <= 0.0) {
+				enemy->invul = false;
+			}
+		}
+
+		sprite->inverted = enemy->invul;
 	}
 }

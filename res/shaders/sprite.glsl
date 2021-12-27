@@ -6,6 +6,7 @@ layout (location = 0) in vec2 position;
 layout (location = 1) in vec2 uv;
 layout (location = 2) in vec4 color;
 layout (location = 3) in float texture_id;
+layout (location = 4) in float inverted;
 
 uniform mat4 camera = mat4(1.0);
 uniform mat4 view = mat4(1.0);
@@ -14,12 +15,14 @@ out VS_OUT {
 	vec4 color;
 	vec2 uv;
 	float texture_id;
+	float inverted;
 } vs_out;
 
 void main() {
 	vs_out.color = color;
 	vs_out.uv = uv;
 	vs_out.texture_id = texture_id;
+	vs_out.inverted = inverted;
 
 	gl_Position = camera * view * vec4(position, 0.0, 1.0);
 }
@@ -36,6 +39,7 @@ in VS_OUT {
 	vec4 color;
 	vec2 uv;
 	float texture_id;
+	float inverted;
 } fs_in;
 
 uniform sampler2D textures[32];
@@ -77,6 +81,10 @@ void main() {
 	case 30: texture_color = texture(textures[30], fs_in.uv); break;
 	case 31: texture_color = texture(textures[31], fs_in.uv); break;
 	default: texture_color = vec4(1.0); break;
+	}
+
+	if ((int(fs_in.inverted)) == 1) {
+		texture_color = vec4(1.0 - texture_color.rgb, texture_color.a);
 	}
 
 	result = fs_in.color * texture_color;

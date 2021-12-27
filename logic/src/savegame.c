@@ -81,6 +81,10 @@ static void read_player(FILE* file) {
 	struct player* player = get_component(world, logic_store->player, struct player);
 	struct transform* transform = get_component(world, logic_store->player, struct transform);
 
+	player->invul_timer = 0.0;
+	player->invul = false;
+	player->visible = true;
+
 	fread(&transform->position.x, sizeof(transform->position.x), 1, file);
 	fread(&transform->position.y, sizeof(transform->position.y), 1, file);
 	fread(&player->velocity.x, sizeof(player->velocity.x), 1, file);

@@ -86,6 +86,8 @@ struct textured_quad {
 	struct rect rect;
 	struct color color;
 
+	bool inverted;
+
 	v2f origin;
 };
 

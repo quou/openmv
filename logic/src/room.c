@@ -330,6 +330,14 @@ struct room* load_room(struct world* world, const char* path) {
 							c = end.x;
 							end.x = start.x;
 							start.x = c;
+						} else if (start.y == end.y && start.x > end.x) {
+							i32 c = end.y;
+							end.y = start.y;
+							start.y = c;
+
+							c = end.x;
+							end.x = start.x;
+							start.x = c;
 						}
 
 						room->slope_colliders[ii] = make_v4i(start.x, start.y, end.x, end.y);

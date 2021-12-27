@@ -10,7 +10,7 @@
 #include "video.h"
 
 #define batch_size 1000
-#define els_per_vert 9
+#define els_per_vert 10
 #define verts_per_quad 4
 #define indices_per_quad 6
 
@@ -38,6 +38,7 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	configure_vb(&renderer->vb, 1, 2, els_per_vert, 2); /* vec2 uv */
 	configure_vb(&renderer->vb, 2, 4, els_per_vert, 4); /* vec4 color */
 	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8); /* float texture_id */
+	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9); /* float inverted */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
@@ -148,10 +149,10 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	const float y = quad->position.y - quad->origin.y * h;
 
 	float verts[] = {
-		x,     y,     tx, ty,           r, g, b, a, (float)tidx,
-		x + w, y,     tx + tw, ty,      r, g, b, a, (float)tidx,
-		x + w, y + h, tx + tw, ty + th, r, g, b, a, (float)tidx,
-		x,     y + h, tx, ty + th,      r, g, b, a, (float)tidx
+		x,     y,     tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted,
+		x + w, y,     tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted,
+		x + w, y + h, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted,
+		x,     y + h, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted
 	};
 
 	const u32 idx_off = renderer->quad_count * verts_per_quad;

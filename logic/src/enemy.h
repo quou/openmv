@@ -9,6 +9,9 @@ struct enemy {
 	i32 damage;
 	i32 money_drop;
 	struct rect collider;
+
+	bool invul;
+	double invul_timer;
 };
 
 struct bat {
