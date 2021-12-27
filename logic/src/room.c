@@ -308,13 +308,9 @@ struct room* load_room(struct world* world, const char* path) {
 
 						room->slope_colliders = core_realloc(room->slope_colliders,
 							sizeof(*room->slope_colliders) * (room->slope_collider_count + point_count));
-						for (u32 iii = 0; iii < point_count; iii += 2) {
-							u32 idx = iii < 2 ? iii : iii - 1;
-
-							v2i start = make_v2i(points[idx].x, points[idx].y);
-
-							idx = iii < 2 ? iii + 1 : iii;
-							v2i end   = make_v2i(points[idx].x, points[idx].y);
+						for (u32 iii = 1; iii < point_count; iii += 1) {
+							v2i start = points[iii - 1];
+							v2i end   = points[iii];
 
 							room->slope_colliders[room->slope_collider_count++] = make_v4i(start.x, start.y, end.x, end.y);
 						}
@@ -1018,17 +1014,25 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
 		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
 
-		if (point_vs_rtri(check_point, start, end)) {
-		 	float col_centre = body_rect.x + (body_rect.w / 2);
+		if (start.y == end.y) { /* Straight lines. */
+			if (check_point.x > start.x && check_point.x < end.x &&
+				check_point.y > start.y) {
+				position->y = ((start.y) - body_rect.h) - collider.y;
+				velocity->y = 0.0f;
+			}
+		} else {
+			if (point_vs_rtri(check_point, start, end)) {
+		 		float col_centre = body_rect.x + (body_rect.w / 2);
 
-			float slope = (float)(end.y - start.y) / (float)(end.x - start.x); /* Rise/Run. */
-		 	float b = (start.y - (slope * start.x));
+				float slope = (float)(end.y - start.y) / (float)(end.x - start.x); /* Rise/Run. */
+		 		float b = (start.y - (slope * start.x));
 
-		 	/* y = mx + b */
-			position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;
-			velocity->y = 0.0f;
+		 		/* y = mx + b */
+				position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;
+				velocity->y = 0.0f;
 
-			collided = true;
+				collided = true;
+			}
 		}
 	}
 
@@ -1145,9 +1149,17 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
 		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
 
-		if (point_vs_rtri(check_point, start, end)) {
-			if (normal) { *normal = make_v2i(0, 1); }
-			return true;
+		if (start.y == end.y) { /* Straight lines. */
+			if (check_point.x > start.x && check_point.x < end.x &&
+				check_point.y > start.y) {
+				if (normal) { *normal = make_v2i(0, 1); }
+				return true;
+			}
+		} else {
+			if (point_vs_rtri(check_point, start, end)) {
+				if (normal) { *normal = make_v2i(0, 1); }
+				return true;
+			}
 		}
 	}
 

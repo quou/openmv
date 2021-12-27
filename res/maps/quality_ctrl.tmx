@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="1" nextlayerid="14" nextobjectid="37">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="32" height="32" tilewidth="16" tileheight="16" infinite="1" nextlayerid="14" nextobjectid="52">
  <editorsettings>
   <export target="quality_ctrl.dat" format="dat"/>
  </editorsettings>
@@ -129,7 +129,7 @@
 </chunk>
   </data>
  </layer>
- <objectgroup id="13" name="enemies">
+ <objectgroup id="13" name="enemies" locked="1">
   <object id="26" name="bat" x="208" y="80">
    <point/>
   </object>
@@ -164,7 +164,7 @@
    <point/>
   </object>
  </objectgroup>
- <objectgroup id="11" name="entity_spawners">
+ <objectgroup id="11" name="entity_spawners" locked="1">
   <object id="17" name="scrap_spawner" x="240" y="0">
    <properties>
     <property name="entity_type" value="broken_robot"/>
@@ -188,7 +188,7 @@
   <object id="24" x="128" y="112" width="47.5" height="8.5"/>
   <object id="25" x="16" y="0" width="464.25" height="8.5"/>
  </objectgroup>
- <objectgroup color="#00aa00" id="6" name="slopes" locked="1">
+ <objectgroup color="#00aa00" id="6" name="slopes">
   <object id="10" x="16" y="128">
    <polyline points="0,0 32,16"/>
   </object>
