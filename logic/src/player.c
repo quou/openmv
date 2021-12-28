@@ -434,13 +434,6 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		player = view_get(&view, struct player);
 		sprite = view_get(&view, struct animated_sprite);
 
-		renderer_push_light(renderer,
-			(struct light) {
-				.position = v2f_add(transform->position, make_v2f(sprite->frames[0].w * sprite_scale / 2, sprite->frames[0].h * sprite_scale / 2)),
-				.intensity = 1.0f,
-				.range = 1000.0f
-			});
-
 		{
 			struct rect ground_test_rect = {
 				transform->position.x + player->collider.x + 1,
@@ -503,6 +496,19 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		sprite->inverted = !player->visible;
 	}
+}
+
+void update_player_light(struct world* world, struct renderer* renderer, entity player) {
+	struct transform* transform = get_component(world, player, struct transform);
+	struct animated_sprite* sprite = get_component(world, player, struct animated_sprite);
+
+	renderer_push_light(renderer,
+		(struct light) {
+			.position = v2f_add(transform->position,
+				make_v2f(sprite->frames[0].w * sprite_scale / 2, sprite->frames[0].h * sprite_scale / 2)),
+			.intensity = 1.0f,
+			.range = 1000.0f
+		});
 }
 
 void kill_player(struct world* world, entity player_handle) {

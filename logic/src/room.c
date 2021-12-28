@@ -646,6 +646,7 @@ struct room* load_room(struct world* world, const char* path) {
 						entity e = new_entity(world);
 						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
 						add_componentv(world, e, struct light, .intensity = intensity, .range = range);
+						add_componentv(world, e, struct room_child, .parent = room);
 					}				
 				} else {
 					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
@@ -847,13 +848,15 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	}
 }
 
-void update_room(struct room* room, double ts, double actual_ts) {
+void update_renderer_light(struct room* room, struct renderer* renderer) {
 	if (room->dark) {
-		logic_store->renderer->ambient_light = 0.0f;
+		renderer->ambient_light = 0.0f;
 	} else {
-		logic_store->renderer->ambient_light = 1.0f;
+		renderer->ambient_light = 1.0f;
 	}
+}
 
+void update_room(struct room* room, double ts, double actual_ts) {
 	/* Update tile animations */
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		for (u32 ii = 0; ii < room->tilesets[i].tile_count; ii++) {

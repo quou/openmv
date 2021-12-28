@@ -122,11 +122,11 @@ void renderer_flush(struct renderer* renderer) {
 
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
-	renderer->light_count = 0;
 }
 
 void renderer_end_frame(struct renderer* renderer) {
 	renderer_flush(renderer);
+	renderer->light_count = 0;
 }
 
 void renderer_push_light(struct renderer* renderer, struct light light) {

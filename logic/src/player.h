@@ -56,6 +56,7 @@ struct player {
 entity new_player_entity(struct world* world);
 void kill_player(struct world* world, entity player_handle);
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts);
+void update_player_light(struct world* world, struct renderer* renderer, entity player);
 void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts);
 void hud_system(struct world* world, struct renderer* renderer);
 

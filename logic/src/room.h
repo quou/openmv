@@ -14,6 +14,7 @@ struct path {
 struct room* load_room(struct world* world, const char* path);
 void free_room(struct room* room);
 void update_room(struct room* room, double ts, double actual_ts);
+void update_renderer_light(struct room* room, struct renderer* renderer);
 void draw_room(struct room* room, struct renderer* renderer, double ts);
 void draw_room_forground(struct room* room, struct renderer* renderer, struct renderer* transition_renderer);
 bool handle_body_collisions(struct room* room, struct rect rect, v2f* position, v2f* velocity);

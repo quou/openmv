@@ -103,7 +103,7 @@ API void CALL on_init() {
 
 	set_component_destroy_func(world, struct upgrade, on_upgrade_destroy);
 
-	logic_store->room = load_room(world, "res/maps/factory/quality_ctrl.dat");
+	logic_store->room = load_room(world, "res/maps/a1/incinerator.dat");
 
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);
@@ -146,6 +146,9 @@ API void CALL on_update(double ts) {
 	if (!logic_store->frozen && !logic_store->paused) {
 		player_system(world, renderer, &logic_store->room, timestep);
 	}
+
+	update_renderer_light(logic_store->room, renderer);
+	update_player_light(world, renderer, logic_store->player);
 
 	camera_system(world, renderer, logic_store->room, ts);
 	enemy_system(world, logic_store->room, timestep);
