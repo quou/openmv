@@ -26,7 +26,7 @@ void shops_init() {
 }
 
 void shops_deinit() {
-
+	shop.shopping = false;
 }
 
 void shops_update(double ts) {

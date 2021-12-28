@@ -47,7 +47,8 @@ struct sprite sprites[] = {
 		.texture = texid_arms,
 		.rect = { 0, 0, 5, 2 },
 		.origin = { 0.5f, 0.5f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[sprid_hud_hp] = {
 		.texture = texid_icon,
@@ -119,7 +120,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 8.9,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_run_left] = {
 		.id = animsprid_player_run_left,
@@ -128,7 +130,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 8.9,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_jump_right] = {
 		.id = animsprid_player_jump_right,
@@ -137,7 +140,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 1,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_jump_left] = {
 		.id = animsprid_player_jump_left,
@@ -146,7 +150,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_fall_right] = {
 		.id = animsprid_player_fall_right,
@@ -155,7 +160,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 1,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_fall_left] = {
 		.id = animsprid_player_fall_left,
@@ -164,7 +170,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_idle_right] = {
 		.id = animsprid_player_idle_right,
@@ -173,7 +180,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 1,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_player_idle_left] = {
 		.id = animsprid_player_idle_left,
@@ -182,7 +190,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 0,
 		.frame_count = 3,
 		.origin = { 0.0f, 0.0f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_muzzle_flash] = {
 		.id = animsprid_muzzle_flash,
@@ -191,7 +200,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 25,
 		.frame_count = 4,
 		.origin = { 0.5f, 0.5f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_projectile_impact] = {
 		.id = animsprid_projectile_impact,
@@ -200,7 +210,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 60,
 		.frame_count = 5,
 		.origin = { 0.5f, 0.5f },
-		.color = { 255, 255, 255, 255 }
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	},
 	[animsprid_bat] = {
 		.id = animsprid_bat,
@@ -250,7 +261,8 @@ struct animated_sprite anim_sprites[] = {
 		.speed = 25,
 		.frame_count = 8,
 		.origin = { 0.5f, 0.5f },
-		.color = { 255, 255, 255, 255 }	
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
 	}
 };
 

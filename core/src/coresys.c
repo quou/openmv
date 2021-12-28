@@ -56,7 +56,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.dimentions = t->dimentions,
 			.color = s->color,
 			.origin = s->origin,
-			.inverted = s->inverted
+			.inverted = s->inverted,
+			.unlit = s->unlit
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {
@@ -87,7 +88,8 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.dimentions = t->dimentions,
 			.color = s->color,
 			.origin = s->origin,
-			.inverted = s->inverted
+			.inverted = s->inverted,
+			.unlit = s->unlit
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {

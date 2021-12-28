@@ -225,24 +225,18 @@ var dat_format = {
 		var file = new BinaryFile(filename, BinaryFile.WriteOnly);
 
 		/* Write the name of the map. */
-		var map_name = map.property("name")
+		var map_name = map.property("name");
 		if (map_name == undefined || map_name == null) {
-			var map_name_len_buf = new ArrayBuffer(4);
-			var map_name_len_view = new Uint32Array(map_name_len_buf);
-			map_name_len_view[0] = 0;
-			file.write(map_name_len_buf);
+			fwrite_uint(0, file);
 		} else {
-			var map_name_len_buf = new ArrayBuffer(4);
-			var map_name_len_view = new Uint32Array(map_name_len_buf);
-			map_name_len_view[0] = map_name.length;
-			file.write(map_name_len_buf);
+			fwrite_string(map_name, file);
+		}
 
-			var map_name_buf = new ArrayBuffer(map_name.length);
-			var map_name_view = new Uint8Array(map_name_buf);
-			for (var ii = 0; ii < map_name.length; ii++) {
-				map_name_view[ii] = map_name.charCodeAt(ii);
-			}
-			file.write(map_name_buf);
+		var is_dark = map.property("dark");
+		if (is_dark == undefined || is_dark == null) {
+			fwrite_uint(0, file);
+		} else {
+			fwrite_uint(is_dark, file);
 		}
 
 		var tilesets = map.usedTilesets();

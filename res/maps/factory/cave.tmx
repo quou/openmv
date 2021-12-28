@@ -3,6 +3,9 @@
  <editorsettings>
   <export target="cave.dat" format="dat"/>
  </editorsettings>
+ <properties>
+  <property name="dark" type="bool" value="true"/>
+ </properties>
  <tileset firstgid="1" source="../../tilesets/tsblue.tsx"/>
  <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
  <tileset firstgid="139" source="../../tilesets/npc.tsx"/>

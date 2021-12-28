@@ -87,6 +87,7 @@ struct textured_quad {
 	struct color color;
 
 	bool inverted;
+	bool unlit;
 
 	v2f origin;
 };
@@ -108,6 +109,11 @@ struct renderer {
 
 	v2i camera_pos;
 	m4f camera;
+
+	v2f light_pos;
+
+	float ambient_light;
+	float light_intensity;
 };
 
 API struct renderer* new_renderer(struct shader shader, v2i dimentions);

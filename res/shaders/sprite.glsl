@@ -7,15 +7,18 @@ layout (location = 1) in vec2 uv;
 layout (location = 2) in vec4 color;
 layout (location = 3) in float texture_id;
 layout (location = 4) in float inverted;
+layout (location = 5) in float unlit;
 
 uniform mat4 camera = mat4(1.0);
 uniform mat4 view = mat4(1.0);
 
 out VS_OUT {
+	vec2 frag_pos;
 	vec4 color;
 	vec2 uv;
 	float texture_id;
 	float inverted;
+	float unlit;
 } vs_out;
 
 void main() {
@@ -23,6 +26,9 @@ void main() {
 	vs_out.uv = uv;
 	vs_out.texture_id = texture_id;
 	vs_out.inverted = inverted;
+	vs_out.unlit = unlit;
+
+	vs_out.frag_pos = position;
 
 	gl_Position = camera * view * vec4(position, 0.0, 1.0);
 }
@@ -36,13 +42,19 @@ void main() {
 out vec4 result;
 
 in VS_OUT {
+	vec2 frag_pos;
 	vec4 color;
 	vec2 uv;
 	float texture_id;
 	float inverted;
+	float unlit;
 } fs_in;
 
 uniform sampler2D textures[32];
+
+uniform float ambient_light;
+uniform vec2 light_pos;
+uniform float light_intensity;
 
 void main() {
 	vec4 texture_color = vec4(1.0);
@@ -87,7 +99,15 @@ void main() {
 		texture_color = vec4(1.0 - texture_color.rgb, texture_color.a);
 	}
 
-	result = fs_in.color * texture_color;
+	float lighting_result = 1.0;
+	if ((int(fs_in.unlit)) == 0 && ambient_light != 1.0) {
+		lighting_result = ambient_light;
+
+		float dist = length(fs_in.frag_pos - light_pos);
+		lighting_result += (1.0 / (pow((dist / 1000.0) * 5.0, 2.0) + 1.0)) * light_intensity;
+	}
+
+	result = lighting_result * fs_in.color * texture_color;
 }
 
 #end FRAGMENT

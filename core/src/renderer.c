@@ -10,7 +10,7 @@
 #include "video.h"
 
 #define batch_size 1000
-#define els_per_vert 10
+#define els_per_vert 11
 #define verts_per_quad 4
 #define indices_per_quad 6
 
@@ -30,6 +30,9 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
 
+	renderer->ambient_light = 1.0f;
+	renderer->light_intensity = 1.0f;
+
 	init_vb(&renderer->vb, VB_DYNAMIC | VB_TRIS);
 	bind_vb_for_edit(&renderer->vb);
 	push_vertices(&renderer->vb, null, els_per_vert * verts_per_quad * batch_size);
@@ -39,6 +42,7 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	configure_vb(&renderer->vb, 2, 4, els_per_vert, 4); /* vec4 color */
 	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8); /* float texture_id */
 	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9); /* float inverted */
+	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* float unlit */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
@@ -85,6 +89,9 @@ void renderer_flush(struct renderer* renderer) {
 	}
 
 	shader_set_m4f(&renderer->shader, "camera", renderer->camera);
+	shader_set_f(&renderer->shader, "ambient_light", renderer->ambient_light);
+	shader_set_v2f(&renderer->shader, "light_pos", renderer->light_pos);
+	shader_set_f(&renderer->shader, "light_intensity", renderer->light_intensity);
 
 	if (renderer->camera_enable) {
 		m4f view = m4f_translate(m4f_identity(), make_v3f(
@@ -149,10 +156,10 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	const float y = quad->position.y - quad->origin.y * h;
 
 	float verts[] = {
-		x,     y,     tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted,
-		x + w, y,     tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted,
-		x + w, y + h, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted,
-		x,     y + h, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted
+		x,     y,     tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
+		x + w, y,     tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
+		x + w, y + h, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
+		x,     y + h, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit
 	};
 
 	const u32 idx_off = renderer->quad_count * verts_per_quad;

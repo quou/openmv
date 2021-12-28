@@ -16,6 +16,7 @@
 #include "res.h"
 #include "room.h"
 #include "savegame.h"
+#include "shop.h"
 #include "sprites.h"
 #include "table.h"
 
@@ -82,6 +83,8 @@ struct dialogue {
 };
 
 struct room {
+	bool dark;
+
 	struct layer* layers;
 	u32 layer_count;
 
@@ -176,6 +179,10 @@ struct room* load_room(struct world* world, const char* path) {
 	room->name_timer = 3.0;
 
 	room->name = read_name(&file);
+
+	u32 dark;
+	file_read(&dark, sizeof(dark), 1, &file);
+	room->dark = (bool)dark;
 
 	room->path = copy_string(path);
 
@@ -826,6 +833,12 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 }
 
 void update_room(struct room* room, double ts, double actual_ts) {
+	if (room->dark) {
+		logic_store->renderer->ambient_light = 0.0f;
+	} else {
+		logic_store->renderer->ambient_light = 1.0f;
+	}
+
 	/* Update tile animations */
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		for (u32 ii = 0; ii < room->tilesets[i].tile_count; ii++) {
@@ -950,7 +963,6 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 		room->transition_timer += actual_ts * room->transition_speed;
 		if (room->transition_timer >= 1.0) {
-			free_room(room);
 			struct room** ptr = room->ptr;
 
 			struct world* world = room->world;
@@ -960,6 +972,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 			char* change_to = room->transition_to;
 			char* entrance = room->entrance;
 
+			free_room(room);
 			*ptr = load_room(world, change_to);
 			room = *ptr;
 
@@ -979,9 +992,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 			core_free(entrance);
 
 			room->transitioning_out = false;
-			logic_store->frozen = false;
-			
-			savegame();
+			logic_store->frozen = false;	
 		}
 	}
 }
