@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="light">
+  <properties>
+   <property name="intensity" type="float" value="0"/>
+   <property name="range" type="float" value="0"/>
+  </properties>
+  <point/>
+ </object>
+</template>

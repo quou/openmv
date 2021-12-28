@@ -164,6 +164,7 @@ API void CALL on_update(double ts) {
 
 	renderer_flush(renderer);
 
+	renderer_end_frame(renderer);
 
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
@@ -173,6 +174,7 @@ API void CALL on_update(double ts) {
 	}
 
 	renderer_flush(logic_store->ui_renderer);
+	renderer_end_frame(logic_store->ui_renderer);
 
 	ui_begin_frame(ui);
 	

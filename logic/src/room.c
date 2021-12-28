@@ -632,6 +632,21 @@ struct room* load_room(struct world* world, const char* path) {
 							r.h * sprite_scale
 						};
 					}
+				} else if (strcmp(layer->name, "lights") == 0) {	
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						float intensity, range;
+						file_read(&intensity, sizeof(intensity), 1, &file);
+						file_read(&range, sizeof(range), 1, &file);
+
+						entity e = new_entity(world);
+						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
+						add_componentv(world, e, struct light, .intensity = intensity, .range = range);
+					}				
 				} else {
 					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
 

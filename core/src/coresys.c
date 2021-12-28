@@ -98,6 +98,15 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 		});
 	}
 
+	for (view(world, view, type_info(struct transform), type_info(struct light))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct light* light = view_get(&view, struct light);
+
+		light->position = transform->position;
+
+		renderer_push_light(renderer, *light);
+	}
+
 	render_queue_flush(&queue, renderer);
 }
 

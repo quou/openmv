@@ -434,7 +434,12 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		player = view_get(&view, struct player);
 		sprite = view_get(&view, struct animated_sprite);
 
-		renderer->light_pos = v2f_add(transform->position, make_v2f(sprite->frames[0].w * sprite_scale / 2, sprite->frames[0].h * sprite_scale / 2));
+		renderer_push_light(renderer,
+			(struct light) {
+				.position = v2f_add(transform->position, make_v2f(sprite->frames[0].w * sprite_scale / 2, sprite->frames[0].h * sprite_scale / 2)),
+				.intensity = 1.0f,
+				.range = 1000.0f
+			});
 
 		{
 			struct rect ground_test_rect = {

@@ -31,7 +31,6 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	renderer->texture_count = 0;
 
 	renderer->ambient_light = 1.0f;
-	renderer->light_intensity = 1.0f;
 
 	init_vb(&renderer->vb, VB_DYNAMIC | VB_TRIS);
 	bind_vb_for_edit(&renderer->vb);
@@ -88,10 +87,23 @@ void renderer_flush(struct renderer* renderer) {
 		shader_set_i(&renderer->shader, name, i);
 	}
 
+	for (u32 i = 0; i < renderer->light_count; i++) {
+		char name[64];
+
+		sprintf(name, "lights[%u].position", i);
+		shader_set_v2f(&renderer->shader, name, renderer->lights[i].position);
+
+		sprintf(name, "lights[%u].intensity", i);
+		shader_set_f(&renderer->shader, name, renderer->lights[i].intensity);
+
+		sprintf(name, "lights[%u].range", i);
+		shader_set_f(&renderer->shader, name, renderer->lights[i].range);
+	}
+
+	shader_set_i(&renderer->shader, "light_count", renderer->light_count);
+
 	shader_set_m4f(&renderer->shader, "camera", renderer->camera);
 	shader_set_f(&renderer->shader, "ambient_light", renderer->ambient_light);
-	shader_set_v2f(&renderer->shader, "light_pos", renderer->light_pos);
-	shader_set_f(&renderer->shader, "light_intensity", renderer->light_intensity);
 
 	if (renderer->camera_enable) {
 		m4f view = m4f_translate(m4f_identity(), make_v3f(
@@ -110,6 +122,15 @@ void renderer_flush(struct renderer* renderer) {
 
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
+	renderer->light_count = 0;
+}
+
+void renderer_end_frame(struct renderer* renderer) {
+	renderer_flush(renderer);
+}
+
+void renderer_push_light(struct renderer* renderer, struct light light) {
+	renderer->lights[renderer->light_count++] = light;
 }
 
 void renderer_push(struct renderer* renderer, struct textured_quad* quad) {

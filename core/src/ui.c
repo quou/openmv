@@ -446,6 +446,7 @@ void ui_end_frame(struct ui_context* ui) {
 	core_free(sorted_windows);
 
 	renderer_flush(ui->renderer);
+	renderer_end_frame(ui->renderer);
 }
 
 bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {

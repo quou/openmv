@@ -50,11 +50,18 @@ in VS_OUT {
 	float unlit;
 } fs_in;
 
+struct light {
+	vec2 position;
+	float intensity;
+	float range;
+};
+
 uniform sampler2D textures[32];
 
 uniform float ambient_light;
-uniform vec2 light_pos;
-uniform float light_intensity;
+
+uniform light lights[100];
+uniform int light_count;
 
 void main() {
 	vec4 texture_color = vec4(1.0);
@@ -103,8 +110,10 @@ void main() {
 	if ((int(fs_in.unlit)) == 0 && ambient_light != 1.0) {
 		lighting_result = ambient_light;
 
-		float dist = length(fs_in.frag_pos - light_pos);
-		lighting_result += (1.0 / (pow((dist / 1000.0) * 5.0, 2.0) + 1.0)) * light_intensity;
+		for (int i = 0; i < light_count; i++) {
+			float dist = length(fs_in.frag_pos - lights[i].position);
+			lighting_result += (1.0 / (pow((dist / lights[i].range) * 5.0, 2.0) + 1.0)) * lights[i].intensity;
+		}
 	}
 
 	result = lighting_result * fs_in.color * texture_color;

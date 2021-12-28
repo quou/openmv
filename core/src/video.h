@@ -92,6 +92,12 @@ struct textured_quad {
 	v2f origin;
 };
 
+struct light {
+	v2f position;
+	float range;
+	float intensity;
+};
+
 struct renderer {
 	struct shader shader;
 	struct vertex_buffer vb;
@@ -113,13 +119,17 @@ struct renderer {
 	v2f light_pos;
 
 	float ambient_light;
-	float light_intensity;
+
+	struct light lights[100];
+	u32 light_count;
 };
 
 API struct renderer* new_renderer(struct shader shader, v2i dimentions);
 API void free_renderer(struct renderer* renderer);
 API void renderer_flush(struct renderer* renderer);
+API void renderer_end_frame(struct renderer* renderer);
 API void renderer_push(struct renderer* renderer, struct textured_quad* quad);
+API void renderer_push_light(struct renderer* renderer, struct light light);
 API void renderer_clip(struct renderer* renderer, struct rect clip);
 
 struct font;

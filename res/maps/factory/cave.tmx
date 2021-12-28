@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="116" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="100">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="116" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="101">
  <editorsettings>
   <export target="cave.dat" format="dat"/>
  </editorsettings>
@@ -57,6 +57,14 @@
 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="16" name="lights">
+  <object id="100" template="../../templates/light.tx" x="224" y="80">
+   <properties>
+    <property name="intensity" type="float" value="1"/>
+    <property name="range" type="float" value="1000"/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="13" name="enemies" locked="1">
   <object id="97" name="bat" x="160" y="96">
    <point/>
@@ -65,7 +73,7 @@
    <point/>
   </object>
  </objectgroup>
- <objectgroup id="15" name="shops">
+ <objectgroup id="15" name="shops" locked="1">
   <object id="99" x="480" y="128" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="5" name="meta" visible="0" locked="1">
