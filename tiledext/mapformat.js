@@ -133,7 +133,7 @@ function write_layer(tilesets, layer, file) {
 				var entrance_prop = obj.property("entrance");
 
 				if (!change_to_prop || !entrance_prop) {
-					print("Object `" + obj.name + "' doesn't have the correct properties to be a transition trigger.");
+					console.error("Object `" + obj.name + "' doesn't have the correct properties to be a transition trigger.");
 				} else {
 					var change_to_len_buf = new ArrayBuffer(4);
 					var change_to_len_view = new Uint32Array(change_to_len_buf);

@@ -24,6 +24,8 @@ struct bat {
 struct spider {
 	v2f velocity;
 
+	bool triggered;
+
 	struct room* room;
 };
 

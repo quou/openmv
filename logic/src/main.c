@@ -13,6 +13,7 @@
 #include "player.h"
 #include "res.h"
 #include "savegame.h"
+#include "shop.h"
 #include "sprites.h"
 #include "ui.h"
 
@@ -92,6 +93,7 @@ API void CALL on_init() {
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
 	prompts_init(load_font("res/CourierPrime.ttf", 25.0f));
+	shops_init();
 
 	set_window_uptr(main_window, logic_store->ui);
 	set_on_text_input(main_window, on_text_input);
@@ -101,7 +103,7 @@ API void CALL on_init() {
 
 	set_component_destroy_func(world, struct upgrade, on_upgrade_destroy);
 
-	logic_store->room = load_room(world, "res/maps/quality_ctrl.dat");
+	logic_store->room = load_room(world, "res/maps/factory/quality_ctrl.dat");
 
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);
@@ -167,6 +169,7 @@ API void CALL on_update(double ts) {
 		menu_update(logic_store->pause_menu);
 	} else {
 		prompts_update(ts);
+		shops_update(ts);
 	}
 
 	renderer_flush(logic_store->ui_renderer);
@@ -214,6 +217,7 @@ API void CALL on_update(double ts) {
 }
 
 API void CALL on_deinit() {
+	shops_deinit();
 	prompts_deinit();
 	free_menu(logic_store->pause_menu);
 

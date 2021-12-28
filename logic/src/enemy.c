@@ -60,7 +60,7 @@ entity new_spider(struct world* world, struct room* room, v2f position) {
 	struct sprite sprite = get_sprite(sprid_spider);
 
 	add_componentv(world, e, struct transform,
-		.position = position,
+		.position = { position.x - sprite.rect.w * sprite_scale, position.y - sprite.rect.h * sprite_scale },
 		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 	add_component(world, e, struct sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
@@ -75,6 +75,7 @@ entity new_spider(struct world* world, struct room* room, v2f position) {
 }
 
 void enemy_system(struct world* world, struct room* room, double ts) {
+	/* Bat system */
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct bat* bat = view_get(&view, struct bat);
@@ -116,6 +117,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		}
 	}
 
+	/* Spider system */
 	for (view(world, view, type_info(struct transform), type_info(struct spider), type_info(struct enemy))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct spider* spider = view_get(&view, struct spider);
@@ -123,8 +125,14 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
 
-		float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
-		if (dist_sqrd < 1865956) { /* (screen width x sprite scale)^2  */
+		if (!spider->triggered) {
+			float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+
+			if (dist_sqrd < 100000) {
+				spider->triggered = true;
+			}
+		}
+		else {
 			spider->velocity.y += g_gravity * ts; 
 
 			transform->position = v2f_add(transform->position, v2f_mul(spider->velocity, make_v2f(ts, ts)));
@@ -136,7 +144,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			};
 
 			v2i normal;
-			if (dist_sqrd < 100000 && rect_room_overlap(spider->room, e_rect, &normal) && normal.y == 1) {
+			if (rect_room_overlap(spider->room, e_rect, &normal) && normal.y == 1) {
 				spider->velocity.y = -800;
 
 				if (p_transform->position.x < transform->position.x) {
@@ -207,7 +215,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 						}
 					}
 
-					new_impact_effect(world, p_transform->position, animsprid_poof);
+					new_impact_effect(world, transform->position, animsprid_poof);
 					destroy_entity(world, view.e);
 				}
 			}

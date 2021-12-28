@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="77">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="78">
  <editorsettings>
   <export target="quality_ctrl.dat" format="dat"/>
  </editorsettings>
  <properties>
   <property name="name" value="Quality Control"/>
  </properties>
- <tileset firstgid="1" source="../tilesets/tsblue.tsx"/>
- <tileset firstgid="131" source="../tilesets/backgrounds.tsx"/>
- <tileset firstgid="139" source="../tilesets/npc.tsx"/>
+ <tileset firstgid="1" source="../../tilesets/tsblue.tsx"/>
+ <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
+ <tileset firstgid="139" source="../../tilesets/npc.tsx"/>
  <layer id="2" name="background" width="39" height="12" locked="1">
   <data encoding="csv">
 135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,
@@ -94,6 +94,14 @@
   <object id="71" x="496" y="0" width="128" height="16"/>
   <object id="72" x="528" y="16" width="96" height="16"/>
   <object id="73" x="544" y="32" width="80" height="16"/>
+ </objectgroup>
+ <objectgroup id="14" name="transition_triggers">
+  <object id="77" x="608" y="48" width="16" height="96">
+   <properties>
+    <property name="change_to" value="res/maps/factory/cave.dat"/>
+    <property name="entrance" value="left"/>
+   </properties>
+  </object>
  </objectgroup>
  <objectgroup color="#00aa00" id="6" name="slopes" locked="1">
   <object id="10" x="16" y="128">

@@ -94,6 +94,9 @@ struct room {
 	struct rect* killzones;
 	u32 killzone_count;
 
+	struct rect* shops;
+	u32 shop_count;
+
 	v4i* slope_colliders;
 	u32 slope_collider_count;
 
@@ -605,6 +608,23 @@ struct room* load_room(struct world* world, const char* path) {
 							r.w * sprite_scale, r.h * sprite_scale});
 						add_componentv(world, e, struct room_child, .parent = room);
 					}
+				} else if (strcmp(layer->name, "shops") == 0) {
+					room->shops = core_alloc(sizeof(struct rect) * object_count);
+					room->shop_count = object_count;
+
+					struct rect r;
+					for (u32 ii = 0; ii < object_count; ii++) {
+						skip_name(&file);
+
+						file_read(&r, sizeof(r), 1, &file);
+
+						room->shops[ii] = (struct rect) {
+							r.x * sprite_scale,
+							r.y * sprite_scale,
+							r.w * sprite_scale,
+							r.h * sprite_scale
+						};
+					}
 				} else {
 					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
 
@@ -674,6 +694,10 @@ void free_room(struct room* room) {
 
 	if (room->killzones) {
 		core_free(room->killzones);
+	}
+
+	if (room->shops) {
+		core_free(room->shops);
 	}
 
 	if (room->transition_triggers) {
@@ -956,6 +980,8 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 			room->transitioning_out = false;
 			logic_store->frozen = false;
+			
+			savegame();
 		}
 	}
 }
@@ -1094,7 +1120,7 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 			return;
 		}
 	}
-
+	
 	struct door* door = null;
 	if (body_on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
 		for (u32 i = 0; i < room->door_count; i++) {
@@ -1117,6 +1143,12 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 		for (u32 i = 0; i < room->dialogue_count; i++) {
 			if (rect_overlap(body_rect, room->dialogue[i].rect, null)) {
 				play_dialogue(room->dialogue[i].script);
+			}
+		}
+
+		for (u32 i = 0; i < room->shop_count; i++) {
+			if (rect_overlap(body_rect, room->shops[i], null)) {
+				shopping();
 			}
 		}
 	}
