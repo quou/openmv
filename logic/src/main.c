@@ -112,6 +112,8 @@ API void CALL on_init() {
 	get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
 
 	logic_store->player = player;
+
+	loadgame();
 }
 
 API void CALL on_update(double ts) {

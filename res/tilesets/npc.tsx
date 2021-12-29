@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.5" tiledversion="1.7.2" name="npc" tilewidth="16" tileheight="16" tilecount="12" columns="12">
- <image source="../bmp/npc.bmp" width="192" height="16"/>
+<tileset version="1.5" tiledversion="1.7.2" name="npc" tilewidth="16" tileheight="16" tilecount="24" columns="12">
+ <image source="../bmp/npc.bmp" width="192" height="32"/>
  <tile id="0">
   <animation>
    <frame tileid="0" duration="100"/>
@@ -18,6 +18,17 @@
    <frame tileid="9" duration="100"/>
    <frame tileid="10" duration="100"/>
    <frame tileid="9" duration="100"/>
+  </animation>
+ </tile>
+ <tile id="12">
+  <animation>
+   <frame tileid="12" duration="100"/>
+   <frame tileid="13" duration="100"/>
+   <frame tileid="14" duration="100"/>
+   <frame tileid="15" duration="100"/>
+   <frame tileid="16" duration="100"/>
+   <frame tileid="17" duration="100"/>
+   <frame tileid="18" duration="100"/>
   </animation>
  </tile>
 </tileset>

@@ -98,8 +98,8 @@
  <objectgroup id="14" name="transition_triggers" locked="1">
   <object id="77" x="608" y="48" width="16" height="96">
    <properties>
-    <property name="change_to" value="res/maps/a1/cave.dat"/>
-    <property name="entrance" value="left"/>
+    <property name="change_to" value="res/maps/a1/mineshaft.dat"/>
+    <property name="entrance" value="bottom_left_a"/>
    </properties>
   </object>
  </objectgroup>

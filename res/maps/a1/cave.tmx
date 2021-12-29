@@ -90,8 +90,8 @@
  <objectgroup id="14" name="transition_triggers" locked="1">
   <object id="102" template="../../templates/transition_trigger.tx" x="0" y="48" width="16" height="98.6667">
    <properties>
-    <property name="change_to" value="res/maps/a1/incinerator.dat"/>
-    <property name="entrance" value="right"/>
+    <property name="change_to" value="res/maps/a1/mineshaft.dat"/>
+    <property name="entrance" value="bottom_right_a"/>
    </properties>
   </object>
  </objectgroup>

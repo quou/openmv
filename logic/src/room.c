@@ -1079,7 +1079,7 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 
 		if (start.y == end.y) { /* Straight lines. */
 			if (check_point.x > start.x && check_point.x < end.x &&
-				check_point.y > start.y) {
+				check_point.y > start.y && check_point.y < start.y + 32) {
 				position->y = ((start.y) - body_rect.h) - collider.y;
 				velocity->y = 0.0f;
 			}
@@ -1220,7 +1220,7 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 
 		if (start.y == end.y) { /* Straight lines. */
 			if (check_point.x > start.x && check_point.x < end.x &&
-				check_point.y > start.y) {
+				check_point.y > start.y && check_point.y < start.y + 32) {
 				if (normal) { *normal = make_v2i(0, 1); }
 				return true;
 			}
