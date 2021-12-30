@@ -405,6 +405,8 @@ struct room* load_room(struct world* world, const char* path) {
 							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale), has_path ? path_name : null);
 						} else if (strcmp(obj_name, "spider") == 0) {
 							new_spider(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
+						} else if (strcmp(obj_name, "drill") == 0) {
+							new_drill(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
 						}
 
 						core_free(obj_name);
@@ -1079,7 +1081,7 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 
 		if (start.y == end.y) { /* Straight lines. */
 			if (check_point.x > start.x && check_point.x < end.x &&
-				check_point.y > start.y) {
+				check_point.y > start.y && check_point.y < start.y + 32) {
 				position->y = ((start.y) - body_rect.h) - collider.y;
 				velocity->y = 0.0f;
 			}
@@ -1220,7 +1222,7 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 
 		if (start.y == end.y) { /* Straight lines. */
 			if (check_point.x > start.x && check_point.x < end.x &&
-				check_point.y > start.y) {
+				check_point.y > start.y && check_point.y < start.y + 32) {
 				if (normal) { *normal = make_v2i(0, 1); }
 				return true;
 			}

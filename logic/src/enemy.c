@@ -68,8 +68,28 @@ entity new_spider(struct world* world, struct room* room, v2f position) {
 		0, 0,
 		sprite.rect.w * sprite_scale,
 		sprite.rect.h * sprite_scale },
-		.hp = 1, .damage = 1, .money_drop = 1);
+		.hp = 5, .damage = 1, .money_drop = 1);
 	add_componentv(world, e, struct spider, .room = room);
+
+	return e;
+}
+
+entity new_drill(struct world* world, struct room* room, v2f position) {
+	entity e = new_entity(world);
+
+	struct animated_sprite sprite = get_animated_sprite(animsprid_drill_left);
+
+	add_componentv(world, e, struct transform,
+		.position = { position.x - sprite.frames[0].w * sprite_scale, position.y - sprite.frames[0].h * sprite_scale },
+		.dimentions = { sprite.frames[0].w * sprite_scale, sprite.frames[0].h * sprite_scale });
+	add_component(world, e, struct animated_sprite, sprite);
+	add_componentv(world, e, struct room_child, .parent = room);
+	add_componentv(world, e, struct enemy, .collider = {
+		0, 0,
+		sprite.frames[0].w * sprite_scale,
+		sprite.frames[0].h * sprite_scale },
+		.hp = 10, .damage = 1, .money_drop = 1);
+	add_componentv(world, e, struct drill, .room = room);
 
 	return e;
 }
@@ -131,8 +151,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			if (dist_sqrd < 100000) {
 				spider->triggered = true;
 			}
-		}
-		else {
+		} else {
 			spider->velocity.y += g_gravity * ts; 
 
 			transform->position = v2f_add(transform->position, v2f_mul(spider->velocity, make_v2f(ts, ts)));
@@ -157,6 +176,50 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 					spider->velocity.x = 0.0;
 				}
 			}
+		}
+	}
+
+	/* Drill system */
+	for (view(world, view, type_info(struct transform), type_info(struct drill), type_info(struct enemy), type_info(struct animated_sprite))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct drill* drill = view_get(&view, struct drill);
+		struct enemy* enemy = view_get(&view, struct enemy);
+		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+
+		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
+
+		if (!drill->triggered) {
+			float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+
+			if (dist_sqrd < 100000) {
+				drill->triggered = true;
+			}
+		} else {
+			drill->velocity.y += g_gravity * ts;
+
+			if (p_transform->position.x < transform->position.x) {
+				drill->velocity.x -= 100 * ts;
+			} else {
+				drill->velocity.x += 100 * ts;
+			}
+
+			v2f to_player = v2f_sub(transform->position, p_transform->position);
+
+			if (to_player.x > 0.0f && sprite->id != animsprid_drill_left) {
+				*sprite = get_animated_sprite(animsprid_drill_left);
+			} else if (to_player.x < 0.0f && sprite->id != animsprid_drill_right) {
+				*sprite = get_animated_sprite(animsprid_drill_right);
+			}
+
+			transform->position = v2f_add(transform->position, v2f_mul(drill->velocity, make_v2f(ts, ts)));
+
+			struct rect e_rect = {
+				transform->position.x + enemy->collider.x,
+				transform->position.y + enemy->collider.y,
+				enemy->collider.w, enemy->collider.h
+			};
+
+			handle_body_collisions(drill->room, enemy->collider, &transform->position, &drill->velocity);
 		}
 	}
 
@@ -225,6 +288,20 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 	for (view(world, view, type_info(struct enemy), type_info(struct animated_sprite))) {
 		struct enemy* enemy = view_get(&view, struct enemy);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+
+		if (enemy->invul) {
+			enemy->invul_timer -= ts;
+			if (enemy->invul_timer <= 0.0) {
+				enemy->invul = false;
+			}
+		}
+
+		sprite->inverted = enemy->invul;
+	}
+
+	for (view(world, view, type_info(struct enemy), type_info(struct sprite))) {
+		struct enemy* enemy = view_get(&view, struct enemy);
+		struct sprite* sprite = view_get(&view, struct sprite);
 
 		if (enemy->invul) {
 			enemy->invul_timer -= ts;
