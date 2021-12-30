@@ -130,6 +130,11 @@ void renderer_end_frame(struct renderer* renderer) {
 }
 
 void renderer_push_light(struct renderer* renderer, struct light light) {
+	if (renderer->light_count > max_lights) {
+		fprintf(stderr, "Too many lights! Max: %d\n", max_lights);
+		return;
+	}
+
 	renderer->lights[renderer->light_count++] = light;
 }
 

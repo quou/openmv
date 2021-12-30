@@ -3,6 +3,8 @@
 #include "common.h"
 #include "maths.h"
 
+#define max_lights 100
+
 /* Basic renderer; Graphics API abstraction. */
 
 API void video_init();
@@ -120,7 +122,7 @@ struct renderer {
 
 	float ambient_light;
 
-	struct light lights[100];
+	struct light lights[max_lights];
 	u32 light_count;
 };
 

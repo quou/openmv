@@ -17,6 +17,7 @@ static const char* files[] = {
 	"res/CourierPrime.ttf",
 	"res/shaders/sprite.glsl",
 	"lua54/premake5.lua",
+	"lua54/LICENSE",
 	"util/packer/premake5.lua",
 	"util/mksdk/premake5.lua",
 	null
