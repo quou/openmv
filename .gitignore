@@ -46,4 +46,6 @@ tags
 *.tiled-session
 .vscode
 
+sdk.tar
+
 /release/

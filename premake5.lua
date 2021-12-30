@@ -7,3 +7,4 @@ include "logic"
 include "bootstrapper"
 
 include "util/packer"
+include "util/mksdk"
