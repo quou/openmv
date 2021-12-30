@@ -29,6 +29,14 @@ struct spider {
 	struct room* room;
 };
 
+struct drill {
+	v2f velocity;
+
+	bool triggered;
+
+	struct room* room;
+};
+
 struct path_follow {
 	char* path_name;
 	struct room* room;
@@ -42,5 +50,6 @@ struct path_follow {
 
 entity new_bat(struct world* world, struct room* room, v2f position, char* path_name);
 entity new_spider(struct world* world, struct room* room, v2f position);
+entity new_drill(struct world* world, struct room* room, v2f position);
 
 void enemy_system(struct world* world, struct room* room, double ts);

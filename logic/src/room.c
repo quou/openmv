@@ -405,6 +405,8 @@ struct room* load_room(struct world* world, const char* path) {
 							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale), has_path ? path_name : null);
 						} else if (strcmp(obj_name, "spider") == 0) {
 							new_spider(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
+						} else if (strcmp(obj_name, "drill") == 0) {
+							new_drill(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
 						}
 
 						core_free(obj_name);
