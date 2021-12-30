@@ -45,6 +45,26 @@ Dependencies on Windows:
  - `kernel32`
  - `winmm`
 
+## Creating New Projects
+OpenMV's core can be used for new projects, including all the code for things
+that games commonly need, such as loading resources and drawing graphics. A
+utility in `util/mksdk` exists so that manually copying files isn't required
+in order to create a new project. Simply build this project and run it from
+the project root to create a file named `sdk.tar`. Extract this file and
+start creating.
+
+The default project creates a blank window and spams the console every
+frame. Edit the code in `logic/src/main.c` to create your game logic. All the
+code compiled in this project is hot-reloadable, meaning you can re-compile
+it and have the code update in real time without needing to restart the program.
+The default project also creates a loading screen while the `on_init` function
+in the logic project is running. Comment out lines 31-64 to remove this
+if you don't want it.
+
+If you want to change the window settings (default: "OpenMV", 1366x768), edit
+line 16 in `bootstrapper/src/main.c`. Multiple windows won't work, I don't
+think (I haven't tried it).
+
 ## Levels
 Levels are created using the Tiled level editor and exported using a custom binary
 format. An extension for Tiled to add this format can be found in
