@@ -103,10 +103,10 @@ API void CALL on_init() {
 
 	set_component_destroy_func(world, struct upgrade, on_upgrade_destroy);
 
-	logic_store->room = load_room(world, "res/maps/a1/incinerator.dat");
-
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);
+
+	logic_store->room = load_room(world, "res/maps/a1/incinerator.dat");
 
 	v2i spawn = get_spawn(logic_store->room);
 	get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);

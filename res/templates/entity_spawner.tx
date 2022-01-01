@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template>
+ <object name="scrap_spawner">
+  <properties>
+   <property name="entity_type" value="broken_robot"/>
+   <property name="max_increment" type="float" value="5"/>
+   <property name="min_increment" type="float" value="2"/>
+  </properties>
+  <point/>
+ </object>
+</template>

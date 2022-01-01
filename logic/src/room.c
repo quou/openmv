@@ -329,8 +329,52 @@ struct room* load_room(struct world* world, const char* path) {
 							};
 						}
 					}
+				} else if (strcmp(layer->name, "doors") == 0) {
+					room->doors = core_calloc(object_count, sizeof(struct door));
+
+					for (u32 ii = 0; ii < object_count; ii++) {
+						struct object* object = layer->as.object_layer.objects + ii;
+
+						if (object->shape == object_shape_rect) {
+							struct rect r = {
+								(i32)object->as.rect.x * sprite_scale,
+								(i32)object->as.rect.y * sprite_scale,
+								(i32)object->as.rect.w * sprite_scale,
+								(i32)object->as.rect.h * sprite_scale
+							};
+
+							char* change_to = null;
+							char* entrance = null;
+
+							struct property* change_to_prop = table_get(object->properties, "change_to");
+							if (change_to_prop && change_to_prop->type == prop_string) {
+								change_to = change_to_prop->as.string;
+							}
+
+							struct property* entrance_prop = table_get(object->properties, "entrance");
+							if (entrance_prop && entrance_prop->type == prop_string) {
+								entrance = entrance_prop->as.string;
+							}
+
+							room->doors[room->door_count++] = (struct door) {
+								.rect = r,
+								.change_to = change_to,
+								.entrance = entrance
+							};
+						}
+					}
+				} else if (strcmp(layer->name, "save_points") == 0) {
+					for (u32 ii = 0; ii < object_count; ii++) {
+						struct object* object = layer->as.object_layer.objects + ii;
+
+						if (object->shape == object_shape_rect) {
+							new_save_point(world, room, (struct rect) {
+								object->as.rect.x * sprite_scale, object->as.rect.y * sprite_scale,
+								object->as.rect.w * sprite_scale, object->as.rect.h * sprite_scale });
+						}
+					}
 				} else if (strcmp(layer->name, "meta") == 0) {
-					for (u32 ii = 0; ii < object_count; ii++) {;
+					for (u32 ii = 0; ii < object_count; ii++) {
 						struct object* object = layer->as.object_layer.objects + ii;
 
 						if (strcmp(object->name, "camera_bounds") == 0 && object->shape == object_shape_rect) {
@@ -340,51 +384,35 @@ struct room* load_room(struct world* world, const char* path) {
 							};
 						}
 					}
-				}
-			} break;
-			default: break;
-		}
-	}
-
-/*
-				} else if (strcmp(layer->name, "doors") == 0) {
-					room->doors = core_alloc(sizeof(struct door) * object_count);
-					room->door_count = object_count;
-
-					struct rect r;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
-
-						file_read(&r, sizeof(r), 1, &file);
-
-						char* change_to = read_name(&file);
-						char* entrance = read_name(&file);
-
-						room->doors[ii] = (struct door) {
-							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-							.change_to = change_to,
-							.entrance = entrance
-						};
-					}
-				} else if (strcmp(layer->name, "save_points") == 0) {
-					struct rect r;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
-
-						file_read(&r, sizeof(r), 1, &file);
-
-						new_save_point(world, room, (struct rect) {
-							r.x * sprite_scale, r.y * sprite_scale,
-							r.w * sprite_scale, r.h * sprite_scale });
-					}
 				} else if (strcmp(layer->name, "upgrade_pickups") == 0) {
-					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
-						char* item_prefix = read_name(&file);
-						char* item_name = read_name(&file);
+						if (object->shape != object_shape_rect) {
+							continue;
+						}
+
+						char* obj_name = object->name;
+
+						struct rect r = {
+							object->as.rect.x,
+							object->as.rect.y,
+							object->as.rect.w,
+							object->as.rect.h,
+						};
+
+						char* item_prefix = null;
+						char* item_name = null;
+
+						struct property* item_prefix_prop = table_get(object->properties, "prefix");
+						if (item_prefix_prop && item_prefix_prop->type == prop_string) {
+							item_prefix = item_prefix_prop->as.string;
+						}
+
+						struct property* item_name_prop = table_get(object->properties, "name");
+						if (item_name_prop && item_name_prop->type == prop_string) {
+							item_name = item_name_prop->as.string;
+						}
 
 						bool hp = false;
 						bool booster = false;
@@ -404,7 +432,10 @@ struct room* load_room(struct world* world, const char* path) {
 						}
 
 						if (hp) {
-							file_read(&upgrade_id, sizeof(upgrade_id), 1, &file);
+							struct property* id_prop = table_get(object->properties, "id");
+							if (id_prop && id_prop->type == prop_number) {
+								upgrade_id = (i32)id_prop->as.number;
+							}
 						}
 
 						struct player* player = get_component(world, logic_store->player, struct player);
@@ -436,153 +467,116 @@ struct room* load_room(struct world* world, const char* path) {
 									.prefix = copy_string(item_prefix), .name = copy_string(item_name));
 							}
 						}
-
-						core_free(obj_name);
-						core_free(item_prefix);
-						core_free(item_name);
-					}
-				} else if (strcmp(layer->name, "meta") == 0) {
-					struct rect r;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(&file);
-
-						file_read(&r, sizeof(r), 1, &file);
-
-						if (strcmp(obj_name, "camera_bounds") == 0) {
-							room->camera_bounds = (struct rect) {
-								r.x * sprite_scale, r.y * sprite_scale,
-								r.w * sprite_scale, r.h * sprite_scale
-							};
-						}
-
-						core_free(obj_name);
 					}
 				} else if (strcmp(layer->name, "dialogue_triggers") == 0) {
 					room->dialogue = core_alloc(object_count * sizeof(struct dialogue));
-					room->dialogue_count = object_count;
-					
-					struct rect r;
+
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_rect) {
+							char* script_path = null;
 
-						char* script_path = read_name(&file);
+							struct property* script_path_prop = table_get(object->properties, "script");
+							if (script_path_prop && script_path_prop->type == prop_string) {
+								script_path = script_path_prop->as.string;
+							}
 
-						u8* source;
-						read_raw(script_path, &source, null, true);
+							if (!script_path) {
+								fprintf(stderr, "Dialogue triggers must have a path to a script!\n");
+								continue;
+							}
 
-						room->dialogue[ii] = (struct dialogue) {
-							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-							.script = new_dialogue_script((char*)source)
-						};
+							u8* source;
+							read_raw(script_path, &source, null, true);
 
-						core_free(source);
-					}
-				} else if (strcmp(layer->name, "killzones") == 0) {
-					struct rect r;
+							struct float_rect r = object->as.rect;
 
-					room->killzones = core_alloc(object_count * sizeof(struct rect));
-					room->killzone_count = object_count;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+							room->dialogue[room->dialogue_count++] = (struct dialogue) {
+								.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
+								.script = new_dialogue_script((char*)source)
+							};
 
-						file_read(&r, sizeof(r), 1, &file);
-
-						room->killzones[ii] = (struct rect) {
-							r.x * sprite_scale,
-							r.y * sprite_scale,
-							r.w * sprite_scale,
-							r.h * sprite_scale
-						};
+							core_free(source);
+						}
 					}
 				} else if (strcmp(layer->name, "entity_spawners") == 0) {
-					struct rect r;
-
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_point) {
+							double min = 0.0;
+							double max = 0.0;
 
-						char* entity_type = read_name(&file);
-						float min, max;
-						file_read(&max, sizeof(max), 1, &file);
-						file_read(&min, sizeof(min), 1, &file);
+							struct property* min_prop = table_get(object->properties, "min_increment");
+							if (min_prop && min_prop->type == prop_number) {
+								min = min_prop->as.number;
+							}
 
-						u32 spawn_type = 0;
-						if (strcmp(entity_type, "broken_robot") == 0) {
-							spawn_type = spawn_type_broken_robot;
+							struct property* max_prop = table_get(object->properties, "max_increment");
+							if (max_prop && max_prop->type == prop_number) {
+								max = max_prop->as.number;
+							}
+
+							struct property* entity_type_prop = table_get(object->properties, "entity_type");
+							char* entity_type = null;
+							if (entity_type_prop && entity_type_prop->type == prop_string) {
+								entity_type = entity_type_prop->as.string;
+							}
+
+							u32 spawn_type = 0;
+							if (strcmp(entity_type, "broken_robot") == 0) {
+								spawn_type = spawn_type_broken_robot;
+							}
+
+							v2f r = object->as.point;
+
+							entity e = new_entity(world);
+							add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
+							add_componentv(world, e, struct entity_spawner, .spawn_type = spawn_type,
+								.next_spawn = random_double(min, max), .max_increment = (double)max, .min_increment = (double)min);
+							add_componentv(world, e, struct room_child, .parent = room);
 						}
-
-						entity e = new_entity(world);
-						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
-						add_componentv(world, e, struct entity_spawner, .spawn_type = spawn_type,
-							.next_spawn = random_double(min, max), .max_increment = (double)max, .min_increment = (double)min);
-						add_componentv(world, e, struct room_child, .parent = room);
 					}
 				} else if (strcmp(layer->name, "lava") == 0) {
-					struct rect r;
-
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_rect) {
+							struct float_rect r = object->as.rect;
 
-						entity e = new_entity(world);
-						add_componentv(world, e, struct lava, .collider = {
-							r.x * sprite_scale, r.y * sprite_scale,
-							r.w * sprite_scale, r.h * sprite_scale});
-						add_componentv(world, e, struct room_child, .parent = room);
+							entity e = new_entity(world);
+							add_componentv(world, e, struct lava, .collider = {
+								r.x * sprite_scale, r.y * sprite_scale,
+								r.w * sprite_scale, r.h * sprite_scale});
+							add_componentv(world, e, struct room_child, .parent = room);
+						}
 					}
-				} else if (strcmp(layer->name, "shops") == 0) {
-					room->shops = core_alloc(sizeof(struct rect) * object_count);
-					room->shop_count = object_count;
-
-					struct rect r;
+				} else if (strcmp(layer->name, "shops") == 0) {	
+					read_rects(room->shops, room->shop_count);
+				} else if (strcmp(layer->name, "lights") == 0) {
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_point) {
+							float intensity = 1.0f;
+							float range = 1000.0f;
+							
+							v2f r = object->as.point;
 
-						room->shops[ii] = (struct rect) {
-							r.x * sprite_scale,
-							r.y * sprite_scale,
-							r.w * sprite_scale,
-							r.h * sprite_scale
-						};
+							entity e = new_entity(world);
+							add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
+							add_componentv(world, e, struct light, .intensity = intensity, .range = range);
+							add_componentv(world, e, struct room_child, .parent = room);
+						}
 					}
-				} else if (strcmp(layer->name, "lights") == 0) {	
-					struct rect r;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
-
-						file_read(&r, sizeof(r), 1, &file);
-
-						float intensity, range;
-						file_read(&intensity, sizeof(intensity), 1, &file);
-						file_read(&range, sizeof(range), 1, &file);
-
-						entity e = new_entity(world);
-						add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
-						add_componentv(world, e, struct light, .intensity = intensity, .range = range);
-						add_componentv(world, e, struct room_child, .parent = room);
-					}				
 				} else {
-					fprintf(stderr, "Warning: Unknown layer type `%s'\n", layer->name);
-
-					struct rect r;
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
-
-						file_read(&r, sizeof(r), 1, &file);
-					}
+					fprintf(stderr, "Warning: Unknown object layer type `%s'\n", layer->name);
 				}
 			} break;
 			default: break;
 		}
 	}
-
-	file_close(&file);*/
 
 	return room;
 }
