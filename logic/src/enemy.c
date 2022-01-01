@@ -18,14 +18,6 @@ static void on_path_follow_create(struct world* world, entity e, void* component
 	((struct path_follow*)component)->first_frame = true;
 }
 
-static void on_path_follow_destroy(struct world* world, entity e, void* component) {
-	struct path_follow* f = component;
-
-	if (f->path_name) {
-		core_free(f->path_name);
-	}
-}
-
 entity new_bat(struct world* world, struct room* room, v2f position, char* path_name) {
 	entity e = new_entity(world);
 
@@ -33,7 +25,6 @@ entity new_bat(struct world* world, struct room* room, v2f position, char* path_
 
 	set_component_create_func(world, struct bat, on_bat_create);
 	set_component_create_func(world, struct path_follow, on_path_follow_create);
-	set_component_destroy_func(world, struct path_follow, on_path_follow_destroy);
 
 	add_componentv(world, e, struct transform,
 		.position = position,

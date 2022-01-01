@@ -19,51 +19,7 @@
 #include "shop.h"
 #include "sprites.h"
 #include "table.h"
-
-struct tile {
-	i16 id;
-	i16 tileset_id;
-};
-
-#define anim_tile_frame_count 32
-
-struct animated_tile {
-	bool exists;
-
-	i16 frames[anim_tile_frame_count];
-	double durations[anim_tile_frame_count];
-
-	u32 frame_count;
-	u32 current_frame;
-	double timer;
-};
-
-struct tileset {
-	struct texture* image;
-	char* name;
-	i32 tile_w, tile_h;
-	i32 tile_count;
-
-	struct animated_tile* animations;
-};
-
-enum {
-	layer_unknown = -1,
-	layer_tiles,
-	layer_objects
-};
-
-struct layer {
-	i32 type;
-	char* name;
-
-	union {
-		struct {
-			struct tile* tiles;
-			u32 w, h;
-		} tile_layer;
-	} as;
-};
+#include "tiled.h"
 
 struct transition_trigger {
 	struct rect rect;
@@ -82,10 +38,17 @@ struct dialogue {
 	struct rect rect;
 };
 
+struct tile_layer {
+	struct tile* tiles;
+	u32 w, h;
+};
+
 struct room {
 	bool dark;
 
-	struct layer* layers;
+	struct tiled_map* map;
+
+	struct tile_layer* layers;
 	u32 layer_count;
 
 	struct tileset* tilesets;
@@ -160,13 +123,32 @@ void skip_name(struct file* file) {
 	file_seek(file, file->cursor + obj_name_len);
 }
 
+#define read_rects(d_, d_c_) \
+	do { \
+		d_ = core_alloc(sizeof(*(d_)) * object_count); \
+		d_c_ = 0; \
+		for (u32 ii = 0; ii < object_count; ii++) { \
+			struct object* object = layer->as.object_layer.objects + ii; \
+			\
+			if (object->shape == object_shape_rect) { \
+				(d_)[(d_c_)].x = (i32)object->as.rect.x * sprite_scale; \
+				(d_)[(d_c_)].y = (i32)object->as.rect.y * sprite_scale; \
+				(d_)[(d_c_)].w = (i32)object->as.rect.w * sprite_scale; \
+				(d_)[(d_c_)].h = (i32)object->as.rect.h * sprite_scale; \
+				\
+				(d_c_)++; \
+			} \
+		} \
+	} while (0)
+
 struct room* load_room(struct world* world, const char* path) {
 	struct room* room = core_calloc(1, sizeof(struct room));
 	room->world = world;
 
-	struct file file = file_open(path);
-	if (!file_good(&file)) {
-		fprintf(stderr, "Failed to open file `%s'.", path);
+	room->map = load_map(path);
+	struct tiled_map* map = room->map;
+
+	if (!room->map) {
 		core_free(room);
 		return null;
 	}
@@ -178,154 +160,64 @@ struct room* load_room(struct world* world, const char* path) {
 	room->name_font = load_font("res/CourierPrime.ttf", 25.0f);
 	room->name_timer = 3.0;
 
-	room->name = read_name(&file);
+	struct property* name_prop = table_get(map->properties, "name");
+	if (name_prop && name_prop->type == prop_string) {
+		room->name = name_prop->as.string;
+	}
 
-	u32 dark;
-	file_read(&dark, sizeof(dark), 1, &file);
-	room->dark = (bool)dark;
+	struct property* dark_prop = table_get(map->properties, "dark");
+	if (dark_prop && dark_prop->type == prop_bool) {
+		room->dark = dark_prop->as.boolean;
+	}
 
 	room->path = copy_string(path);
 
 	room->entrances = new_table(sizeof(v2i));
 	room->paths = new_table(sizeof(struct path));
 
-	/* Load the tilesets. */
-	file_read(&room->tileset_count, sizeof(room->tileset_count), 1, &file);
-	room->tilesets = core_calloc(room->tileset_count, sizeof(struct tileset));
+	room->tilesets = map->tilesets;
+	room->tileset_count = map->tileset_count;
 
-	for (u32 i = 0; i < room->tileset_count; i++) {
-		struct tileset* current = room->tilesets + i;
-
-		/* Read the name. */
-		current->name = read_name(&file);
-
-		/* Read the tileset image. */
-		u32 path_len;
-		file_read(&path_len, sizeof(path_len), 1, &file);
-		char* path = core_alloc(path_len + 1);
-		path[path_len] = '\0';
-		file_read(path, 1, path_len, &file);
-		current->image = load_texture(path);
-		core_free(path);
-
-		/* Read the tile count. */
-		file_read(&current->tile_count, sizeof(current->tile_count), 1, &file);
-
-		/* Read the tile width and height */
-		file_read(&current->tile_w, sizeof(current->tile_w), 1, &file);
-		file_read(&current->tile_h, sizeof(current->tile_h), 1, &file);
-
-		current->animations = core_calloc(current->tile_count, sizeof(struct animated_tile));
-
-		/* Load animations. */
-		u32 animation_count;
-		file_read(&animation_count, sizeof(animation_count), 1, &file);
-		
-		for (u32 ii = 0; ii < animation_count; ii++) {
-			u32 frame_count;
-			u32 id;
-			file_read(&frame_count, sizeof(frame_count), 1, &file);
-			file_read(&id, sizeof(id), 1, &file);
-
-			struct animated_tile* tile = current->animations + id;
-			tile->frame_count = frame_count;
-			tile->timer = 0.0;
-			tile->exists = true;
-			tile->current_frame = 0;
-
-			for (u32 iii = 0; iii < frame_count; iii++) {
-				i32 tile_id;
-				i32 duration;
-				file_read(&tile_id, sizeof(tile_id), 1, &file);
-				file_read(&duration, sizeof(duration), 1, &file);
-				
-				tile->frames[iii] = tile_id;
-				tile->durations[iii] = (double)duration * 0.001;
-			}
-		}
-	}
-
-	/* Load the tile layers */	
-	file_read(&room->layer_count, sizeof(room->layer_count), 1, &file);
-	room->layers = core_calloc(room->layer_count, sizeof(struct layer));
-
-	for (u32 i = 0; i < room->layer_count; i++) {
-		struct layer* layer = room->layers + i;
-
-		/* Read the name. */
-		layer->name = read_name(&file);
-
-		if (strcmp(layer->name, "forground") == 0) {
-			room->forground_index = i;
-		}
-
-		file_read(&layer->type, sizeof(layer->type), 1, &file);
+	/* Load the tile layers */
+	for (u32 i = 0; i < map->layer_count; i++) {
+		struct layer* layer = map->layers + i;
 
 		switch (layer->type) {
 			case layer_tiles: {
-				file_read(&layer->as.tile_layer.w, sizeof(layer->as.tile_layer.w), 1, &file);
-				file_read(&layer->as.tile_layer.h, sizeof(layer->as.tile_layer.h), 1, &file);
+				u32 idx = room->layer_count++;
+				room->layers = core_realloc(room->layers, room->layer_count * sizeof(struct tile_layer));
 
-				layer->as.tile_layer.tiles = core_alloc(sizeof(struct tile) * layer->as.tile_layer.w * layer->as.tile_layer.h);
+				room->layers[idx].tiles = layer->as.tile_layer.tiles;
+				room->layers[idx].w = layer->as.tile_layer.w;
+				room->layers[idx].h = layer->as.tile_layer.h;
 
-				u32 w = layer->as.tile_layer.w;
-				u32 h = layer->as.tile_layer.h;
-				for (u32 y = 0; y < h; y++) {
-					for (u32 x = 0; x < w; x++) {
-						i16 id, tileset_idx = 0;
-
-						file_read(&id, sizeof(id), 1, &file);
-						file_read(&tileset_idx, sizeof(tileset_idx), 1, &file);
-
-						layer->as.tile_layer.tiles[x + y * w] = (struct tile) {
-							.id = id,
-							.tileset_id = tileset_idx
-						};
-					}
+				if (strcmp(layer->name, "forground") == 0) {
+					room->forground_index = idx;
 				}
 			} break;
 			case layer_objects: {
-				u32 object_count;
-				file_read(&object_count, sizeof(object_count), 1, &file);
+				u32 object_count = layer->as.object_layer.object_count;
 
 				if (strcmp(layer->name, "collisions") == 0) {
-					room->box_collider_count = object_count;
-					room->box_colliders = core_alloc(sizeof(*room->box_colliders) * object_count);
-					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
-
-						file_read(room->box_colliders + ii, sizeof(*room->box_colliders), 1, &file);
-
-						room->box_colliders[ii].x *= sprite_scale;
-						room->box_colliders[ii].y *= sprite_scale;
-						room->box_colliders[ii].w *= sprite_scale;
-						room->box_colliders[ii].h *= sprite_scale;
-					}
+					read_rects(room->box_colliders, room->box_collider_count);
+				} else if (strcmp(layer->name, "killzones") == 0) {
+					read_rects(room->killzones, room->killzone_count);
 				} else if (strcmp(layer->name, "slopes") == 0) {
 					room->slope_collider_count = 0;
 					room->slope_colliders = null;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						u32 point_count = 0;
-						file_read(&point_count, sizeof(point_count), 1, &file);
-						v2i* points = core_alloc(point_count * sizeof(v2i));
+						if (object->shape == object_shape_polygon) {
+							room->slope_colliders = core_realloc(room->slope_colliders,
+								sizeof(*room->slope_colliders) * (room->slope_collider_count + object->as.polygon.count));
+							for (u32 iii = 1; iii < object->as.polygon.count; iii += 1) {
+								v2f start = object->as.polygon.points[iii - 1];
+								v2f end   = object->as.polygon.points[iii];
 
-						for (u32 iii = 0; iii < point_count; iii++) {
-							file_read(&points[iii].x, sizeof(points[iii].x), 1, &file);
-							file_read(&points[iii].y, sizeof(points[iii].y), 1, &file);
+								room->slope_colliders[room->slope_collider_count++] = make_v4i(start.x, start.y, end.x, end.y);
+							}
 						}
-
-						room->slope_colliders = core_realloc(room->slope_colliders,
-							sizeof(*room->slope_colliders) * (room->slope_collider_count + point_count));
-						for (u32 iii = 1; iii < point_count; iii += 1) {
-							v2i start = points[iii - 1];
-							v2i end   = points[iii];
-
-							room->slope_colliders[room->slope_collider_count++] = make_v4i(start.x, start.y, end.x, end.y);
-						}
-
-						core_free(points);
 					}
 
 					for (u32 ii = 0; ii < room->slope_collider_count; ii++) {
@@ -353,83 +245,108 @@ struct room* load_room(struct world* world, const char* path) {
 						room->slope_colliders[ii] = make_v4i(start.x, start.y, end.x, end.y);
 					}
 				} else if (strcmp(layer->name, "entrances") == 0) {
-					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
+						
+						if (object->shape == object_shape_point) {
+							v2i point;
+							point.x = (i32)object->as.point.x * sprite_scale;
+							point.y = (i32)object->as.point.y * sprite_scale;
 
-						file_read(&r, sizeof(r), 1, &file);
-						r.x *= sprite_scale;
-						r.y *= sprite_scale;
-						r.w *= sprite_scale;
-						r.h *= sprite_scale;
-						table_set(room->entrances, obj_name, &r);
-
-						core_free(obj_name);
+							table_set(room->entrances, object->name, &point);
+						}
 					}
 				} else if (strcmp(layer->name, "enemy_paths") == 0) {
-					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_polygon) {
+							struct path p = { 0 };
+							p.count = object->as.polygon.count;
+							p.points = core_calloc(p.count, sizeof(v2i));
 
-						struct path p = { 0 };
-						file_read(&p.count, sizeof(p.count), 1, &file);
-						p.points = core_alloc(sizeof(v2f) * p.count);
+							for (u32 iii = 0; iii < p.count; iii++) {
+								p.points[iii].x = (i32)object->as.polygon.points[iii].x * sprite_scale;
+								p.points[iii].y = (i32)object->as.polygon.points[iii].y * sprite_scale;
+							}
 
-						for (u32 iii = 0; iii < p.count; iii++) {
-							file_read(&p.points[iii].x, sizeof(float), 1, &file);
-							file_read(&p.points[iii].y, sizeof(float), 1, &file);
-
-							p.points[iii] = v2f_mul(p.points[iii], make_v2f(sprite_scale, sprite_scale));
+							table_set(room->paths, object->name, &p);
 						}
-
-						table_set(room->paths, obj_name, &p);
-
-						core_free(obj_name);
 					}
-				} else if (strcmp(layer->name, "enemies") == 0) {
-					struct rect r;
+				} else if (strcmp(layer->name, "enemies") == 0) {	
 					for (u32 ii = 0; ii < object_count; ii++) {
-						char* obj_name = read_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_point) {
+							char* path_name = null;
+							struct property* path_name_prop = table_get(object->properties, "path");
+							if (path_name_prop && path_name_prop->type == prop_string) {
+								path_name = path_name_prop->as.string;
+							}
 
-						char* path_name = read_name(&file);
-						bool has_path = false;
-						if (strlen(path_name) > 0) {
-							has_path = true;
+							v2f pos = v2f_mul(object->as.point, make_v2f(sprite_scale, sprite_scale));
+
+							if (strcmp(object->name, "bat") == 0) {
+								new_bat(world, room, pos, path_name);
+							} else if (strcmp(object->name, "spider") == 0) {
+								new_spider(world, room, pos);
+							} else if (strcmp(object->name, "drill") == 0) {
+								new_drill(world, room, pos);
+							}
 						}
-
-						if (strcmp(obj_name, "bat") == 0) {
-							new_bat(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale), has_path ? path_name : null);
-						} else if (strcmp(obj_name, "spider") == 0) {
-							new_spider(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
-						} else if (strcmp(obj_name, "drill") == 0) {
-							new_drill(world, room, make_v2f(r.x * sprite_scale, r.y * sprite_scale));
-						}
-
-						core_free(obj_name);
 					}
 				} else if (strcmp(layer->name, "transition_triggers") == 0) {
-					room->transition_triggers = core_alloc(sizeof(struct transition_trigger) * object_count);
-					room->transition_trigger_count = object_count;
+					room->transition_triggers = core_calloc(object_count, sizeof(struct transition_trigger));
 
-					struct rect r;
 					for (u32 ii = 0; ii < object_count; ii++) {
-						skip_name(&file);
+						struct object* object = layer->as.object_layer.objects + ii;
 
-						file_read(&r, sizeof(r), 1, &file);
+						if (object->shape == object_shape_rect) {
+							struct rect r = {
+								(i32)object->as.rect.x * sprite_scale,
+								(i32)object->as.rect.y * sprite_scale,
+								(i32)object->as.rect.w * sprite_scale,
+								(i32)object->as.rect.h * sprite_scale
+							};
 
-						char* change_to = read_name(&file);
-						char* entrance = read_name(&file);
+							char* change_to = null;
+							char* entrance = null;
 
-						room->transition_triggers[ii] = (struct transition_trigger) {
-							.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-							.change_to = change_to,
-							.entrance = entrance
-						};
+							struct property* change_to_prop = table_get(object->properties, "change_to");
+							if (change_to_prop && change_to_prop->type == prop_string) {
+								change_to = change_to_prop->as.string;
+							}
+
+							struct property* entrance_prop = table_get(object->properties, "entrance");
+							if (entrance_prop && entrance_prop->type == prop_string) {
+								entrance = entrance_prop->as.string;
+							}
+
+							room->transition_triggers[room->transition_trigger_count++] = (struct transition_trigger) {
+								.rect = r,
+								.change_to = change_to,
+								.entrance = entrance
+							};
+						}
 					}
+				} else if (strcmp(layer->name, "meta") == 0) {
+					for (u32 ii = 0; ii < object_count; ii++) {;
+						struct object* object = layer->as.object_layer.objects + ii;
+
+						if (strcmp(object->name, "camera_bounds") == 0 && object->shape == object_shape_rect) {
+							room->camera_bounds = (struct rect) {
+								object->as.rect.x * sprite_scale, object->as.rect.y * sprite_scale,
+								object->as.rect.w * sprite_scale, object->as.rect.h * sprite_scale
+							};
+						}
+					}
+				}
+			} break;
+			default: break;
+		}
+	}
+
+/*
 				} else if (strcmp(layer->name, "doors") == 0) {
 					room->doors = core_alloc(sizeof(struct door) * object_count);
 					room->door_count = object_count;
@@ -665,14 +582,15 @@ struct room* load_room(struct world* world, const char* path) {
 		}
 	}
 
-	file_close(&file);
+	file_close(&file);*/
 
 	return room;
 }
 
 void free_room(struct room* room) {
+	free_map(room->map);
+
 	core_free(room->path);
-	core_free(room->name);
 
 	for (view(room->world, view, type_info(struct room_child))) {
 		struct room_child* rc = view_get(&view, struct room_child);
@@ -680,33 +598,6 @@ void free_room(struct room* room) {
 		if (rc->parent == room) {
 			destroy_entity(room->world, view.e);
 		}
-	}
-
-	if (room->tilesets) {
-		for (u32 i = 0; i < room->tileset_count; i++) {
-			core_free(room->tilesets[i].name);
-
-			if (room->tilesets[i].animations) {
-				core_free(room->tilesets[i].animations);
-			}
-		}
-
-		core_free(room->tilesets);
-	}
-
-	if (room->layers) {
-		for (u32 i = 0; i < room->layer_count; i++) {
-			core_free(room->layers[i].name);
-
-			switch (room->layers[i].type) {
-				case layer_tiles:
-					core_free(room->layers[i].as.tile_layer.tiles);
-					break;
-				default: break;
-			}
-		}
-
-		core_free(room->layers);
 	}
 
 	if (room->box_colliders) {
@@ -725,12 +616,11 @@ void free_room(struct room* room) {
 		core_free(room->shops);
 	}
 
-	if (room->transition_triggers) {
-		for (u32 i = 0; i < room->transition_trigger_count; i++) {
-			core_free(room->transition_triggers[i].change_to);
-			core_free(room->transition_triggers[i].entrance);
-		}
+	if (room->layers) {
+		core_free(room->layers);
+	}
 
+	if (room->transition_triggers) {
 		core_free(room->transition_triggers);
 	}
 
@@ -762,8 +652,8 @@ void free_room(struct room* room) {
 	core_free(room);
 }
 
-static void draw_tile_layer(struct room* room, struct renderer* renderer, struct layer* layer, i32 idx) {
-	if (layer->type == layer_tiles && (idx == -1 || room->forground_index != idx)) {
+static void draw_tile_layer(struct room* room, struct renderer* renderer, struct tile_layer* layer, i32 idx) {
+	if (idx == -1 || room->forground_index != idx) {
 		v2i cam_pos = renderer->camera_pos;
 		v2i cam_top_corner = v2i_sub(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
 		v2i cam_bot_corner = v2i_add(cam_pos, v2i_div(renderer->dimentions, make_v2i(2, 2)));
@@ -775,12 +665,12 @@ static void draw_tile_layer(struct room* room, struct renderer* renderer, struct
 
 		start_x = start_x < 0 ? 0 : start_x;
 		start_y = start_y < 0 ? 0 : start_y;
-		end_x = end_x > layer->as.tile_layer.w ? layer->as.tile_layer.w : end_x;
-		end_y = end_y > layer->as.tile_layer.h ? layer->as.tile_layer.h : end_y;
+		end_x = end_x > layer->w ? layer->w : end_x;
+		end_y = end_y > layer->h ? layer->h : end_y;
 
 		for (u32 y = start_y; y < end_y; y++) {
 			for (u32 x = start_x; x < end_x; x++) {
-				struct tile tile = layer->as.tile_layer.tiles[x + y * layer->as.tile_layer.w];
+				struct tile tile = layer->tiles[x + y * layer->w];
 				if (tile.id != -1) {
 					struct tileset* set = room->tilesets + tile.tileset_id;
 
@@ -816,7 +706,7 @@ static void draw_tile_layer(struct room* room, struct renderer* renderer, struct
 }
 
 void draw_room(struct room* room, struct renderer* renderer, double ts) {
-	if (room->name_timer >= 0.0) {
+	if (room->name && room->name_timer >= 0.0) {
 		room->name_timer -= ts;
 	
 		i32 win_w, win_h;
@@ -830,7 +720,7 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	}
 
 	for (u32 i = 0; i < room->layer_count; i++) {
-		struct layer* layer = room->layers + i;
+		struct tile_layer* layer = room->layers + i;
 
 		draw_tile_layer(room, renderer, layer, i);
 	}
@@ -1018,7 +908,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 }
 
 void draw_room_forground(struct room* room, struct renderer* renderer, struct renderer* transition_renderer) {
-	struct layer* layer = room->layers + room->forground_index;
+	struct tile_layer* layer = room->layers + room->forground_index;
 
 	draw_tile_layer(room, renderer, layer, -1);
 

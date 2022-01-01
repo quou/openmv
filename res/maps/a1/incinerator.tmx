@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="79">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="15" nextobjectid="84">
  <editorsettings>
   <export target="incinerator.dat" format="dat"/>
  </editorsettings>
  <properties>
-  <property name="name" value="Quality Control"/>
+  <property name="name" value="Incinerator"/>
  </properties>
  <tileset firstgid="1" source="../../tilesets/tsblue.tsx"/>
  <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
@@ -35,7 +35,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,147,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,151,147,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -57,7 +57,7 @@
 8,8,8,8,8,8,8,8,31,31,31,31,31,31,31,31,31,31,31,31,31,8,8,8,8,31,31,31,31,31,31,8,8,8,8,8,8,8,8
 </data>
  </layer>
- <objectgroup id="13" name="enemies" locked="1">
+ <objectgroup id="13" name="enemies">
   <object id="76" name="bat" x="144" y="80">
    <point/>
   </object>

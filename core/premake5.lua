@@ -32,6 +32,8 @@ project "core"
 		"src/res.h",
 		"src/table.c",
 		"src/table.h",
+		"src/tiled.c",
+		"src/tiled.h",
 		"src/ui.c",
 		"src/ui.h",
 		"src/util",
