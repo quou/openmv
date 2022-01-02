@@ -9,8 +9,8 @@
 #include "util/stb_truetype.h"
 #include "video.h"
 
-#define batch_size 1000
-#define els_per_vert 11
+#define batch_size 100
+#define els_per_vert 12
 #define verts_per_quad 4
 #define indices_per_quad 6
 
@@ -42,6 +42,7 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8); /* float texture_id */
 	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9); /* float inverted */
 	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* float unlit */
+	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* float unlit */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
@@ -87,6 +88,13 @@ void renderer_flush(struct renderer* renderer) {
 		shader_set_i(&renderer->shader, name, i);
 	}
 
+	for (u32 i = 0; i < renderer->transform_count; i++) {
+		char name[32];
+		sprintf(name, "transforms[%u]", i);
+
+		shader_set_m4f(&renderer->shader, name, renderer->transforms[i]);
+	}
+
 	for (u32 i = 0; i < renderer->light_count; i++) {
 		char name[64];
 
@@ -122,6 +130,7 @@ void renderer_flush(struct renderer* renderer) {
 
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
+	renderer->transform_count = 0;
 }
 
 void renderer_end_frame(struct renderer* renderer) {
@@ -178,15 +187,26 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 
 	const float w = quad->dimentions.x;
 	const float h = quad->dimentions.y;
-	const float x = quad->position.x - quad->origin.x * w;
-	const float y = quad->position.y - quad->origin.y * h;
+	const float x = quad->position.x;
+	const float y = quad->position.y;
+
+	m4f transform = m4f_translate(m4f_identity(), make_v3f(quad->position.x, quad->position.y, 0.0f));
+
+	transform = m4f_translate(transform, make_v3f(quad->origin.x, quad->origin.y, 0.0f));
+	transform = m4f_rotate(transform, (float)torad(quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
+	transform = m4f_scale(transform, make_v3f(quad->dimentions.x, quad->dimentions.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f(-quad->origin.x, -quad->origin.y, 0.0f));
+
+	float trans_id = (float)renderer->transform_count;
 
 	float verts[] = {
-		x,     y,     tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
-		x + w, y,     tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
-		x + w, y + h, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit,
-		x,     y + h, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit
+		0.0f, 0.0f, tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
+		1.0f, 0.0f, tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
+		1.0f, 1.0f, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
+		0.0f, 1.0f, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id
 	};
+
+	renderer->transforms[renderer->transform_count++] = transform;
 
 	const u32 idx_off = renderer->quad_count * verts_per_quad;
 

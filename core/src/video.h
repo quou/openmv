@@ -92,6 +92,7 @@ struct textured_quad {
 	bool unlit;
 
 	v2f origin;
+	float rotation;
 };
 
 struct light {
@@ -124,6 +125,9 @@ struct renderer {
 
 	struct light lights[max_lights];
 	u32 light_count;
+
+	m4f transforms[100];
+	u32 transform_count;
 };
 
 API struct renderer* new_renderer(struct shader shader, v2i dimentions);

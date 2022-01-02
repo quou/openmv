@@ -8,9 +8,12 @@ layout (location = 2) in vec4 color;
 layout (location = 3) in float texture_id;
 layout (location = 4) in float inverted;
 layout (location = 5) in float unlit;
+layout (location = 6) in float transform_id;
 
 uniform mat4 camera = mat4(1.0);
 uniform mat4 view = mat4(1.0);
+
+uniform mat4 transforms[100];
 
 out VS_OUT {
 	vec2 frag_pos;
@@ -30,7 +33,7 @@ void main() {
 
 	vs_out.frag_pos = position;
 
-	gl_Position = camera * view * vec4(position, 0.0, 1.0);
+	gl_Position = camera * view * transforms[int(transform_id)] * vec4(position, 0.0, 1.0);
 }
 
 #end VERTEX

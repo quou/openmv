@@ -836,13 +836,16 @@ void update_room(struct room* room, double ts, double actual_ts) {
 		}
 	}
 
-	for (view(room->world, view, type_info(struct transform), type_info(struct lava_particle))) {
+	for (view(room->world, view, type_info(struct transform), type_info(struct lava_particle), type_info(struct sprite))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct lava_particle* particle = view_get(&view, struct lava_particle);
+		struct sprite* sprite = view_get(&view, struct sprite);
 
 		particle->velocity.y += g_gravity * ts;
 
 		transform->position = v2f_add(transform->position, v2f_mul(particle->velocity, make_v2f(ts, ts)));
+
+		sprite->rotation += ts * 100.0f;
 
 		particle->lifetime -= ts;
 		if (particle->lifetime <= 0.0) {
