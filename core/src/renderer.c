@@ -174,10 +174,10 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 			}
 		}
 
-		tx = (float)quad->rect.x / (float)quad->texture->width;
-		ty = (float)quad->rect.y / (float)quad->texture->height;
-		tw = (float)quad->rect.w / (float)quad->texture->width;
-		th = (float)quad->rect.h / (float)quad->texture->height;
+		tx = (float)quad->rect.x/ (float)quad->texture->width;
+		ty = (float)quad->rect.y/ (float)quad->texture->height;
+		tw = (float)quad->rect.w/ (float)quad->texture->width;
+		th = (float)quad->rect.h/ (float)quad->texture->height;
 	}
 
 	const float r = (float)quad->color.r / 255.0f;
