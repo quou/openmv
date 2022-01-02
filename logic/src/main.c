@@ -151,7 +151,8 @@ API void CALL on_update(double ts) {
 		player_system(world, renderer, &logic_store->room, timestep);
 	}
 
-	update_renderer_light(logic_store->room, renderer);
+	apply_lights(world, renderer);
+	update_room_light(logic_store->room, renderer);
 	update_player_light(world, renderer, logic_store->player);
 
 	camera_system(world, renderer, logic_store->room, ts);

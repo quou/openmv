@@ -31,7 +31,7 @@ void main() {
 	vs_out.inverted = inverted;
 	vs_out.unlit = unlit;
 
-	vs_out.frag_pos = position;
+	vs_out.frag_pos = (transforms[int(transform_id)] * vec4(position, 0.0, 1.0)).xy;
 
 	gl_Position = camera * view * transforms[int(transform_id)] * vec4(position, 0.0, 1.0);
 }

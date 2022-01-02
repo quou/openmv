@@ -36,13 +36,13 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	bind_vb_for_edit(&renderer->vb);
 	push_vertices(&renderer->vb, null, els_per_vert * verts_per_quad * batch_size);
 	push_indices(&renderer->vb, null, indices_per_quad * batch_size);
-	configure_vb(&renderer->vb, 0, 2, els_per_vert, 0); /* vec2 position */
-	configure_vb(&renderer->vb, 1, 2, els_per_vert, 2); /* vec2 uv */
-	configure_vb(&renderer->vb, 2, 4, els_per_vert, 4); /* vec4 color */
-	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8); /* float texture_id */
-	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9); /* float inverted */
+	configure_vb(&renderer->vb, 0, 2, els_per_vert, 0);  /* vec2 position */
+	configure_vb(&renderer->vb, 1, 2, els_per_vert, 2);  /* vec2 uv */
+	configure_vb(&renderer->vb, 2, 4, els_per_vert, 4);  /* vec4 color */
+	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8);  /* float texture_id */
+	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9);  /* float inverted */
 	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* float unlit */
-	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* float unlit */
+	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* float trans_id */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;

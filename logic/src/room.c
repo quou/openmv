@@ -734,7 +734,7 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 	}
 }
 
-void update_renderer_light(struct room* room, struct renderer* renderer) {
+void update_room_light(struct room* room, struct renderer* renderer) {
 	if (room->dark) {
 		renderer->ambient_light = 0.0f;
 	} else {

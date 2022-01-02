@@ -57,8 +57,8 @@
 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="16" name="lights" locked="1">
-  <object id="100" template="../../templates/light.tx" x="224" y="80">
+ <objectgroup id="16" name="lights">
+  <object id="100" template="../../templates/light.tx" x="156.333" y="154.667">
    <properties>
     <property name="intensity" type="float" value="1"/>
     <property name="range" type="float" value="1000"/>

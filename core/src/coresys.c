@@ -40,6 +40,17 @@ static void render_queue_flush(struct render_queue* queue, struct renderer* rend
 	}
 }
 
+void apply_lights(struct world* world, struct renderer* renderer) {
+	for (view(world, view, type_info(struct transform), type_info(struct light))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct light* light = view_get(&view, struct light);
+
+		light->position = transform->position;
+
+		renderer_push_light(renderer, *light);
+	}
+}
+
 void render_system(struct world* world, struct renderer* renderer, double ts) {
 	struct render_queue queue = { 0 };
 
@@ -98,15 +109,6 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.quad = quad,
 			.z = t->z
 		});
-	}
-
-	for (view(world, view, type_info(struct transform), type_info(struct light))) {
-		struct transform* transform = view_get(&view, struct transform);
-		struct light* light = view_get(&view, struct light);
-
-		light->position = transform->position;
-
-		renderer_push_light(renderer, *light);
 	}
 
 	render_queue_flush(&queue, renderer);

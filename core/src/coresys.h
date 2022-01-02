@@ -44,6 +44,8 @@ struct animated_sprite {
 	float rotation;
 };
 
+API void apply_lights(struct world* world, struct renderer* renderer);
+
 /* Process all the entities in the world that have a sprite and a transform,
  * or an animated sprite and a transform. */
 API void render_system(struct world* world, struct renderer* renderer, double ts);
