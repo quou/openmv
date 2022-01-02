@@ -29,6 +29,8 @@ struct logic_store {
 	entity player;
 
 	struct audio_clip* explosion_sound;
+
+	struct table* savegame_persist;
 };
 
 extern struct logic_store* logic_store;

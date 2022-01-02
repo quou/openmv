@@ -9,13 +9,13 @@
 #include "savegame.h"
 #include "table.h"
 
-struct table* savegame_persist;
-
 void savegame_init() {
-	savegame_persist = new_table(sizeof(struct persistent));
+	logic_store->savegame_persist = new_table(sizeof(struct persistent));
 }
 
 void savegame_deinit() {
+	struct table* savegame_persist = logic_store->savegame_persist;
+
 	for (struct table_iter i = new_table_iter(savegame_persist); table_iter_next(&i);) {
 		struct persistent* p = i.value;
 		if (p->type == persist_str) {
@@ -27,6 +27,8 @@ void savegame_deinit() {
 }
 
 void set_persistent(const char* name, u32 type, const void* val) {
+	struct table* savegame_persist = logic_store->savegame_persist;
+
 	struct persistent p = {
 		.type = type
 	};
@@ -54,6 +56,8 @@ void set_persistent(const char* name, u32 type, const void* val) {
 }
 
 struct persistent* get_persistent(const char* name) {
+	struct table* savegame_persist = logic_store->savegame_persist;
+
 	return (struct persistent*)table_get(savegame_persist, name);
 }
 
@@ -116,6 +120,7 @@ static char* read_string(FILE* file) {
 }
 
 void savegame() {
+	struct table* savegame_persist = logic_store->savegame_persist;
 	struct world* world = logic_store->world;
 
 	FILE* file = fopen("savegame", "wb");
@@ -167,6 +172,7 @@ void savegame() {
 }
 
 void loadgame() {
+	struct table* savegame_persist = logic_store->savegame_persist;
 	struct world* world = logic_store->world;
 
 	FILE* file = fopen("savegame", "rb");

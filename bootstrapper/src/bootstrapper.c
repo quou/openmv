@@ -133,7 +133,9 @@ void free_script_context(struct script_context* ctx) {
 		core_free(ctx->instance);
 	}
 
-	close_dynlib(ctx->handle);
+	if (ctx->handle) {
+		close_dynlib(ctx->handle);
+	}
 
 	core_free(ctx);
 }
@@ -156,7 +158,10 @@ void script_context_update(struct script_context* ctx, double ts) {
 			if (s.st_mtime > ctx->lib_mod_time) {
 				ctx->lib_mod_time = s.st_mtime;
 
-				close_dynlib(ctx->handle);
+				if (ctx->handle) {
+					close_dynlib(ctx->handle);
+				}
+
 				copy_asm(ctx->lib_path);
 				open_funcs(ctx);
 
