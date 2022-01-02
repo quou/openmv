@@ -6,6 +6,8 @@ void savegame_deinit();
 void savegame();
 void loadgame();
 
+bool savegame_exists();
+
 void ask_savegame();
 
 enum {

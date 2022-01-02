@@ -246,3 +246,15 @@ static void on_save_ask(bool yes, void* udata) {
 void ask_savegame() {
 	prompt_ask("Do you want to save?", on_save_ask, null);
 }
+
+bool savegame_exists() {
+	bool r = true;
+
+	FILE* file = fopen("savegame", "r");
+
+	if (!file) {
+		r = false;
+	}
+
+	return r;
+}

@@ -113,7 +113,9 @@ API void CALL on_init() {
 
 	logic_store->player = player;
 
-	loadgame();
+	if (savegame_exists()) {
+		loadgame();
+	}
 }
 
 API void CALL on_update(double ts) {
