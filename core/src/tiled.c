@@ -86,7 +86,7 @@ static struct table* read_properties(struct file* file) {
 struct tiled_map* load_map(const char* filename) {
 	struct file file = file_open(filename);
 	if (!file_good(&file)) {
-		fprintf(stderr, "Failed to open file `%s'.", filename);
+		fprintf(stderr, "Failed to open file `%s'.\n", filename);
 		return null;
 	}
 
