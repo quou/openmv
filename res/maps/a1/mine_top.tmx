@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="22" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="27">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="22" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="34">
  <editorsettings>
   <export target="mine_top.dat" format="dat"/>
  </editorsettings>
  <tileset firstgid="1" source="../../tilesets/tsblue.tsx"/>
  <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
- <layer id="8" name="background" width="22" height="12">
+ <layer id="8" name="background" width="22" height="12" locked="1">
   <data encoding="csv">
 135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,
 137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,
@@ -28,7 +28,7 @@
 0,0,0,0,0,0,0,0,0,92,93,94,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,67,68,69,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,72,73,74,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,77,78,79,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,77,78,79,0,0,0,0,0,0,0,4,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,8,8,8,8,8,8,0,
 0,0,0,0,0,0,0,8,9,0,0,0,7,8,8,8,8,8,8,8,8,0,
 0,0,0,0,0,0,0,8,9,0,0,0,7,8,8,8,8,8,8,8,8,0,
@@ -37,14 +37,14 @@
 0,0,0,0,0,0,0,8,9,0,0,0,0,7,8,8,8,8,8,8,8,0
 </data>
  </layer>
- <layer id="2" name="forground" width="22" height="12">
+ <layer id="2" name="forground" width="22" height="12" locked="1">
   <data encoding="csv">
 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,
-8,8,2,13,13,13,1,8,8,87,88,89,2,13,13,13,13,13,13,13,13,13,
-8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-8,8,18,19,3,3,3,3,3,0,0,0,3,3,3,3,3,33,3,3,3,3,
+8,8,2,13,13,13,1,8,8,87,88,89,2,13,13,13,13,13,13,13,11,8,
+8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,
+8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,
+8,8,9,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,8,
+8,8,18,19,3,3,3,3,3,0,0,0,3,3,3,3,3,33,3,3,16,8,
 8,8,8,8,8,8,8,8,23,82,0,84,25,8,0,0,0,0,0,0,0,8,
 8,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,
 8,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8,
@@ -53,32 +53,46 @@
 8,8,8,8,8,8,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,8
 </data>
  </layer>
- <objectgroup id="7" name="slopes">
+ <objectgroup id="9" name="transition_triggers" locked="1"/>
+ <objectgroup color="#00aa00" id="7" name="slopes" locked="1">
   <object id="17" x="272" y="96">
    <polyline points="0,0 8.36364,-7.63636 16,0"/>
   </object>
   <object id="26" x="32" y="80">
    <polyline points="0,0 32,16"/>
   </object>
+  <object id="31" x="320" y="96">
+   <polyline points="0,0 17.6364,-7.45455"/>
+  </object>
  </objectgroup>
  <objectgroup color="#0000ff" id="3" name="entrances" locked="1">
   <object id="1" name="elevator_entrance" x="168" y="96">
    <point/>
   </object>
+  <object id="27" name="right_door" x="312" y="96">
+   <point/>
+  </object>
  </objectgroup>
- <objectgroup id="4" name="doors" locked="1">
+ <objectgroup id="4" name="doors">
   <object id="3" template="../../templates/door.tx" name="elevator_door" x="160" y="80">
    <properties>
     <property name="change_to" value="res/maps/a1/mineshaft.dat"/>
     <property name="entrance" value="elevator_entrance"/>
    </properties>
   </object>
+  <object id="33" template="../../templates/door.tx" x="304" y="80">
+   <properties>
+    <property name="change_to" value="res/maps/a2/mine_entrance.dat"/>
+    <property name="entrance" value="mine_entrance"/>
+   </properties>
+  </object>
  </objectgroup>
- <objectgroup color="#00aa00" id="5" name="collisions">
+ <objectgroup color="#00aa00" id="5" name="collisions" locked="1">
   <object id="22" x="0" y="0" width="352" height="16"/>
   <object id="23" x="112" y="16" width="80" height="16"/>
   <object id="24" x="0" y="96" width="352" height="16"/>
   <object id="25" x="0" y="16" width="32" height="80"/>
+  <object id="30" x="336" y="16" width="16" height="80"/>
  </objectgroup>
  <objectgroup id="6" name="meta" visible="0" locked="1">
   <object id="16" name="camera_bounds" x="0" y="0" width="336" height="192"/>

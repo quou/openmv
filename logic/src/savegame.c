@@ -99,9 +99,6 @@ static void read_player(FILE* file) {
 
 	fread(&player->items, sizeof(player->items), 1, file);
 	fread(&player->hp_ups, sizeof(player->hp_ups), 1, file);
-
-	savegame_deinit();
-	savegame_init();
 }
 
 static void write_string(FILE* file, const char* str) {
@@ -183,6 +180,11 @@ void loadgame() {
 	}
 
 	read_player(file);
+	
+	savegame_deinit();
+	savegame_init();
+
+	savegame_persist = logic_store->savegame_persist;
 
 	/* Read the current room path and load it. */
 	char* room_path = read_string(file);
@@ -198,7 +200,7 @@ void loadgame() {
 	for (u32 i = 0; i < persist_count; i++) {
 		u32 key_len = 0;
 		fread(&key_len, sizeof(key_len), 1, file);
-		char* key = core_alloc(key_len);
+		char* key = core_alloc(key_len + 1);
 		key[key_len] = '\0';
 		fread(key, 1, key_len, file);
 		

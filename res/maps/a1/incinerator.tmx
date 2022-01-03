@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="16" nextobjectid="87">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="88">
  <editorsettings>
   <export target="incinerator.dat" format="dat"/>
  </editorsettings>
@@ -9,6 +9,7 @@
  <tileset firstgid="1" source="../../tilesets/tsblue.tsx"/>
  <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
  <tileset firstgid="139" source="../../tilesets/npc.tsx"/>
+ <tileset firstgid="163" source="../../tilesets/item.tsx"/>
  <layer id="2" name="background" width="39" height="12" locked="1">
   <data encoding="csv">
 135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,
@@ -25,7 +26,7 @@
 137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137
 </data>
  </layer>
- <layer id="3" name="midground" width="39" height="12" locked="1">
+ <layer id="3" name="midground" width="39" height="12">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -34,8 +35,8 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,147,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,166,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,147,0,0,170,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -64,6 +65,9 @@
  </objectgroup>
  <objectgroup id="11" name="entity_spawners" locked="1">
   <object id="17" template="../../templates/entity_spawner.tx" x="240" y="0"/>
+ </objectgroup>
+ <objectgroup id="16" name="save_points">
+  <object id="87" x="96" y="128" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="15" name="upgrade_pickups"/>
  <objectgroup id="5" name="meta" visible="0" locked="1">

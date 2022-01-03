@@ -1123,13 +1123,8 @@ struct path* get_path(struct room* room, const char* name) {
 }
 
 entity new_save_point(struct world* world, struct room* room, struct rect rect) {
-	struct sprite sprite = get_sprite(sprid_terminal);
-
 	entity e = new_entity(world);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct transform, .position = { rect.x, rect.y - 5 * sprite_scale },
-		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
-	add_component(world, e, struct sprite, sprite);
 	add_componentv(world, e, struct save_point, .rect = rect);
 
 	return e;
