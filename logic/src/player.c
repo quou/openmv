@@ -445,7 +445,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			v2i normal;
 			bool old_on_ground = player->on_ground;
 			player->on_ground = rect_room_overlap(*room, ground_test_rect, &normal);
-			if (player->velocity.y > 300 && player->on_ground && !old_on_ground) {
+			if (player->velocity.y > 600 && player->on_ground && !old_on_ground) {
 				play_audio_clip(player->land_sound);
 			}
 		}

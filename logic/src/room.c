@@ -619,11 +619,6 @@ void free_room(struct room* room) {
 	}
 
 	if (room->doors) {
-		for (u32 i = 0; i < room->door_count; i++) {
-			core_free(room->doors[i].change_to);
-			core_free(room->doors[i].entrance);
-		}
-
 		core_free(room->doors);
 	}
 
@@ -717,20 +712,6 @@ void draw_room(struct room* room, struct renderer* renderer, double ts) {
 		struct tile_layer* layer = room->layers + i;
 
 		draw_tile_layer(room, renderer, layer, i);
-	}
-
-	for (u32 i = 0; i < room->door_count; i++) {
-		struct sprite sprite = get_sprite(sprid_door);
-
-		struct textured_quad quad = {
-			.texture = sprite.texture,
-			.position = { room->doors[i].rect.x, room->doors[i].rect.y },
-			.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
-			.rect = sprite.rect,
-			.color = sprite.color
-		};
-
-		renderer_push(renderer, &quad);
 	}
 }
 
