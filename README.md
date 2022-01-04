@@ -24,8 +24,8 @@ Created from the ground up in C99.
  - [ ] Actually make a damn game.
 
 ## Building
-Generate a Makefile using Premake. Requires a bunch of GCC extensions, because
-I am bad at programming; Just use GCC.
+Generate a Makefile using Premake. Currently, Clang is used to build OpenMV, though
+GCC should also work.
 
 Before you can run the game in release mode, build the `packer` project and run
 it from the project root to create a file named `res.pck` which contains all of

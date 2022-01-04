@@ -203,10 +203,12 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 	}
 
 finished:
+#ifdef DEBUG
 	if (engine->debug) {
 		printf("Stack top: ");
 		print_value(*engine->stack_top);
 	}
+#endif
 
 	return;
 }

@@ -59,7 +59,7 @@ bool add_file_ex(mtar_t* tar, const char* src, const char* dst) {
 }
 
 bool add_file(mtar_t* tar, const char* src) {
-	add_file_ex(tar, src, src);
+	return add_file_ex(tar, src, src);
 }
 
 void add_dir(mtar_t* tar, const char* dirname) {

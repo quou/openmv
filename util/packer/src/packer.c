@@ -51,7 +51,7 @@ i32 main() {
 	fwrite(&header_size, sizeof(header_size), 1, out);
 
 	for (u32 i = 0; i < file_count; i++) {
-		u64 hash = elf_hash(files[i], strlen(files[i]));
+		u64 hash = elf_hash((const u8*)files[i], strlen(files[i]));
 
 		FILE* file = fopen(files[i], "rb");
 

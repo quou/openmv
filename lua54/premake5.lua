@@ -4,6 +4,8 @@ project "lua54"
 	staticruntime "on"
 	pic "on"
 
+	toolset "clang"
+
 	architecture "x64"
 
 	targetdir "../bin/"

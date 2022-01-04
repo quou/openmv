@@ -1,6 +1,11 @@
+#include <math.h>
 #include <stdlib.h>
 
 #include "physics.h"
+
+static i32 sort_cmp(const void* a, const void* b) {
+	return *(i32*)a > *(i32*)b;
+}
 
 bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 	if (!(
@@ -22,10 +27,7 @@ bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 
 		i32 overlap[] = { right, left, top, bottom };
 
-		qsort(overlap, sizeof(overlap) / sizeof(*overlap), sizeof(i32),
-			lambda(i32 _(const void* a, const void* b) {
-				return *(i32*)a > *(i32*)b;
-			}));
+		qsort(overlap, sizeof(overlap) / sizeof(*overlap), sizeof(i32), sort_cmp);
 
 		*normal = make_v2i(0, 0);
 		if (overlap[0]        == abs(right)) {
@@ -43,7 +45,7 @@ bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 }
 
 static i32 area(v2i a, v2i b, v2i c) {
-	return (i32)abs((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y)) / 2.0);
+	return (i32)fabs((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y)) / 2.0);
 }
 
 bool point_vs_tri(v2i p, v2i a, v2i b, v2i c) {

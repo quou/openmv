@@ -1,7 +1,9 @@
 project "logic"
 	kind "SharedLib"
 	language "C"
-	cdialect "gnu99"
+	cdialect "C99"
+
+	toolset "clang"
 
 	targetdir "../"
 	objdir "obj"

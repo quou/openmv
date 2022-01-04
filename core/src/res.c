@@ -66,6 +66,7 @@ void file_close(struct file* file) {
 
 u64 file_seek(struct file* file, u64 offset) {
 	file->cursor = offset;
+	return file->cursor;
 }
 
 u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
@@ -218,7 +219,7 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	
 	switch (new_res.type) {
 		case res_shader:
-			init_shader(&new_res.as.shader, raw, path);
+			init_shader(&new_res.as.shader, (const char*)raw, path);
 			core_free(raw);
 			break;
 		case res_texture:

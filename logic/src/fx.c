@@ -12,6 +12,8 @@ entity new_jetpack_particle(struct world* world, v2f position) {
 	add_component(world, e, struct sprite, get_sprite(sprid_fx_jetpack));
 	get_component(world, e, struct sprite)->origin = make_v2f(0.5f, 0.5f);
 	add_componentv(world, e, struct jetpack_fx, .timer = 1.0);
+
+	return e;
 }
 
 void fx_system(struct world* world, double ts) {
