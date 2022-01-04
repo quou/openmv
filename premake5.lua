@@ -8,3 +8,4 @@ include "bootstrapper"
 
 include "util/packer"
 include "util/mksdk"
+include "util/script_tester"

@@ -30,6 +30,8 @@ project "core"
 		"src/renderer.c",
 		"src/res.c",
 		"src/res.h",
+		"src/script_engine.c",
+		"src/script_engine.h",
 		"src/table.c",
 		"src/table.h",
 		"src/tiled.c",
