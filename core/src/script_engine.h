@@ -9,6 +9,8 @@
 enum {
 	op_return = 0,
 	op_push,
+	op_pop,
+	op_call,
 	op_add,
 	op_sub,
 	op_div,
@@ -43,8 +45,6 @@ void chunk_add_instruction(struct script_chunk* chunk, u8 instruction);
 void chunk_add_address(struct script_chunk* chunk, u64 address);
 
 struct script_engine {
-	struct script_chunk main;
-
 	bool debug;
 
 	u8* ip;
@@ -54,12 +54,18 @@ struct script_engine {
 	u64 data_count;
 	u64 data_capacity;
 
+	struct script_chunk* chunks;
+	u64 chunk_count;
+	u64 chunk_capacity;
+
 	struct script_value stack[script_engine_stack_size];
 	struct script_value* stack_top;
 };
 
 struct script_engine* new_script_engine();
 void free_script_engine(struct script_engine* engine);
+
+u64 new_chunk(struct script_engine* engine);
 void execute_chunk(struct script_engine* engine, struct script_chunk* chunk);
 
 void script_engine_push(struct script_engine* engine, struct script_value value);

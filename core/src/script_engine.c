@@ -71,19 +71,23 @@ void chunk_add_address(struct script_chunk* chunk, u64 address) {
 struct script_engine* new_script_engine() {
 	struct script_engine* engine = core_calloc(1, sizeof(struct script_engine));
 
-	init_chunk(&engine->main);
-
 	engine->stack_top = engine->stack;
 	*engine->stack_top = script_null_value;
 
 	return engine;
 }
 
-void free_script_engine(struct script_engine* engine) {
-	deinit_chunk(&engine->main);
-	
+void free_script_engine(struct script_engine* engine) {	
 	if (engine->data) {
 		core_free(engine->data);
+	}
+
+	if (engine->chunks) {
+		for (u64 i = 0; i < engine->chunk_count; i++) {
+			deinit_chunk(engine->chunks + i);
+		}
+
+		core_free(engine->chunks);
 	}
 
 	core_free(engine);
@@ -119,6 +123,19 @@ struct script_value script_engine_pop(struct script_engine* engine) {
 	return *engine->stack_top--;
 }
 
+u64 new_chunk(struct script_engine* engine) {
+	if (engine->chunk_count >= engine->chunk_capacity) {
+		engine->chunk_capacity = engine->chunk_capacity < 8 ? 8 : engine->chunk_capacity * 2;
+		engine->chunks = core_realloc(engine->chunks, sizeof(*engine->chunks) * engine->chunk_capacity);
+	}
+
+	struct script_chunk* chunk = engine->chunks + engine->chunk_count;
+
+	init_chunk(chunk);
+
+	return engine->chunk_count++;
+}
+
 void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 	engine->ip = chunk->code;
 
@@ -136,6 +153,26 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 				script_engine_push(engine, get_value(engine, *((u64*)(engine->ip + 1))));
 				engine->ip += sizeof(u64);
 			} break;
+			case op_pop: {
+				script_engine_pop(engine);
+			} break;
+			case op_call: {
+				u64 chunk_addr = *((u64*)(engine->ip + 1));
+
+#ifdef DEBUG
+				if (engine->debug) {
+					printf("Call chunk at: %lu\n", chunk_addr);
+				}
+#endif
+
+				struct script_chunk* to_call = engine->chunks + chunk_addr;
+				engine->ip += sizeof(u64);
+				u8* old_ip = engine->ip;
+
+				execute_chunk(engine, to_call);
+
+				engine->ip = old_ip;
+			}
 			case op_add: {
 				struct script_value b = script_engine_pop(engine);
 				struct script_value a = script_engine_pop(engine);
