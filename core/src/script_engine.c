@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "core.h"
 #include "script_engine.h"
@@ -10,6 +11,9 @@ void print_script_value(struct script_value val) {
 			break;
 		case script_value_number:
 			printf("%g (number)", val.as.number);
+			break;
+		case script_value_function:
+			printf("%ld (function)", val.as.function);
 			break;
 		default: break;
 	}
@@ -210,6 +214,10 @@ struct script_value get_value(struct script_engine* engine, u64 address) {
 	}
 
 	return engine->data[address - 1];
+}
+
+struct script_value script_get_global(struct script_engine* engine, const char* name) {
+	return script_value_table_get(&engine->globals, elf_hash((const u8*)name, (u32)strlen(name)));
 }
 
 void script_engine_push(struct script_engine* engine, struct script_value value) {

@@ -5,7 +5,7 @@
 #include "script_engine.h"
 
 enum {
-	tt_num = 0,
+	tt_fn = 0,
 	tt_ret,
 	tt_number,
 	tt_plus,
@@ -111,7 +111,7 @@ static u32 check_keyword(struct lexer* lexer, u32 start, u32 len, const char* re
 
 static u32 get_identifier_type(struct lexer* lexer) {
 	switch (*lexer->start) {
-		case 'n': return check_keyword(lexer, 1, 2, "um", tt_num);
+		case 'f': return check_keyword(lexer, 1, 1, "n", tt_fn);
 		case 'r': return check_keyword(lexer, 1, 2, "et", tt_ret);
 	}
 
@@ -153,7 +153,7 @@ static void skip_whitespace(struct lexer* lexer) {
 	}
 }
 
-struct token next_token(struct lexer* lexer) {
+static struct token next_token(struct lexer* lexer) {
 	skip_whitespace(lexer);
 
 	lexer->start = lexer->current;
@@ -186,12 +186,87 @@ struct token next_token(struct lexer* lexer) {
 	return make_error_token(lexer, "Unexpected character.");
 }
 
-void compile_script(struct script_engine* engine, const char* source) {
-	struct lexer lexer;
-	init_lexer(&lexer, source);
-
+struct compiler {
 	struct token token;
-	while ((token = next_token(&lexer)).type != tt_eof) {
-		printf("%d\t%.*s\n", token.type, token.length, token.start);
+
+	struct script_chunk* chunk;
+
+	struct lexer lexer;
+
+	struct script_engine* engine;
+
+	bool had_error;
+};
+
+static void compile_error(struct compiler* compiler, const char* fmt, ...) {
+	compiler->had_error = true;
+
+	fprintf(stderr, "Compile Error (line %u): ", compiler->token.line);
+
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+
+	fprintf(stderr, "\n");
+}
+
+static void compiler_expect(struct compiler* compiler, const char* name, u32 tt) {
+	compiler->token = next_token(&compiler->lexer);
+	if (compiler->token.type != tt) {
+		compile_error(compiler, "Expected %s, but got `%.*s'.",
+			name, compiler->token.length, compiler->token.start);
+	}
+}
+
+static void compile_function(struct compiler* compiler) {
+	if (compiler->chunk) {
+		compile_error(compiler, "Nested functions are not supported.");
+		return;
+	}
+
+	compiler_expect(compiler, "identifier", tt_identifier);
+
+	struct token fn_name = compiler->token;
+
+	compiler_expect(compiler, "{", tt_left_brace);
+
+	u64 fn_addr = new_chunk(compiler->engine);
+	compiler->chunk = compiler->engine->chunks + fn_addr;
+
+	/* Compile the function */
+	while (compiler->token.type != tt_right_brace) {
+		compiler->token = next_token(&compiler->lexer);
+
+		if (compiler->token.type == tt_eof) {
+			compile_error(compiler, "Expected `}' after function.");
+			return;
+		}
+	}
+
+	chunk_add_instruction(compiler->chunk, op_halt);
+
+	script_value_table_set(&compiler->engine->globals, elf_hash((const u8*)fn_name.start, fn_name.length), script_function_value(fn_addr));
+
+	compiler->chunk = null;
+}
+
+void compile_script(struct script_engine* engine, const char* source) {
+	struct compiler compiler = { 0 };
+	compiler.engine = engine;
+
+	init_lexer(&compiler.lexer, source);
+
+	while ((compiler.token = next_token(&compiler.lexer)).type != tt_eof) {
+		switch (compiler.token.type) {
+			case tt_fn:
+				compile_function(&compiler);
+				break;
+			default: break;
+		}
+		
+		if (compiler.had_error) {
+			return;
+		}
 	}
 }

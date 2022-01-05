@@ -34,7 +34,8 @@ enum {
 
 enum {
 	script_value_null = 0,
-	script_value_number
+	script_value_number,
+	script_value_function
 };
 
 struct script_value {
@@ -42,11 +43,13 @@ struct script_value {
 
 	union {
 		double number;
+		u64 function;
 	} as;
 };
 
-#define script_null_value 		(struct script_value) { .type = script_value_null }
-#define script_number_value(n_)	(struct script_value) { .type = script_value_number, .as.number = n_ }
+#define script_null_value 			(struct script_value) { .type = script_value_null }
+#define script_number_value(n_)		(struct script_value) { .type = script_value_number,	.as.number = n_ }
+#define script_function_value(a_)	(struct script_value) { .type = script_value_function,	.as.function = a_ }
 
 void print_script_value(struct script_value val);
 
@@ -112,6 +115,8 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk);
 void script_engine_push(struct script_engine* engine, struct script_value value);
 struct script_value script_engine_pop(struct script_engine* engine);
 struct script_value script_engine_peek(struct script_engine* engine, u64 offset);
+
+struct script_value script_get_global(struct script_engine* engine, const char* name);
 
 /* Returns the address of the new constant. */
 u64 new_constant(struct script_engine* engine, struct script_value value);
