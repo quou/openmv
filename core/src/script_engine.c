@@ -19,14 +19,14 @@ void print_script_value(struct script_value val) {
 	}
 }
 
-static void print_ip(struct script_chunk* chunk, u8* ip) {
+static void print_ip(struct script_engine* engine, u8* ip) {
 	switch (*ip) {
 		case op_halt:
 			puts("HALT");
 			break;
 		case op_push:
 			printf("PUSH <%lu> (", *(u64*)(ip + 1));
-			print_script_value(chunk_get_value(chunk, *(u64*)(ip + 1)));
+			print_script_value(get_value(engine, *(u64*)(ip + 1)));
 			printf(")\n");
 			break;
 		case op_pop:
@@ -65,10 +65,6 @@ void deinit_chunk(struct script_chunk* chunk) {
 	if (chunk->code) {
 		core_free(chunk->code);
 	}
-
-	if (chunk->data) {
-		core_free(chunk->data);
-	}
 	
 	*chunk = (struct script_chunk) { 0 };
 }
@@ -92,24 +88,6 @@ void chunk_add_address(struct script_chunk* chunk, u64 address) {
 
 	*((u64*)(chunk->code + chunk->count)) = address;
 	chunk->count = new_count;
-}
-
-u64 chunk_new_constant(struct script_chunk* chunk, struct script_value value) {
-	if (chunk->data_count >= chunk->data_capacity) {
-		chunk->data_capacity = chunk->data_capacity < 8 ? 8 : chunk->data_capacity * 2;
-		chunk->data = core_realloc(chunk->data, sizeof(*chunk->data) * chunk->data_capacity);
-	}
-
-	chunk->data[chunk->data_count] = value;
-	return (chunk->data_count++ + 1);
-}
-
-struct script_value chunk_get_value(struct script_chunk* chunk, u64 address) {
-	if (address == 0) {
-		return script_null_value;
-	}
-
-	return chunk->data[address - 1];
 }
 
 void init_script_value_table(struct script_value_table* table) {
@@ -195,6 +173,10 @@ struct script_engine* new_script_engine() {
 }
 
 void free_script_engine(struct script_engine* engine) {	
+	if (engine->data) {
+		core_free(engine->data);
+	}
+
 	if (engine->chunks) {
 		for (u64 i = 0; i < engine->chunk_count; i++) {
 			deinit_chunk(engine->chunks + i);
@@ -217,6 +199,24 @@ void script_runtime_error(struct script_engine* engine, const char* fmt, ...) {
 	fprintf(stderr, "\nExecution Halted.\n");
 
 	engine->panic = true;
+}
+
+u64 new_constant(struct script_engine* engine, struct script_value value) {
+	if (engine->data_count >= engine->data_capacity) {
+		engine->data_capacity = engine->data_capacity < 8 ? 8 : engine->data_capacity * 2;
+		engine->data = core_realloc(engine->data, sizeof(*engine->data) * engine->data_capacity);
+	}
+
+	engine->data[engine->data_count] = value;
+	return (engine->data_count++ + 1);
+}
+
+struct script_value get_value(struct script_engine* engine, u64 address) {
+	if (address == 0) {
+		return script_null_value;
+	}
+
+	return engine->data[address - 1];
 }
 
 struct script_value script_get_global(struct script_engine* engine, const char* name) {
@@ -274,7 +274,7 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 	while (1) {
 #ifdef DEBUG
 		if (engine->debug) {
-			print_ip(chunk, engine->ip);
+			print_ip(engine, engine->ip);
 		}
 #endif
 
@@ -282,7 +282,7 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 			case op_halt:
 				goto finished;
 			case op_push: {
-				script_engine_push(engine, chunk_get_value(chunk, *((u64*)(engine->ip + 1))));
+				script_engine_push(engine, get_value(engine, *((u64*)(engine->ip + 1))));
 				engine->ip += sizeof(u64);
 			} break;
 			case op_pop: {

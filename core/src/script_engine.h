@@ -59,21 +59,12 @@ struct script_chunk {
 	u8* code;
 	u64 count;
 	u64 capacity;
-
-	/* Constants. */
-	struct script_value* data;
-	u64 data_count;
-	u64 data_capacity;
 };
 
 void init_chunk(struct script_chunk* chunk);
 void deinit_chunk(struct script_chunk* chunk);
 void chunk_add_instruction(struct script_chunk* chunk, u8 instruction);
 void chunk_add_address(struct script_chunk* chunk, u64 address);
-
-/* Returns the address of the new constant. */
-u64 chunk_new_constant(struct script_chunk* chunk, struct script_value value);
-struct script_value chunk_get_value(struct script_chunk* chunk, u64 address);
 
 struct script_value_table_entry {
 	u64 key;
@@ -100,6 +91,11 @@ struct script_engine {
 
 	bool panic;
 
+	/* Constants. */
+	struct script_value* data;
+	u64 data_count;
+	u64 data_capacity;
+
 	struct script_chunk* chunks;
 	u64 chunk_count;
 	u64 chunk_capacity;
@@ -123,5 +119,9 @@ struct script_value script_engine_pop(struct script_engine* engine);
 struct script_value script_engine_peek(struct script_engine* engine, u64 offset);
 
 struct script_value script_get_global(struct script_engine* engine, const char* name);
+
+/* Returns the address of the new constant. */
+u64 new_constant(struct script_engine* engine, struct script_value value);
+struct script_value get_value(struct script_engine* engine, u64 address);
 
 void compile_script(struct script_engine* engine, const char* source);
