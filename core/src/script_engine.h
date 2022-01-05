@@ -48,6 +48,8 @@ struct script_value {
 #define script_null_value 		(struct script_value) { .type = script_value_null }
 #define script_number_value(n_)	(struct script_value) { .type = script_value_number, .as.number = n_ }
 
+void print_script_value(struct script_value val);
+
 struct script_chunk {
 	u8* code;
 	u64 count;
@@ -58,6 +60,24 @@ void init_chunk(struct script_chunk* chunk);
 void deinit_chunk(struct script_chunk* chunk);
 void chunk_add_instruction(struct script_chunk* chunk, u8 instruction);
 void chunk_add_address(struct script_chunk* chunk, u64 address);
+
+struct script_value_table_entry {
+	u64 key;
+	struct script_value value;
+	bool taken;
+};
+
+/* Faster hash table implementation than OpenMV's default hash table. */
+struct script_value_table {
+	struct script_value_table_entry* entries;
+	u64 count;
+	u64 capacity;
+};
+
+void init_script_value_table(struct script_value_table* table);
+void deinit_script_value_table(struct script_value_table* table);
+void script_value_table_set(struct script_value_table* table, u64 key, struct script_value value);
+struct script_value script_value_table_get(struct script_value_table* table, u64 key);
 
 struct script_engine {
 	bool debug;
@@ -77,6 +97,8 @@ struct script_engine {
 
 	struct script_value stack[script_engine_stack_size];
 	struct script_value* stack_top;
+
+	struct script_value_table globals;
 };
 
 struct script_engine* new_script_engine();
@@ -94,3 +116,5 @@ struct script_value script_engine_peek(struct script_engine* engine, u64 offset)
 /* Returns the address of the new constant. */
 u64 new_constant(struct script_engine* engine, struct script_value value);
 struct script_value get_value(struct script_engine* engine, u64 address);
+
+void compile_script(struct script_engine* engine, const char* source);

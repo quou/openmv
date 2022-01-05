@@ -3,7 +3,7 @@
 #include "core.h"
 #include "script_engine.h"
 
-static void print_value(struct script_value val) {
+void print_script_value(struct script_value val) {
 	switch (val.type) {
 		case script_value_null:
 			printf("(null)");
@@ -22,7 +22,7 @@ static void print_ip(struct script_engine* engine, u8* ip) {
 			break;
 		case op_push:
 			printf("PUSH <%lu> (", *(u64*)(ip + 1));
-			print_value(get_value(engine, *(u64*)(ip + 1)));
+			print_script_value(get_value(engine, *(u64*)(ip + 1)));
 			printf(")\n");
 			break;
 		case op_pop:
@@ -81,6 +81,77 @@ void chunk_add_address(struct script_chunk* chunk, u64 address) {
 
 	*((u64*)(chunk->code + chunk->count)) = address;
 	chunk->count = new_count;
+}
+
+void init_script_value_table(struct script_value_table* table) {
+	*table = (struct script_value_table) { 0 };
+}
+
+void deinit_script_value_table(struct script_value_table* table) {
+	if (table->entries) {
+		core_free(table->entries);
+	}
+
+	*table = (struct script_value_table) { 0 };
+}
+
+static struct script_value_table_entry* find_el(struct script_value_table_entry* els, u64 capacity, u64 key) {
+	u64 idx = key % capacity;
+
+	for (;;) {
+		struct script_value_table_entry* el = els + idx;
+		if (!el->taken) {
+			return el;
+		} else if (el->key == key) {
+			return el;
+		}
+
+		idx = (idx + 1) % capacity;
+	}
+}
+
+static void table_resize(struct script_value_table* table, u64 capacity) {
+	struct script_value_table_entry* els = core_calloc(capacity, sizeof(struct script_value_table_entry));
+
+	for (u64 i = 0; i < table->capacity; i++) {
+		struct script_value_table_entry* el = table->entries + i;
+		if (!el->taken) { continue; }
+
+		struct script_value_table_entry* dst = find_el(els, capacity, el->key);
+		dst->key = el->key;
+		dst->value = el->value;
+		dst->taken = true;
+	}
+
+	if (table->entries) { core_free(table->entries); }
+
+	table->entries = els;
+	table->capacity = capacity;
+}
+
+void script_value_table_set(struct script_value_table* table, u64 key, struct script_value value) {
+	if (table->count >= table->capacity * 0.75) {
+		u64 capacity = table->capacity < 8 ? 8 : table->capacity * 2;
+		table_resize(table, capacity);
+	}
+
+	struct script_value_table_entry* el = find_el(table->entries, table->capacity, key);
+	if (!el->taken) {
+		table->count++;
+	}
+
+	el->taken = true;
+	el->key = key;
+	el->value = value;
+}
+
+struct script_value script_value_table_get(struct script_value_table* table, u64 key) {
+	if (table->count == 0) { return script_null_value; }
+
+	struct script_value_table_entry* el = find_el(table->entries, table->capacity, key);
+	if (!el || !el->taken) { return script_null_value; }
+
+	return el->value;
 }
 
 struct script_engine* new_script_engine() {
@@ -266,7 +337,7 @@ finished:
 #ifdef DEBUG
 	if (engine->debug) {
 		printf("Stack top: ");
-		print_value(*engine->stack_top);
+		print_script_value(*engine->stack_top);
 		printf("\n");
 	}
 #endif
