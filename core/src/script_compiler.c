@@ -188,6 +188,7 @@ static struct token next_token(struct lexer* lexer) {
 
 struct compiler {
 	struct token token;
+	struct token previous;
 
 	struct script_chunk* chunk;
 
@@ -211,12 +212,113 @@ static void compile_error(struct compiler* compiler, const char* fmt, ...) {
 	fprintf(stderr, "\n");
 }
 
-static void compiler_expect(struct compiler* compiler, const char* name, u32 tt) {
+static void compiler_advance(struct compiler* compiler) {
+	compiler->previous = compiler->token;
 	compiler->token = next_token(&compiler->lexer);
+}
+
+static void compiler_expect(struct compiler* compiler, const char* name, u32 tt) {
+	compiler_advance(compiler);
 	if (compiler->token.type != tt) {
 		compile_error(compiler, "Expected %s, but got `%.*s'.",
 			name, compiler->token.length, compiler->token.start);
 	}
+}
+
+static void compiler_consume(struct compiler* compiler, u32 tt, const char* error) {
+	if (compiler->token.type == tt) {
+		compiler_advance(compiler);
+		return;
+	}
+	compile_error(compiler, error);
+}
+
+static void compile_expression(struct compiler* compiler);
+
+enum {
+	prec_none = 0,
+	prec_assignment,
+	prec_term,
+	prec_factor
+};
+
+typedef void (*parse_func)(struct compiler* compiler);
+
+struct parse_rule {
+	parse_func prefix;
+	parse_func infix;
+	u32 prec;
+};
+
+static struct parse_rule* get_parse_rule(struct compiler* compiler, u32 type);
+static void parse_precedance(struct compiler* compiler, u32 prec);
+
+static void number_parser(struct compiler* compiler) {
+	double value = strtod(compiler->previous.start, null);
+	chunk_add_instruction(compiler->chunk, op_push);
+	chunk_add_address(compiler->chunk, new_constant(compiler->engine, script_number_value(value)));
+}
+
+static void grouping_parser(struct compiler* compiler) {
+	compile_expression(compiler);
+	compiler_consume(compiler, tt_right_paren, "Expected `)' after expression.");
+}
+
+static void binary_parser(struct compiler* compiler) {
+	u32 op_type = compiler->previous.type;
+	struct parse_rule* rule = get_parse_rule(compiler, op_type);
+	parse_precedance(compiler, rule->prec + 1);
+
+	switch (op_type) {
+		case tt_plus:  chunk_add_instruction(compiler->chunk, op_add); break;
+		case tt_dash:  chunk_add_instruction(compiler->chunk, op_sub); break;
+		case tt_star:  chunk_add_instruction(compiler->chunk, op_mul); break;
+		case tt_slash: chunk_add_instruction(compiler->chunk, op_div); break;
+		default: return;
+	}
+}
+
+struct parse_rule parse_rules[] = {
+	[tt_fn]				= { null,				null,				prec_none },
+	[tt_ret]			= { null,				null,				prec_none },
+	[tt_number]			= { number_parser,		null,				prec_none },
+	[tt_plus]			= { null,				binary_parser,		prec_term },
+	[tt_dash]			= { null,				binary_parser,		prec_term },
+	[tt_star]			= { null,				binary_parser,		prec_factor },
+	[tt_slash]			= { null,				binary_parser,		prec_factor },
+	[tt_left_brace]		= { null,				null,				prec_none },
+	[tt_right_brace]	= { null,				null,				prec_none },
+	[tt_left_paren]		= { grouping_parser,	null,				prec_none },
+	[tt_right_paren]	= { null,				null,				prec_none },
+	[tt_semi]			= { null,				null,				prec_none },
+	[tt_identifier]		= { null,				null,				prec_none },
+	[tt_error]			= { null,				null,				prec_none },
+	[tt_eof]			= { null,				null,				prec_none }
+};
+
+static struct parse_rule* get_parse_rule(struct compiler* compiler, u32 type) {
+	return parse_rules + type;
+}
+
+static void parse_precedance(struct compiler* compiler, u32 prec) {
+	compiler_advance(compiler);
+	parse_func prefix_rule = get_parse_rule(compiler, compiler->previous.type)->prefix;
+	if (!prefix_rule) {
+		compile_error(compiler, "Expected an expression.");
+		return;
+	}
+
+	prefix_rule(compiler);
+
+	while (prec <= get_parse_rule(compiler, compiler->token.type)->prec) {
+		compiler_advance(compiler);
+		parse_func infix_rule = get_parse_rule(compiler, compiler->previous.type)->infix;
+		infix_rule(compiler);
+	}
+}
+
+static void compile_expression(struct compiler* compiler) {
+	parse_precedance(compiler, prec_assignment);
 }
 
 static void compile_function(struct compiler* compiler) {
@@ -236,7 +338,9 @@ static void compile_function(struct compiler* compiler) {
 
 	/* Compile the function */
 	while (compiler->token.type != tt_right_brace) {
-		compiler->token = next_token(&compiler->lexer);
+		compiler_advance(compiler);
+		compile_expression(compiler);
+		compiler_consume(compiler, tt_semi, "Expected `;' after expression.");
 
 		if (compiler->token.type == tt_eof) {
 			compile_error(compiler, "Expected `}' after function.");
@@ -257,7 +361,9 @@ void compile_script(struct script_engine* engine, const char* source) {
 
 	init_lexer(&compiler.lexer, source);
 
-	while ((compiler.token = next_token(&compiler.lexer)).type != tt_eof) {
+	compiler_advance(&compiler);
+
+	while (compiler.token.type != tt_eof) {
 		switch (compiler.token.type) {
 			case tt_fn:
 				compile_function(&compiler);
@@ -268,5 +374,7 @@ void compile_script(struct script_engine* engine, const char* source) {
 		if (compiler.had_error) {
 			return;
 		}
+
+		compiler_advance(&compiler);
 	}
 }
