@@ -21,8 +21,8 @@ static void print_value(struct script_value val) {
 
 static void print_ip(u8* ip) {
 	switch (*ip) {
-		case op_return:
-			puts("RETURN");
+		case op_halt:
+			puts("HALT");
 			break;
 		case op_push:
 			printf("PUSH <%lu>\n", *(u64*)(ip + 1));
@@ -197,7 +197,7 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 #endif
 
 		switch (*engine->ip) {
-			case op_return:
+			case op_halt:
 				goto finished;
 			case op_push: {
 				script_engine_push(engine, get_value(engine, *((u64*)(engine->ip + 1))));

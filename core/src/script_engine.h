@@ -5,7 +5,7 @@
  * This VM is stack-based.
  *
  * Instruction set:
- * - return			Stop the execution of the current chunk.
+ * - halt			Stop the execution of the current chunk.
  * - push	<addr>	Push a value at <addr> onto the stack.
  * - pop			Pops the value off the top of the stack.
  * - call	<addr>	Executes the chunk at <addr>.
@@ -21,7 +21,7 @@
 #define script_engine_stack_size 1024
 
 enum {
-	op_return = 0,
+	op_halt = 0,
 	op_push,
 	op_pop,
 	op_call,

@@ -16,7 +16,7 @@ u64 decl_fun(struct script_engine* engine) {
 
 	chunk_add_instruction(chunk, op_sub);
 
-	chunk_add_instruction(chunk, op_return);
+	chunk_add_instruction(chunk, op_halt);
 
 	return fun_ptr;
 }
@@ -44,7 +44,7 @@ int main() {
 
 	chunk_add_instruction(main, op_add);
 
-	chunk_add_instruction(main, op_return);
+	chunk_add_instruction(main, op_halt);
 
 	execute_chunk(engine, main);
 
