@@ -6,7 +6,7 @@ u64 decl_fun(struct script_engine* engine) {
 	struct script_chunk* chunk = engine->chunks + fun_ptr;
 
 	u64 a_ptr = new_constant(engine, script_number_value(3));
-	u64 b_ptr = new_constant(engine, script_number_value(6));
+	u64 b_ptr = new_constant(engine, script_number_value(3));
 
 	chunk_add_instruction(chunk, op_push); /* Push the 3 */
 	chunk_add_address(chunk, a_ptr);
@@ -14,7 +14,7 @@ u64 decl_fun(struct script_engine* engine) {
 	chunk_add_instruction(chunk, op_push); /* Push the 6 */
 	chunk_add_address(chunk, b_ptr);
 
-	chunk_add_instruction(chunk, op_add);
+	chunk_add_instruction(chunk, op_sub);
 
 	chunk_add_instruction(chunk, op_return);
 
@@ -35,6 +35,9 @@ int main() {
 
 	chunk_add_instruction(main, op_call); /* Call a function */
 	chunk_add_address(main, adder_func);
+
+	chunk_add_instruction(main, op_jump);
+	chunk_add_address(main, 2 + sizeof(u64)); /* Jump over the push and add */
 
 	chunk_add_instruction(main, op_push); /* Push the 3 */
 	chunk_add_address(main, a_ptr);

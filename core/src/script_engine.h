@@ -1,6 +1,20 @@
 #pragma once
 
-/* Simple bytecode interpreter. */
+/* Simple bytecode interpreter.
+ *
+ * This VM is stack-based.
+ *
+ * Instruction set:
+ * - return			Stop the execution of the current chunk.
+ * - push	<addr>	Push a value at <addr> onto the stack.
+ * - pop			Pops the value off the top of the stack.
+ * - call	<addr>	Executes the chunk at <addr>.
+ * - jump	<offst>	Peeks and jumps to IP + <offst> if the value is zero.
+ * - add			Pops two values off the stack, adds them and pushes the result.
+ * - sub			Pops two values off the stack, subtracts the last from the first and pushes the result.
+ * - div			Pops two values off the stack, divides the last by the first and pushes the result.
+ * - mul			Pops two values off the stack, multiplies them and pushes the result.
+ */
 
 #include "common.h"
 
@@ -11,6 +25,7 @@ enum {
 	op_push,
 	op_pop,
 	op_call,
+	op_jump,
 	op_add,
 	op_sub,
 	op_div,
@@ -70,6 +85,7 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk);
 
 void script_engine_push(struct script_engine* engine, struct script_value value);
 struct script_value script_engine_pop(struct script_engine* engine);
+struct script_value script_engine_peek(struct script_engine* engine, u64 offset);
 
 /* Returns the address of the new constant. */
 u64 new_constant(struct script_engine* engine, struct script_value value);

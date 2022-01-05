@@ -24,12 +24,29 @@ static void print_ip(u8* ip) {
 		case op_return:
 			puts("RETURN");
 			break;
-		case op_push: {
+		case op_push:
 			puts("PUSH");
 			break;
-		}
+		case op_pop:
+			puts("POP");
+			break;
+		case op_call:
+			puts("CALL");
+			break;
+		case op_jump:
+			puts("JUMP");
+			break;
 		case op_add:
 			puts("ADD");
+			break;
+		case op_sub:
+			puts("SUB");
+			break;
+		case op_div:
+			puts("DIV");
+			break;
+		case op_mul:
+			puts("MUL");
 			break;
 		default: break;
 	}
@@ -123,6 +140,10 @@ struct script_value script_engine_pop(struct script_engine* engine) {
 	return *engine->stack_top--;
 }
 
+struct script_value script_engine_peek(struct script_engine* engine, u64 offset) {
+	return *engine->stack_top;
+}
+
 u64 new_chunk(struct script_engine* engine) {
 	if (engine->chunk_count >= engine->chunk_capacity) {
 		engine->chunk_capacity = engine->chunk_capacity < 8 ? 8 : engine->chunk_capacity * 2;
@@ -134,6 +155,19 @@ u64 new_chunk(struct script_engine* engine) {
 	init_chunk(chunk);
 
 	return engine->chunk_count++;
+}
+
+static bool is_zero(struct script_value val) {
+	switch (val.type) {
+		case script_value_null:
+			return true;
+		case script_value_number:
+			if (val.as.number == 0.0) {
+				return true;
+			}
+			return false;
+		default: return false;
+	}
 }
 
 void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
@@ -172,7 +206,15 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 				execute_chunk(engine, to_call);
 
 				engine->ip = old_ip;
-			}
+			} break;
+			case op_jump: {
+				u64 offset = *((u64*)(engine->ip + 1));
+				engine->ip += sizeof(u64);
+
+				if (is_zero(script_engine_peek(engine, 0))) {
+					engine->ip += offset;
+				}
+			} break;
 			case op_add: {
 				struct script_value b = script_engine_pop(engine);
 				struct script_value a = script_engine_pop(engine);
