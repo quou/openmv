@@ -21,7 +21,6 @@ int main() {
 	compile_file(engine, "util/script_tester/res/test.osc");
 
 	struct script_chunk* main = engine->chunks + script_get_global(engine, "main").as.function;
-
 	execute_chunk(engine, main);
 
 	free_script_engine(engine);

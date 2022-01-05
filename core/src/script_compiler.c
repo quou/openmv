@@ -258,7 +258,7 @@ static void parse_precedance(struct compiler* compiler, u32 prec);
 static void number_parser(struct compiler* compiler) {
 	double value = strtod(compiler->previous.start, null);
 	chunk_add_instruction(compiler->chunk, op_push);
-	chunk_add_address(compiler->chunk, new_constant(compiler->engine, script_number_value(value)));
+	chunk_add_address(compiler->chunk, chunk_new_constant(compiler->chunk, script_number_value(value)));
 }
 
 static void grouping_parser(struct compiler* compiler) {
