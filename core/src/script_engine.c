@@ -110,6 +110,19 @@ void free_script_engine(struct script_engine* engine) {
 	core_free(engine);
 }
 
+void script_runtime_error(struct script_engine* engine, const char* fmt, ...) {
+	fprintf(stderr, "Fatal Runtime Error: ");
+
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+
+	fprintf(stderr, "\nExecution Halted.\n");
+
+	engine->panic = true;
+}
+
 u64 new_constant(struct script_engine* engine, struct script_value value) {
 	if (engine->data_count >= engine->data_capacity) {
 		engine->data_capacity = engine->data_capacity < 8 ? 8 : engine->data_capacity * 2;
@@ -131,7 +144,10 @@ struct script_value get_value(struct script_engine* engine, u64 address) {
 void script_engine_push(struct script_engine* engine, struct script_value value) {
 	engine->stack_top++;
 
-	/* TODO: Runtime error management (Stack overflow, in this case). */
+	if (engine->stack_top >= engine->stack + script_engine_stack_size) {
+		script_runtime_error(engine, "Stack Overflow.");
+		return;
+	}
 
 	*engine->stack_top = value;
 }
@@ -242,6 +258,10 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 		}
 
 		engine->ip++;
+
+		if (engine->panic) {
+			return;
+		}
 	}
 
 finished:

@@ -64,6 +64,8 @@ struct script_engine {
 
 	u8* ip;
 
+	bool panic;
+
 	/* Constants. */
 	struct script_value* data;
 	u64 data_count;
@@ -79,6 +81,8 @@ struct script_engine {
 
 struct script_engine* new_script_engine();
 void free_script_engine(struct script_engine* engine);
+
+void script_runtime_error(struct script_engine* engine, const char* fmt, ...);
 
 u64 new_chunk(struct script_engine* engine);
 void execute_chunk(struct script_engine* engine, struct script_chunk* chunk);
