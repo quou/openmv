@@ -12,6 +12,7 @@ enum {
 	tt_dash,
 	tt_star,
 	tt_slash,
+	tt_percent,
 	tt_left_brace,
 	tt_right_brace,
 	tt_left_paren,
@@ -180,6 +181,7 @@ static struct token next_token(struct lexer* lexer) {
 		case '*': return make_token(lexer, tt_star);
 		case '/': return make_token(lexer, tt_slash);
 		case ';': return make_token(lexer, tt_semi);
+		case '%': return make_token(lexer, tt_percent);
 		default: break;
 	}
 
@@ -270,10 +272,11 @@ static void binary_parser(struct compiler* compiler) {
 	parse_precedance(compiler, rule->prec + 1);
 
 	switch (op_type) {
-		case tt_plus:  chunk_add_instruction(compiler->chunk, op_add); break;
-		case tt_dash:  chunk_add_instruction(compiler->chunk, op_sub); break;
-		case tt_star:  chunk_add_instruction(compiler->chunk, op_mul); break;
-		case tt_slash: chunk_add_instruction(compiler->chunk, op_div); break;
+		case tt_plus:		chunk_add_instruction(compiler->chunk, op_add); break;
+		case tt_dash:		chunk_add_instruction(compiler->chunk, op_sub); break;
+		case tt_star:		chunk_add_instruction(compiler->chunk, op_mul); break;
+		case tt_slash:		chunk_add_instruction(compiler->chunk, op_div); break;
+		case tt_percent:	chunk_add_instruction(compiler->chunk, op_mod); break;
 		default: return;
 	}
 }
@@ -286,6 +289,7 @@ struct parse_rule parse_rules[] = {
 	[tt_dash]			= { null,				binary_parser,		prec_term },
 	[tt_star]			= { null,				binary_parser,		prec_factor },
 	[tt_slash]			= { null,				binary_parser,		prec_factor },
+	[tt_percent]		= { null,				binary_parser,		prec_factor },
 	[tt_left_brace]		= { null,				null,				prec_none },
 	[tt_right_brace]	= { null,				null,				prec_none },
 	[tt_left_paren]		= { grouping_parser,	null,				prec_none },
@@ -336,9 +340,10 @@ static void compile_function(struct compiler* compiler) {
 	u64 fn_addr = new_chunk(compiler->engine);
 	compiler->chunk = compiler->engine->chunks + fn_addr;
 
+	compiler_advance(compiler);
+
 	/* Compile the function */
 	while (compiler->token.type != tt_right_brace) {
-		compiler_advance(compiler);
 		compile_expression(compiler);
 		compiler_consume(compiler, tt_semi, "Expected `;' after expression.");
 

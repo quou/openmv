@@ -47,6 +47,9 @@ static void print_ip(struct script_engine* engine, u8* ip) {
 		case op_div:
 			puts("DIV");
 			break;
+		case op_mod:
+			puts("MOD");
+			break;
 		case op_mul:
 			puts("MUL");
 			break;
@@ -333,6 +336,12 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 				struct script_value a = script_engine_pop(engine);
 
 				script_engine_push(engine, script_number_value(a.as.number * b.as.number));
+			} break;
+			case op_mod: {
+				struct script_value b = script_engine_pop(engine);
+				struct script_value a = script_engine_pop(engine);
+
+				script_engine_push(engine, script_number_value((i64)a.as.number % (i64)b.as.number));
 			} break;
 		}
 

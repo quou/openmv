@@ -14,6 +14,7 @@
  * - sub			Pops two values off the stack, subtracts the last from the first and pushes the result.
  * - div			Pops two values off the stack, divides the last by the first and pushes the result.
  * - mul			Pops two values off the stack, multiplies them and pushes the result.
+ * - mod			Pops two values off the stack, truncates them, divides the last by the first and pushes the remainder.
  */
 
 #include "common.h"
@@ -29,7 +30,8 @@ enum {
 	op_add,
 	op_sub,
 	op_div,
-	op_mul
+	op_mul,
+	op_mod
 };
 
 enum {
