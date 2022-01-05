@@ -8,7 +8,7 @@
  * - halt			Stop the execution of the current chunk.
  * - push	<addr>	Push a value at <addr> onto the stack.
  * - pop			Pops the value off the top of the stack.
- * - call	<addr>	Executes the chunk at <addr>.
+ * - call	<hash>	Call a global value with the hash <hash>.
  * - jump	<offst>	Peeks and jumps to IP + <offst> if the value is zero.
  * - add			Pops two values off the stack, adds them and pushes the result.
  * - sub			Pops two values off the stack, subtracts the last from the first and pushes the result.

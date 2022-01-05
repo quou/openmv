@@ -289,7 +289,16 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 				script_engine_pop(engine);
 			} break;
 			case op_call: {
-				u64 chunk_addr = *((u64*)(engine->ip + 1));
+				u64 function_hash = *((u64*)(engine->ip + 1));
+
+				struct script_value val = script_value_table_get(&engine->globals, function_hash);
+
+				if (val.type != script_value_function) {
+					script_runtime_error(engine, "Value not callable.");
+					break;
+				}
+
+				u64 chunk_addr = val.as.function;
 
 #ifdef DEBUG
 				if (engine->debug) {
