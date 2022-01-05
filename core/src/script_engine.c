@@ -4,28 +4,26 @@
 #include "script_engine.h"
 
 static void print_value(struct script_value val) {
-	printf("Value (");
-
 	switch (val.type) {
 		case script_value_null:
-			printf("null)");
+			printf("(null)");
 			break;
 		case script_value_number:
-			printf("number): %g", val.as.number);
+			printf("%g (number)", val.as.number);
 			break;
 		default: break;
 	}
-
-	printf("\n");
 }
 
-static void print_ip(u8* ip) {
+static void print_ip(struct script_engine* engine, u8* ip) {
 	switch (*ip) {
 		case op_halt:
 			puts("HALT");
 			break;
 		case op_push:
-			printf("PUSH <%lu>\n", *(u64*)(ip + 1));
+			printf("PUSH <%lu> (", *(u64*)(ip + 1));
+			print_value(get_value(engine, *(u64*)(ip + 1)));
+			printf(")\n");
 			break;
 		case op_pop:
 			puts("POP");
@@ -192,7 +190,7 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 	while (1) {
 #ifdef DEBUG
 		if (engine->debug) {
-			print_ip(engine->ip);
+			print_ip(engine, engine->ip);
 		}
 #endif
 
@@ -269,6 +267,7 @@ finished:
 	if (engine->debug) {
 		printf("Stack top: ");
 		print_value(*engine->stack_top);
+		printf("\n");
 	}
 #endif
 
