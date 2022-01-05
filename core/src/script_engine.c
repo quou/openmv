@@ -25,16 +25,16 @@ static void print_ip(u8* ip) {
 			puts("RETURN");
 			break;
 		case op_push:
-			puts("PUSH");
+			printf("PUSH <%lu>\n", *(u64*)(ip + 1));
 			break;
 		case op_pop:
 			puts("POP");
 			break;
 		case op_call:
-			puts("CALL");
+			printf("CALL <%lu>\n", *(u64*)(ip + 1));
 			break;
 		case op_jump:
-			puts("JUMP");
+			printf("JUMP <%lu>\n", *(u64*)(ip + 1));
 			break;
 		case op_add:
 			puts("ADD");
