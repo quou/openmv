@@ -160,6 +160,8 @@ struct script_engine* new_script_engine() {
 	engine->stack_top = engine->stack;
 	*engine->stack_top = script_null_value;
 
+	init_script_value_table(&engine->globals);
+
 	return engine;
 }
 

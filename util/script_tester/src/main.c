@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "core.h"
+#include "res.h"
 #include "script_engine.h"
 
 u64 decl_fun(struct script_engine* engine) {
@@ -23,23 +24,21 @@ u64 decl_fun(struct script_engine* engine) {
 	return fun_ptr;
 }
 
+void do_file(struct script_engine* engine, const char* path) {
+	u8* src;
+	read_raw(path, &src, null, true);
+
+	compile_script(engine, (const char*)src);
+
+	core_free(src);
+}
+
 int main() {
-	struct script_value_table table;
-	init_script_value_table(&table);
-
-	script_value_table_set(&table, 100, script_number_value(30));
-	script_value_table_set(&table, 140, script_number_value(50));
-	script_value_table_set(&table, 110, script_number_value(80));
-
-	print_script_value(script_value_table_get(&table, 100)); printf("\n");
-	print_script_value(script_value_table_get(&table, 140)); printf("\n");
-	print_script_value(script_value_table_get(&table, 110)); printf("\n");
-
-	deinit_script_value_table(&table);
-
 	struct script_engine* engine = new_script_engine();
 
 	engine->debug = true;
+
+	do_file(engine, "util/script_tester/res/test.osc");
 
 	u64 adder_func = decl_fun(engine);
 
