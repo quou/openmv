@@ -20,6 +20,7 @@ static const char* files[] = {
 	"lua54/LICENSE",
 	"util/packer/premake5.lua",
 	"util/mksdk/premake5.lua",
+	"util/script_tester/premake5.lua",
 	null
 };
 
@@ -28,6 +29,8 @@ static const char* dirs[] = {
 	"bootstrapper/src/",
 	"util/packer/src/",
 	"util/mksdk/src/",
+	"util/script_tester/src/",
+	"util/script_tester/res/",
 	"lua54/src/",
 	null
 };

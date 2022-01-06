@@ -19,6 +19,7 @@ enum {
 	tt_right_paren,
 	tt_semi,
 	tt_identifier,
+	tt_print,
 	tt_error,
 	tt_eof
 };
@@ -114,6 +115,7 @@ static u32 get_identifier_type(struct lexer* lexer) {
 	switch (*lexer->start) {
 		case 'f': return check_keyword(lexer, 1, 1, "n", tt_fn);
 		case 'r': return check_keyword(lexer, 1, 2, "et", tt_ret);
+		case 'p': return check_keyword(lexer, 1, 4, "rint", tt_print);
 	}
 
 	return tt_identifier;
@@ -296,6 +298,7 @@ struct parse_rule parse_rules[] = {
 	[tt_right_paren]	= { null,				null,				prec_none },
 	[tt_semi]			= { null,				null,				prec_none },
 	[tt_identifier]		= { null,				null,				prec_none },
+	[tt_print]			= { null,				null,				prec_none },
 	[tt_error]			= { null,				null,				prec_none },
 	[tt_eof]			= { null,				null,				prec_none }
 };
@@ -325,6 +328,32 @@ static void compile_expression(struct compiler* compiler) {
 	parse_precedance(compiler, prec_assignment);
 }
 
+static bool compiler_match_token(struct compiler* compiler, u32 tt) {
+	if (compiler->token.type != tt) {
+		return false;
+	}
+
+	compiler_advance(compiler);
+
+	return true;
+}
+
+static void compile_statement(struct compiler* compiler) {
+	if (compiler_match_token(compiler, tt_print)) {
+		compile_expression(compiler);
+		compiler_consume(compiler, tt_semi, "Expected `;' after expression.");
+		chunk_add_instruction(compiler->chunk, op_print);
+	} else {
+		compile_expression(compiler);
+		compiler_consume(compiler, tt_semi, "Expected `;' after expression.");
+		chunk_add_instruction(compiler->chunk, op_pop);
+	}
+}
+
+static void compile_declaration(struct compiler* compiler) {
+	compile_statement(compiler);
+}
+
 static void compile_function(struct compiler* compiler) {
 	if (compiler->chunk) {
 		compile_error(compiler, "Nested functions are not supported.");
@@ -344,8 +373,7 @@ static void compile_function(struct compiler* compiler) {
 
 	/* Compile the function */
 	while (compiler->token.type != tt_right_brace) {
-		compile_expression(compiler);
-		compiler_consume(compiler, tt_semi, "Expected `;' after expression.");
+		compile_declaration(compiler);
 
 		if (compiler->token.type == tt_eof) {
 			compile_error(compiler, "Expected `}' after function.");

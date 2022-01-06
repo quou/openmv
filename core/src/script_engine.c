@@ -7,13 +7,28 @@
 void print_script_value(struct script_value val) {
 	switch (val.type) {
 		case script_value_null:
+			printf("null");
+			break;
+		case script_value_number:
+			printf("%g", val.as.number);
+			break;
+		case script_value_function:
+			printf("<%ld>", val.as.function);
+			break;
+		default: break;
+	}
+}
+
+void print_script_value_type(struct script_value val) {
+	switch (val.type) {
+		case script_value_null:
 			printf("(null)");
 			break;
 		case script_value_number:
-			printf("%g (number)", val.as.number);
+			printf("(number)");
 			break;
 		case script_value_function:
-			printf("%ld (function)", val.as.function);
+			printf("(function)");
 			break;
 		default: break;
 	}
@@ -52,6 +67,9 @@ static void print_ip(struct script_engine* engine, u8* ip) {
 			break;
 		case op_mul:
 			puts("MUL");
+			break;
+		case op_print:
+			puts("PRINT");
 			break;
 		default: break;
 	}
@@ -352,6 +370,11 @@ void execute_chunk(struct script_engine* engine, struct script_chunk* chunk) {
 
 				script_engine_push(engine, script_number_value((i64)a.as.number % (i64)b.as.number));
 			} break;
+			case op_print: {
+				struct script_value v = script_engine_pop(engine);
+				print_script_value(v);
+				printf("\n");
+			} break;
 		}
 
 		engine->ip++;
@@ -366,7 +389,9 @@ finished:
 	if (engine->debug) {
 		printf("Stack top: ");
 		print_script_value(*engine->stack_top);
-		printf("\n");
+		printf("(");
+		print_script_value_type(*engine->stack_top);
+		printf(")\n");
 	}
 #endif
 
