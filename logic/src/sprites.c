@@ -193,6 +193,86 @@ struct animated_sprite anim_sprites[] = {
 		.color = { 255, 255, 255, 255 },
 		.unlit = true
 	},
+	[animsprid_player_run_right_up] = {
+		.id = animsprid_player_run_right_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 48, 0, 16, 16 }, { 64, 0, 16, 16 }, { 80, 0, 16, 16 } },
+		.speed = 8.9,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_run_left_up] = {
+		.id = animsprid_player_run_left_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 48, 16, 16, 16 }, { 64, 16, 16, 16 }, { 80, 16, 16, 16 } },
+		.speed = 8.9,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_jump_right_up] = {
+		.id = animsprid_player_jump_right_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 64, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_jump_left_up] = {
+		.id = animsprid_player_jump_left_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 64, 16, 16, 16 } },
+		.speed = 0,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_fall_right_up] = {
+		.id = animsprid_player_fall_right_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 80, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_fall_left_up] = {
+		.id = animsprid_player_fall_left_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 80, 16, 16, 16 } },
+		.speed = 0,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_idle_right_up] = {
+		.id = animsprid_player_idle_right_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 48, 0, 16, 16 } },
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[animsprid_player_idle_left_up] = {
+		.id = animsprid_player_idle_left_up,
+		.texture = (struct texture*)texid_player,
+		.frames = { { 48, 16, 16, 16 } },
+		.speed = 0,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
 	[animsprid_muzzle_flash] = {
 		.id = animsprid_muzzle_flash,
 		.texture = (struct texture*)texid_fx,

@@ -59,6 +59,8 @@ struct player_constants {
 
 	v2f left_muzzle_pos;
 	v2f right_muzzle_pos;
+	v2f left_up_muzzle_pos;
+	v2f right_up_muzzle_pos;
 
 	v2f knockback;
 
@@ -95,8 +97,10 @@ const struct player_constants player_constants = {
 
 	.shoot_cooldown = 0.1,
 
-	.left_muzzle_pos =  { 11 * sprite_scale, 11 * sprite_scale },
-	.right_muzzle_pos = { 4  * sprite_scale, 11 * sprite_scale },
+	.left_muzzle_pos =  { 4 * sprite_scale, 11 * sprite_scale },
+	.right_muzzle_pos = { 12  * sprite_scale, 11 * sprite_scale },
+	.left_up_muzzle_pos =  { 7 * sprite_scale, 7 * sprite_scale },
+	.right_up_muzzle_pos = { 9  * sprite_scale, 7 * sprite_scale },
 
 	.knockback = { 300.0f, 300.0f },
 
@@ -157,6 +161,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		if (player->velocity.y > player_constants.max_gravity) {
 			player->velocity.y = player_constants.max_gravity;
 		}
+
+		bool face_up = key_pressed(main_window, mapped_key("up"));
 
 		if (key_pressed(main_window, mapped_key("right"))) {
 			if (player->velocity.x < player_constants.move_speed) {
@@ -392,38 +398,64 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			play_audio_clip(player->shoot_sound);
 
+			v2f pos;
+
+			if (face_up) {
+				if (player->face == player_face_left) {
+					pos = player_constants.left_up_muzzle_pos;
+				} else {
+					pos = player_constants.right_up_muzzle_pos;
+				}
+			} else {
+				if (player->face == player_face_left) {
+					pos = player_constants.left_muzzle_pos;
+				} else {
+					pos = player_constants.right_muzzle_pos;
+				}
+			}
+
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
+			struct rect collider;
+
+			if (face_up) {
+				sprite.rotation = 90;
+
+				collider.x = (-sprite.rect.h / 2) * sprite_scale;
+				collider.y = (-sprite.rect.w / 2) * sprite_scale;
+				collider.w = sprite.rect.h * sprite_scale;
+				collider.h = sprite.rect.w * sprite_scale;
+			} else {
+				sprite.rotation = 0;
+
+				collider.x = (-sprite.rect.w / 2) * sprite_scale;
+				collider.y = (-sprite.rect.h / 2) * sprite_scale;
+				collider.w = sprite.rect.w * sprite_scale;
+				collider.h = sprite.rect.h * sprite_scale;
+			}
+
 			entity projectile = new_entity(world);
 			add_componentv(world, projectile, struct transform,
-				.z = 100,
-				.position = v2f_add(transform->position,
-					player->face == player_face_left ? player_constants.left_muzzle_pos : player_constants.right_muzzle_pos),
+				.z = 500,
+				.position = v2f_add(transform->position, pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
 			get_component(world, projectile, struct transform)->position.x += player->face == player_face_left ?
 				-20 : 20;
 			add_component(world, projectile, struct sprite, sprite);
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
+				.up = face_up,
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
 				.damage = 4,
-				.collider = {
-					(-sprite.rect.w / 2) * sprite_scale, /* Because the projectile sprite has an origin of 0.5, 0.5. */
-					(-sprite.rect.h / 2) * sprite_scale,
-					sprite.rect.w * sprite_scale,
-					sprite.rect.h * sprite_scale
-				});
+				.collider = collider);
 
 			/* Spawn the muzzle flash */
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
 			entity flash = new_entity(world);
 			add_componentv(world, flash, struct transform,
-				.z = 100,
-				.position = v2f_add(transform->position,
-					player->face == player_face_right ?
-						make_v2f(player_constants.left_muzzle_pos.x, player_constants.left_muzzle_pos.y)
-						: make_v2f(player_constants.right_muzzle_pos.x, player_constants.right_muzzle_pos.y)),
+				.z = 500,
+				.position = v2f_add(transform->position, pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
 			add_component(world, flash, struct animated_sprite, f_sprite);
 			add_componentv(world, flash, struct anim_fx);
@@ -455,7 +487,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 		
 		if (!player->on_ground && player->velocity.y < 0.0f && !key_pressed(main_window, mapped_key("jump"))) {
-				player->velocity.y += player_constants.low_jump_mul * ts;
+			player->velocity.y += player_constants.low_jump_mul * ts;
 		}
 
 		if (player->on_ground) {
@@ -463,33 +495,61 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			if (player->velocity.x > 50.0f || player->velocity.x < -50.0f) {
 				if (player->face == player_face_left) {
-					if (sprite->id != animsprid_player_run_left) {
+					if (face_up && sprite->id != animsprid_player_run_left_up) {
+						*sprite = get_animated_sprite(animsprid_player_run_left_up);
+					} else if (!face_up && sprite->id != animsprid_player_run_left) {
 						*sprite = get_animated_sprite(animsprid_player_run_left);
 					}
 				} else {
-					if (sprite->id != animsprid_player_run_right) {
+					if (face_up && sprite->id != animsprid_player_run_right_up) {
+						*sprite = get_animated_sprite(animsprid_player_run_right_up);
+					} else if (!face_up && sprite->id != animsprid_player_run_right) {
 						*sprite = get_animated_sprite(animsprid_player_run_right);
 					}
 				}
 			} else {
 				if (player->face == player_face_left) {
-					*sprite = get_animated_sprite(animsprid_player_idle_left);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_idle_left_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_idle_left);
+					}
 				} else {
-					*sprite = get_animated_sprite(animsprid_player_idle_right);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_idle_right_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_idle_right);
+					}
 				}
 			}
 		} else {
 			if (player->velocity.y < 0.0f) {
 				if (player->face == player_face_left) {
-					*sprite = get_animated_sprite(animsprid_player_jump_left);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_jump_left_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_jump_left);
+					}
 				} else {
-					*sprite = get_animated_sprite(animsprid_player_jump_right);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_jump_right_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_jump_right);
+					}
 				}
 			} else {
 				if (player->face == player_face_left) {
-					*sprite = get_animated_sprite(animsprid_player_fall_left);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_fall_left_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_fall_left);
+					}
 				} else {
-					*sprite = get_animated_sprite(animsprid_player_fall_right);
+					if (face_up) {
+						*sprite = get_animated_sprite(animsprid_player_fall_right_up);
+					} else {
+						*sprite = get_animated_sprite(animsprid_player_fall_right);
+					}
 				}
 			}
 		}
@@ -653,7 +713,9 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct projectile* projectile = view_get(&view, struct projectile);
 
-		if (projectile->face == player_face_left) {
+		if (projectile->up) {
+			transform->position.y -= projectile->speed * ts;
+		} else if (projectile->face == player_face_left) {
 			transform->position.x -= projectile->speed * ts;
 		} else {
 			transform->position.x += projectile->speed * ts;
