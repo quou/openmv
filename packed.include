@@ -1,7 +1,8 @@
 res/DejaVuSans.ttf
-res/DejaVuSansMono.ttf
+res/CourierPrime.ttf
 res/aud/decline.wav
 res/aud/fly.wav
+res/aud/explosion.wav
 res/aud/heart.wav
 res/aud/hurt.wav
 res/aud/jump.wav
@@ -19,6 +20,10 @@ res/bmp/icon.bmp
 res/bmp/item.bmp
 res/bmp/npc.bmp
 res/bmp/tsblue.bmp
-res/maps/quality_ctrl.dat
+res/bmp/tsred.bmp
+res/maps/a1/cave.dat
+res/maps/a1/incinerator.dat
+res/maps/a1/mine_top.dat
+res/maps/a2/mine_entrance.dat
 res/scripts/npc_broken_robot.lua
 res/shaders/sprite.glsl
