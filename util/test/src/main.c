@@ -14,7 +14,7 @@ static coroutine_decl(test_coroutine)
 	coroutine_yield();
 
 	*(i32*)co_udata = 40;
-}
+coroutine_end
 
 bool coroutine_test() {
 	i32 val;

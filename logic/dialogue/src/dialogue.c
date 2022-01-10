@@ -54,7 +54,7 @@ static coroutine_decl(broken_robot_play)
 
 	dialogue_message("......", co->udata);
 	coroutine_yield();
-}
+coroutine_end
 
 struct coroutine broken_robot_co;
 
