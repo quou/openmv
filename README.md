@@ -2,7 +2,7 @@
 
 ![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/001.png)
 
-An open source metroidvania.
+An open source Metroidvania.
 
 Created from the ground up in C99.
 
@@ -24,13 +24,14 @@ Created from the ground up in C99.
  - [ ] Actually make a damn game.
 
 ## Building
-Generate a Makefile using Premake. Currently, Clang is used to build OpenMV, though
-GCC should also work.
+Generate a Makefile using Premake and use that to compile everything.
 
 Before you can run the game in release mode, build the `packer` project and run
 it from the project root to create a file named `res.pck` which contains all of
 the game's resources. The game reads from this file in release mode so that
-shipping the entire resource folder isn't required.
+shipping the entire resource folder isn't required. The packer packs all of
+the files in `packed.include`; This file is sometimes out of date, so if the
+game struggles to load in release mode, try debug mode instead.
 
 Dependencies on Linux:
  - `libdl`
@@ -45,6 +46,11 @@ Dependencies on Windows:
  - `user32`
  - `kernel32`
  - `winmm`
+
+I develop everything under 64-bit GNU/Linux, with Clang and glibc. There's no
+reason why it wouldn't work under a 32-bit system with GCC, though (The Premake
+scripts will need to be modified to build under 32-bit). Windows *should* work,
+but I rarely test it, so some minor modifications might be needed here and there.
 
 ## Creating New Projects
 OpenMV's core can be used for new projects, including all the code for things
