@@ -87,3 +87,12 @@ Below is a list of pieces of code that I didn't write:
  - [stb_truetype](https://github.com/nothings/stb/blob/master/stb_truetype.h).
 
 Everything else was written by me, from scratch.
+
+## Contributing
+If you have plans to contribute code to this repository: First of all, thank-you
+for your time! Second, please follow the general style of the existing code as
+much as possible. This includes: Using tabs for indentation (not spaces), using
+`double` instead of `float` for timing and not `typedef`'ing structures or
+enumerations. Everything should adhere to standard C99 where possible or at
+the very least compile with Clang (minimise the use of GNU extensions). External
+libraries should also be avoided, though single-header utilities are fine.
