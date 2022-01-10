@@ -11,19 +11,21 @@ typedef void (*coroutine_func)(struct coroutine*, void*);
 #define _coroutine_jmp() \
 	if (co->progress != 0) { \
 		longjmp(co->env, 0); \
-	}
+	} \
 
 #define coroutine_decl(n_) \
 	void n_(struct coroutine* co, void* co_udata) { \
 	_coroutine_jmp()
 
 #define coroutine_yield() \
-	co->progress++; \
-	co->r = setjmp(co->env); \
-	if (co->r == 0) { return; }
+	do { \
+		co->progress++; \
+		co->r = setjmp(co->env); \
+		if (co->r == 0) { return; } \
+	} while (0)
 
 #define coroutine_resume(co_) \
-	(co_).func(&(co_), (co_).udata)
+		(co_).func(&(co_), (co_).udata)
 
 struct coroutine {
 	coroutine_func func;
