@@ -30,8 +30,8 @@ Before you can run the game in release mode, build the `packer` project and run
 it from the project root to create a file named `res.pck` which contains all of
 the game's resources. The game reads from this file in release mode so that
 shipping the entire resource folder isn't required. The packer packs all of
-the files in `packed.include`; This file is sometimes out of date, so if the
-game struggles to load in release mode, try debug mode instead.
+the files listed in `packed.include`; This file is sometimes out of date,
+so if the game struggles to load in release mode, try debug mode instead.
 
 Dependencies on Linux:
  - `libdl`
