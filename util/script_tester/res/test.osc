@@ -1,6 +1,0 @@
-fn main {
-	print 44;
-
-	print (30 + 67) - 33 * 2;
-	print 37 % 4;
-}

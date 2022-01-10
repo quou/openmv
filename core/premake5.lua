@@ -20,6 +20,9 @@ project "core"
 		"src/core.h",
 		"src/coresys.c",
 		"src/coresys.h",
+		"src/coroutine.c",
+		"src/coroutine.h",
+		"src/dynlib.h",
 		"src/entity.c",
 		"src/entity.h",
 		"src/keytable.c",
@@ -32,9 +35,6 @@ project "core"
 		"src/renderer.c",
 		"src/res.c",
 		"src/res.h",
-		"src/script_compiler.c",
-		"src/script_engine.c",
-		"src/script_engine.h",
 		"src/table.c",
 		"src/table.h",
 		"src/tiled.c",
@@ -95,7 +95,8 @@ project "core"
 	filter "system:linux"
 		files {
 			"src/platform_linux.c",
-			"src/platform_x11.c"
+			"src/platform_x11.c",
+			"src/dynlib_linux.c"
 		}
 
 		postbuildcommands {
@@ -104,5 +105,6 @@ project "core"
 	
 	filter "system:windows"
 		files {
-			"src/platform_windows.c"
+			"src/platform_windows.c",
+			"src/dynlib_windows.c"
 		}

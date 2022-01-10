@@ -31,6 +31,8 @@ struct logic_store {
 	struct audio_clip* explosion_sound;
 
 	struct table* savegame_persist;
+
+	void* dialogue_lib;
 };
 
 extern struct logic_store* logic_store;

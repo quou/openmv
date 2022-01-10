@@ -126,7 +126,8 @@
  <objectgroup id="8" name="dialogue_triggers" locked="1">
   <object id="13" x="48" y="128" width="16" height="16">
    <properties>
-    <property name="script" value="res/scripts/npc_broken_robot.lua"/>
+    <property name="on_next" value="broken_robot_on_next"/>
+    <property name="on_play" value="broken_robot_on_play"/>
    </properties>
   </object>
  </objectgroup>

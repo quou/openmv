@@ -16,6 +16,7 @@
 #include "shop.h"
 #include "sprites.h"
 #include "ui.h"
+#include "dynlib.h"
 
 struct logic_store* logic_store;
 
@@ -69,6 +70,20 @@ static void on_quit(struct menu* menu) {
 }
 
 API void CALL on_init() {
+#ifndef PLATFORM_WINDOWS
+	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
+
+	if (!logic_store->dialogue_lib) {
+		fprintf(stderr, "Failed to load libdialogue.so: %s\n", dynlib_get_error());
+	}
+#else
+	logic_store->dialogue_lib = open_dynlib("dialogue.dll");
+	
+	if (!logic_store->dialogue_lib) {
+		fprintf(stderr, "Failed to load dialogue.dll.\n");
+	}
+#endif	
+
 	keymap_init();
 	default_keymap();
 	load_keymap();
@@ -227,6 +242,8 @@ API void CALL on_update(double ts) {
 }
 
 API void CALL on_deinit() {
+	close_dynlib(logic_store->dialogue_lib);
+
 	shops_deinit();
 	prompts_deinit();
 	free_menu(logic_store->pause_menu);

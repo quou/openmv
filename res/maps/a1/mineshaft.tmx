@@ -153,15 +153,15 @@
    <polyline points="0,0 -64,16 -64,48 -32,64 112,32 128,-16"/>
   </object>
  </objectgroup>
- <objectgroup id="10" name="dialogue_triggers" locked="1">
+ <objectgroup id="10" name="dialogue_triggers">
   <object id="30" x="64" y="336" width="16" height="16">
    <properties>
-    <property name="script" value="res/scripts/miner_robot.lua"/>
+    <property name="on_play" value="miner_robot_on_play"/>
    </properties>
   </object>
   <object id="43" x="352" y="336" width="16" height="16">
    <properties>
-    <property name="script" value="res/scripts/miner_robot.lua"/>
+    <property name="on_play" value="miner_robot_on_play"/>
    </properties>
   </object>
  </objectgroup>

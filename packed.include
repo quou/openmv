@@ -25,5 +25,4 @@ res/maps/a1/cave.dat
 res/maps/a1/incinerator.dat
 res/maps/a1/mine_top.dat
 res/maps/a2/mine_entrance.dat
-res/scripts/npc_broken_robot.lua
 res/shaders/sprite.glsl

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "entity.h"
 #include "video.h"
 
 struct room;
@@ -21,6 +22,8 @@ bool handle_body_collisions(struct room* room, struct rect rect, v2f* position, 
 void handle_body_interactions(struct room** room, struct rect rect, entity body, bool body_on_ground);
 void room_transition_to(struct room** room, entity body, struct rect collider, const char* path, const char* entrance);
 bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal);
+
+void dialogue_message(const char* text, void* ctx);
 
 char* get_room_path(struct room* room);
 

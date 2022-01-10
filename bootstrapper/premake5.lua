@@ -16,7 +16,6 @@ project "bootstrapper"
 		"src/bootstrapper.h",
 		"src/bootstrapper.c",
 		"src/main.c",
-		"src/dynlib.h",
 	}
 
 	includedirs {
@@ -41,17 +40,3 @@ project "bootstrapper"
 		defines { "RELEASE" }
 		optimize "on"
 		runtime "release"
-
-	filter "system:linux"
-		files {
-			"src/dynlib_linux.c"
-		}
-
-		links {
-			"dl"
-		}
-	
-	filter "system:windows"
-		files {
-			"src/dynlib_windows.c"
-		}

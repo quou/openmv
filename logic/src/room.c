@@ -7,7 +7,7 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
-#include "dialogue.h"
+#include "dynlib.h"
 #include "enemy.h"
 #include "keymap.h"
 #include "logic_store.h"
@@ -33,9 +33,14 @@ struct door {
 	char* entrance;
 };
 
+typedef void (*on_dialogue_next_func)();
+typedef void (*on_dialogue_play_func)(void* ctx);
+
 struct dialogue {
-	struct dialogue_script* script;
 	struct rect rect;
+	on_dialogue_next_func on_next;
+	on_dialogue_play_func on_play;
+	bool want_next;
 };
 
 struct tile_layer {
@@ -475,29 +480,26 @@ struct room* load_room(struct world* world, const char* path) {
 						struct object* object = layer->as.object_layer.objects + ii;
 
 						if (object->shape == object_shape_rect) {
-							char* script_path = null;
+							char* on_play_name = null;
+							char* on_next_name = null;
 
-							struct property* script_path_prop = table_get(object->properties, "script");
-							if (script_path_prop && script_path_prop->type == prop_string) {
-								script_path = script_path_prop->as.string;
+							struct property* on_play_prop = table_get(object->properties, "on_play");
+							if (on_play_prop && on_play_prop->type == prop_string) {
+								on_play_name = on_play_prop->as.string;
 							}
-
-							if (!script_path) {
-								fprintf(stderr, "Dialogue triggers must have a path to a script!\n");
-								continue;
+						
+							struct property* on_next_prop = table_get(object->properties, "on_next");
+							if (on_next_prop && on_next_prop->type == prop_string) {
+								on_next_name = on_next_prop->as.string;
 							}
-
-							u8* source;
-							read_raw(script_path, &source, null, true);
 
 							struct float_rect r = object->as.rect;
 
 							room->dialogue[room->dialogue_count++] = (struct dialogue) {
 								.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-								.script = new_dialogue_script((char*)source)
+								.on_play = on_play_name ? dynlib_get_sym(logic_store->dialogue_lib, on_play_name) : null,
+								.on_next = on_next_name ? dynlib_get_sym(logic_store->dialogue_lib, on_next_name) : null,
 							};
-
-							core_free(source);
 						}
 					}
 				} else if (strcmp(layer->name, "entity_spawners") == 0) {
@@ -622,11 +624,7 @@ void free_room(struct room* room) {
 		core_free(room->doors);
 	}
 
-	if (room->dialogue) {
-		for (u32 i = 0; i < room->dialogue_count; i++) {
-			free_dialogue_script(room->dialogue[i].script);
-		}
-		
+	if (room->dialogue) {	
 		core_free(room->dialogue);
 	}
 
@@ -835,7 +833,11 @@ void update_room(struct room* room, double ts, double actual_ts) {
 	}
 
 	for (u32 i = 0; i < room->dialogue_count; i++) {
-		update_dialogue(room->dialogue[i].script);
+		struct dialogue* d = room->dialogue + i;
+		if (d->want_next && d->on_next) {
+			d->on_next();
+			d->want_next = false;
+		}
 	}
 
 	if (room->transitioning_in) {
@@ -1040,8 +1042,11 @@ void handle_body_interactions(struct room** room_ptr, struct rect collider, enti
 		}
 
 		for (u32 i = 0; i < room->dialogue_count; i++) {
-			if (rect_overlap(body_rect, room->dialogue[i].rect, null)) {
-				play_dialogue(room->dialogue[i].script);
+			struct dialogue* d = room->dialogue + i;
+
+			if (rect_overlap(body_rect, room->dialogue[i].rect, null) && d->on_play) {
+				d->want_next = true;
+				d->on_play(&d->want_next);
 			}
 		}
 
@@ -1128,4 +1133,12 @@ entity new_save_point(struct world* world, struct room* room, struct rect rect) 
 	add_componentv(world, e, struct save_point, .rect = rect);
 
 	return e;
+}
+
+static void on_dialogue_message_finish(void* ctx) {
+	*(bool*)ctx = true;
+}
+
+void dialogue_message(const char* text, void* ctx) {
+	message_prompt_ex(text, on_dialogue_message_finish, ctx);
 }

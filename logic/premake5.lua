@@ -1,3 +1,5 @@
+include "dialogue"
+
 project "logic"
 	kind "SharedLib"
 	language "C"
@@ -20,11 +22,9 @@ project "logic"
 	includedirs {
 		"src",
 		"../core/src",
-		"../lua54/src"
 	}
 
 	links {
-		"lua54",
 		"core"
 	}
 

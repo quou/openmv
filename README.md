@@ -19,7 +19,7 @@ Created from the ground up in C99.
  - [x] Room system.
  - [x] Resource Packing.
  - [x] Tilemap system.
- - [ ] Custom scripting language for dialogue (ditch Lua in the name of Handmade).
+ - [x] Dialogue system for NPCs.
  - [ ] Advanced Rendering (Post processing fx, etc.).
  - [ ] Actually make a damn game.
 

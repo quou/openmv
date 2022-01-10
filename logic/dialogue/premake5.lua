@@ -1,31 +1,35 @@
-project "script_tester"
-	kind "ConsoleApp"
+project "dialogue"
+	kind "SharedLib"
 	language "C"
 	cdialect "C99"
 
 	toolset "clang"
 
-	targetdir "../../bin"
+	targetdir "../../"
 	objdir "obj"
 
 	architecture "x64"
+
 	staticruntime "on"
 
 	files {
-		"src/main.c",
+		"src/**.h",
+		"src/**.c"
 	}
 
 	includedirs {
 		"src",
+		"../../logic/src/",
 		"../../core/src"
 	}
 
 	links {
+		"logic",
 		"core"
 	}
 
 	defines {
-		"IMPORT_SYMBOLS"
+		"EXPORT_SYMBOLS"
 	}
 
 	filter "configurations:debug"
