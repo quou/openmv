@@ -10,8 +10,8 @@ typedef void (*coroutine_func)(struct coroutine*, void*);
 
 #define _coroutine_jmp() \
 	if (co->progress != 0) { \
-		longjmp(co->env, 0); \
-	} \
+		longjmp(co->env, 1); \
+	}
 
 #define coroutine_decl(n_) \
 	void n_(struct coroutine* co, void* co_udata) { \
@@ -32,10 +32,8 @@ struct coroutine {
 
 	void* udata;
 
-	i32 r;
-
 	u32 progress;
-	bool is_dead;
+	i32 r;
 
 	jmp_buf env;
 };

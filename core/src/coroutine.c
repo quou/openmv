@@ -6,6 +6,5 @@ struct coroutine new_coroutine(coroutine_func func, void* udata) {
 		.func = func,
 		.udata = udata,
 		.progress = 0,
-		.is_dead = false,
 	};
 }
