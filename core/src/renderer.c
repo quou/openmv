@@ -439,7 +439,8 @@ i32 render_text(struct renderer* renderer, struct font* font,
 			.position = { x + g->xoff, y + g->yoff },
 			.dimentions = { w, h },
 			.rect = { g->x0, g->y0, w, h },
-			.color = color
+			.color = color,
+			.unlit = true
 		};
 
 		renderer_push(renderer, &quad);
@@ -471,7 +472,8 @@ i32 render_text_n(struct renderer* renderer, struct font* font,
 			.position = { x + g->xoff, y + g->yoff },
 			.dimentions = { w, h },
 			.rect = { g->x0, g->y0, w, h },
-			.color = color
+			.color = color,
+			.unlit = true
 		};
 
 		renderer_push(renderer, &quad);

@@ -127,6 +127,7 @@ API void CALL on_init() {
 
 	entity player = new_player_entity(world);
 	struct player* pc = get_component(world, player, struct player);
+	struct collider* pcol = get_component(world, player, struct collider);
 
 	logic_store->player = player;
 
@@ -136,7 +137,7 @@ API void CALL on_init() {
 		logic_store->room = load_room(world, "res/maps/a1/incinerator.dat");
 
 		v2i spawn = get_spawn(logic_store->room);
-		get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pc->collider.w / 2), spawn.y - pc->collider.h);
+		get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pcol->rect.w / 2), spawn.y - pcol->rect.h);
 	}
 }
 
@@ -237,7 +238,8 @@ API void CALL on_update(double ts) {
 				.position = { transform->position.x, transform->position.y },
 				.dimentions = { 50, 1 },
 				.color = make_color(0xff0000, 255),
-				.rotation = transform->rotation
+				.rotation = transform->rotation,
+				.unlit = true
 			};
 			renderer_push(renderer, &quad);
 
@@ -245,9 +247,24 @@ API void CALL on_update(double ts) {
 				.position = { transform->position.x, transform->position.y },
 				.dimentions = { 1, 50 },
 				.color = make_color(0x0000ff, 255),
-				.rotation = transform->rotation
+				.rotation = transform->rotation,
+				.unlit = true
 			};
 			renderer_push(renderer, &quad2);
+		}
+
+		for (view(world, view, type_info(struct transform), type_info(struct collider))) {
+			struct transform* transform = view_get(&view, struct transform);
+			struct collider* collider = view_get(&view, struct collider);
+
+			struct textured_quad quad = {
+				.position = { transform->position.x + collider->rect.x, transform->position.y + collider->rect.y },
+				.dimentions = { collider->rect.w, collider->rect.h },
+				.color = make_color(0x00ff00, 125),
+				.rotation = transform->rotation,
+				.unlit = true
+			};
+			renderer_push(renderer, &quad);
 		}
 
 		renderer_flush(renderer);

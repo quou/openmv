@@ -13,6 +13,10 @@ struct transform {
 	float rotation;
 };
 
+struct collider {
+	struct rect rect;
+};
+
 struct sprite {
 	struct texture* texture;
 	struct rect rect;

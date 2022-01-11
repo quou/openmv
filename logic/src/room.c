@@ -457,8 +457,9 @@ struct room* load_room(struct world* world, const char* path) {
 									.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 								add_component(world, pickup, struct sprite, sprite);
 								add_componentv(world, pickup, struct health_upgrade, .id = upgrade_id,
-									.collider = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
 									.booster = booster);
+								add_componentv(world, pickup, struct collider,
+									.rect = { 0, 0, r.w * sprite_scale, r.h * sprite_scale });
 							} else if (sprite_id != -1 && upgrade_id != -1) { 
 								struct sprite sprite = get_sprite(sprite_id);
 
@@ -468,7 +469,8 @@ struct room* load_room(struct world* world, const char* path) {
 									.position = { r.x * sprite_scale, r.y * sprite_scale },
 									.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 								add_component(world, pickup, struct sprite, sprite);
-								add_componentv(world, pickup, struct upgrade, .id = upgrade_id, .collider = r,
+								add_componentv(world, pickup, struct collider, .rect = { 0, 0, r.x * sprite_scale, r.y * sprite_scale });
+								add_componentv(world, pickup, struct upgrade, .id = upgrade_id,
 									.prefix = copy_string(item_prefix), .name = copy_string(item_name));
 							}
 						}
@@ -756,8 +758,13 @@ void update_room(struct room* room, double ts, double actual_ts) {
 					add_componentv(room->world, e, struct transform, .position = transform->position,
 						.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 					add_component(room->world, e, struct sprite, sprite);
-					add_componentv(room->world, e, struct lava_interact,
-						.collider = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+					add_componentv(room->world, e, struct lava_interact);
+					add_componentv(room->world, e, struct collider,
+						.rect = {
+							-(sprite.rect.w * sprite_scale) / 2,
+							-(sprite.rect.h * sprite_scale) / 2,
+							sprite.rect.w * sprite_scale,
+							sprite.rect.h * sprite_scale });
 					add_componentv(room->world, e, struct room_child, .parent = room);
 					add_componentv(room->world, e, struct fall, .mul = 1.0);
 				} break;
@@ -784,15 +791,16 @@ void update_room(struct room* room, double ts, double actual_ts) {
 	for (view(room->world, view, type_info(struct lava))) {
 		struct lava* lava = view_get(&view, struct lava);
 
-		for (view(room->world, view, type_info(struct transform), type_info(struct lava_interact))) {
+		for (view(room->world, view, type_info(struct transform), type_info(struct lava_interact), type_info(struct collider))) {
 			struct transform* transform = view_get(&view, struct transform);
 			struct lava_interact* inter = view_get(&view, struct lava_interact);
+			struct collider* collider = view_get(&view, struct collider);
 
 			struct rect rect = {
-				.x = transform->position.x + inter->collider.x,
-				.y = transform->position.y + inter->collider.y,
-				.w = inter->collider.w,
-				.h = inter->collider.h,
+				.x = transform->position.x + collider->rect.x,
+				.y = transform->position.y + collider->rect.y,
+				.w = collider->rect.w,
+				.h = collider->rect.h,
 			};
 	
 			if (rect_overlap(lava->collider, rect, null)) {
@@ -807,7 +815,8 @@ void update_room(struct room* room, double ts, double actual_ts) {
 					add_component(room->world, e, struct sprite, sprite);
 					add_componentv(room->world, e, struct lava_particle,
 						.velocity = { random_double(-100, 100), random_double(-600, -300) },
-						.lifetime = 1.0);
+						.lifetime = 1.0,
+						.rotation_inc = random_double(-100, 100));
 				}
 
 				destroy_entity(room->world, view.e);
@@ -824,7 +833,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 		transform->position = v2f_add(transform->position, v2f_mul(particle->velocity, make_v2f(ts, ts)));
 
-		transform->rotation += ts * 100.0f;
+		transform->rotation += ts * particle->rotation_inc;
 
 		particle->lifetime -= ts;
 		if (particle->lifetime <= 0.0) {

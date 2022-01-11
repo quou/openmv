@@ -58,7 +58,7 @@ struct fall {
 };
 
 struct lava_interact {
-	struct rect collider;
+	u32 i;
 };
 
 struct lava {
@@ -68,4 +68,5 @@ struct lava {
 struct lava_particle {
 	v2f velocity;
 	double lifetime;
+	float rotation_inc;
 };

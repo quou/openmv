@@ -13,8 +13,6 @@ enum {
 struct player {
 	v2f velocity;
 
-	struct rect collider;
-
 	bool on_ground;
 	bool dashing;
 
@@ -69,7 +67,6 @@ enum {
 
 struct upgrade {
 	u32 id;
-	struct rect collider;
 
 	char* prefix;
 	char* name;
@@ -81,13 +78,10 @@ struct health_upgrade {
 	bool booster;
 	u32 id;
 	i32 value;
-	struct rect collider;
 };
 
 struct coin_pickup {
 	v2f velocity;
-
-	struct rect collider;
 };
 
 entity new_coin_pickup(struct world* world, struct room* room, v2f position);
@@ -97,7 +91,6 @@ struct projectile {
 	bool up;
 	double lifetime;
 	float speed;
-	struct rect collider;
 
 	i32 damage;
 };
@@ -114,7 +107,6 @@ entity new_impact_effect(struct world* world, v2f position, u32 anim_id);
 
 struct damage_num_fx {
 	char text[32];
-	v2f position;
 	float velocity;
 	double timer;
 };

@@ -9,8 +9,8 @@ API extern struct window* main_window;
 
 #define prop_offset(t_, e_) ((u64)(&(((t_*)(0))->e_)))
 
-#define _get_nth_arg(_1, _2, _3, _4, N, ...) N
-#define count_va_args(...) _get_nth_arg(__VA_ARGS__, 4, 3, 2, 1)
+#define _get_nth_arg(_1, _2, _3, _4, _5, N, ...) N
+#define count_va_args(...) _get_nth_arg(__VA_ARGS__, 5, 4, 3, 2, 1)
 
 /* Return the hash of a string using the ELF hash algorithm*/
 API u64 elf_hash(const u8* data, u32 size);

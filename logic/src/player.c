@@ -128,7 +128,6 @@ entity new_player_entity(struct world* world) {
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 }, .z = 100);
 	add_componentv(world, e, struct player,
-		.collider = player_constants.left_collider,
 		.visible = true,
 
 		.hp = player_constants.default_hp,
@@ -141,6 +140,7 @@ entity new_player_entity(struct world* world) {
 		.upgrade_sound = load_audio_clip("res/aud/upgrade.wav"),
 		.heart_sound = load_audio_clip("res/aud/heart.wav"));
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
+	add_componentv(world, e, struct collider, .rect = player_constants.left_collider);
 	
 	return e;
 }
@@ -149,10 +149,12 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
-			type_info(struct animated_sprite))) {
+			type_info(struct animated_sprite),
+			type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct player* player = view_get(&view, struct player);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+		struct collider* collider = view_get(&view, struct collider);
 
 		if (!player->dashing) {
 			player->velocity.y += player_constants.gravity * ts;
@@ -218,9 +220,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		if (player->face == player_face_left) {
-			player->collider = player_constants.left_collider;
+			collider->rect = player_constants.left_collider;
 		} else {
-			player->collider = player_constants.right_collider;
+			collider->rect = player_constants.right_collider;
 		}
 
 		player->dash_time += ts;
@@ -248,8 +250,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		transform->position = v2f_add(transform->position, v2f_mul(player->velocity, make_v2f(ts, ts)));
 
-		handle_body_collisions(*room, player->collider, &transform->position, &player->velocity);
-		handle_body_interactions(room, player->collider, view.e, player->on_ground);
+		handle_body_collisions(*room, collider->rect, &transform->position, &player->velocity);
+		handle_body_interactions(room, collider->rect, view.e, player->on_ground);
 
 		/* Update pointers because the pools might have been reallocated. */
 		transform = view_get(&view, struct transform);
@@ -257,19 +259,20 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		sprite = view_get(&view, struct animated_sprite);
 
 		struct rect player_rect = {
-			(i32)transform->position.x + player->collider.x,
-			(i32)transform->position.y + player->collider.y,
-			player->collider.w, player->collider.h
+			(i32)transform->position.x + collider->rect.x,
+			(i32)transform->position.y + collider->rect.y,
+			collider->rect.w, collider->rect.h
 		};
 		if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
-			for (view(world, up_view, type_info(struct upgrade))) {
+			for (view(world, up_view, type_info(struct transform), type_info(struct upgrade), type_info(struct collider))) {
+				struct transform* u_transform = view_get(&up_view, struct transform);
 				struct upgrade* upgrade = view_get(&up_view, struct upgrade);
+				struct collider* u_collider = view_get(&up_view, struct collider);
 
-				struct rect up_rect = {
-					upgrade->collider.x * sprite_scale,
-					upgrade->collider.y * sprite_scale,
-					upgrade->collider.w * sprite_scale,
-					upgrade->collider.h * sprite_scale,
+				struct rect up_rect = { 
+					u_transform->position.x + u_collider->rect.x,
+					u_transform->position.y + u_collider->rect.y,
+					u_collider->rect.w, u_collider->rect.y
 				};
 
 				if (rect_overlap(player_rect, up_rect, null)) {
@@ -285,10 +288,18 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
-		for (view(world, up_view, type_info(struct health_upgrade))) {
+		for (view(world, up_view, type_info(struct transform), type_info(struct health_upgrade), type_info(struct collider))) {
+			struct transform* u_transform = view_get(&up_view, struct transform);
 			struct health_upgrade* upgrade = view_get(&up_view, struct health_upgrade);
+			struct collider* u_collider = view_get(&up_view, struct collider);
 
-			if (rect_overlap(player_rect, upgrade->collider, null)) {
+			struct rect up_rect = { 
+				u_transform->position.x + u_collider->rect.x,
+				u_transform->position.y + u_collider->rect.y,
+				u_collider->rect.w, u_collider->rect.y
+			};
+
+			if (rect_overlap(player_rect, up_rect, null)) {
 				if (upgrade->booster) {
 					if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
 						player->max_hp += player_constants.health_boost_value;
@@ -318,20 +329,21 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 		}
 
-		for (view(world, c_view, type_info(struct transform), type_info(struct coin_pickup))) {
+		for (view(world, c_view, type_info(struct transform), type_info(struct coin_pickup), type_info(struct collider))) {
 			struct transform* c_transform = view_get(&c_view, struct transform);
 			struct coin_pickup* coin = view_get(&c_view, struct coin_pickup);
+			struct collider* c_collider = view_get(&c_view, struct collider);
 
 			coin->velocity.y += player_constants.gravity * ts;
 
 			c_transform->position = v2f_add(c_transform->position, v2f_mul(coin->velocity, make_v2f(ts, ts)));
 	
-			handle_body_collisions(*room, coin->collider, &c_transform->position, &coin->velocity);
+			handle_body_collisions(*room, c_collider->rect, &c_transform->position, &coin->velocity);
 
 			struct rect c_rect = {
-				c_transform->position.x + coin->collider.x,
-				c_transform->position.y + coin->collider.y,
-				coin->collider.w, coin->collider.h
+				c_transform->position.x + c_collider->rect.x,
+				c_transform->position.y + c_collider->rect.y,
+				c_collider->rect.w, c_collider->rect.y
 			};
 
 			if (rect_overlap(player_rect, c_rect, null)) {
@@ -342,14 +354,15 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		}
 
 		if (!player->invul) {
-			for (view(world, e_view, type_info(struct transform), type_info(struct enemy))) {
+			for (view(world, e_view, type_info(struct transform), type_info(struct enemy), type_info(struct collider))) {
 				struct transform* e_transform = view_get(&e_view, struct transform);
 				struct enemy* enemy = view_get(&e_view, struct enemy);
+				struct collider* e_collider = view_get(&e_view, struct collider);
 
 				struct rect e_rect = {
-					e_transform->position.x + enemy->collider.x,
-					e_transform->position.y + enemy->collider.y,
-					enemy->collider.w, enemy->collider.h
+					e_transform->position.x + e_collider->rect.x,
+					e_transform->position.y + e_collider->rect.y,
+					e_collider->rect.w, e_collider->rect.h
 				};
 
 				v2i n;
@@ -449,8 +462,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.up = face_up,
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
-				.damage = 4,
-				.collider = collider);
+				.damage = 4);
+			add_componentv(world, projectile, struct collider,
+				.rect = collider);
 
 			/* Spawn the muzzle flash */
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
@@ -470,9 +484,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 		{
 			struct rect ground_test_rect = {
-				transform->position.x + player->collider.x + 1,
-				transform->position.y + player->collider.y + player->collider.h,
-				player->collider.w - 2,
+				transform->position.x + collider->rect.x + 1,
+				transform->position.y + collider->rect.y + collider->rect.h,
+				collider->rect.w - 2,
 				player_constants.ground_hit_range
 			};
 
@@ -711,9 +725,10 @@ void hud_system(struct world* world, struct renderer* renderer) {
 }
 
 void projectile_system(struct world* world, struct room* room, double ts) {
-	for (view(world, view, type_info(struct transform), type_info(struct projectile))) {
+	for (view(world, view, type_info(struct transform), type_info(struct projectile), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct projectile* projectile = view_get(&view, struct projectile);
+		struct collider* collider = view_get(&view, struct collider);
 
 		if (projectile->up) {
 			transform->position.y -= projectile->speed * ts;
@@ -729,9 +744,9 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			destroy_entity(world, view.e);
 		} else {
 			struct rect rect = {
-				projectile->collider.x + transform->position.x,
-				projectile->collider.y + transform->position.y,
-				projectile->collider.w, projectile->collider.h
+				collider->rect.x + transform->position.x,
+				collider->rect.y + transform->position.y,
+				collider->rect.w, collider->rect.h
 			};
 
 			if (rect_room_overlap(room, rect, null)) {
@@ -768,11 +783,12 @@ void anim_fx_system(struct world* world, double ts) {
 void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
 	struct texture* atlas = get_texture(texid_icon);
 
-	for (view(world, view, type_info(struct damage_num_fx))) {
+	for (view(world, view, type_info(struct transform), type_info(struct damage_num_fx))) {
+		struct transform* transform = view_get(&view, struct transform);
 		struct damage_num_fx* d = view_get(&view, struct damage_num_fx);
 
 		d->velocity += 30.0 * ts;
-		d->position.y -= d->velocity * ts;
+		transform->position.y -= d->velocity * ts;
 
 		float x = 0.0f;
 
@@ -785,7 +801,7 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 
 			struct textured_quad quad = {
 				.texture = atlas,
-				.position = make_v2i(x + d->position.x, d->position.y),
+				.position = make_v2i(x + transform->position.x, transform->position.y),
 				.dimentions = make_v2i(rect.w * sprite_scale, rect.h * sprite_scale),
 				.rect = rect,
 				.color = { 197, 53, 53, d->timer > 1.0 ? 255 : (i32)(d->timer * 255) }
@@ -805,8 +821,8 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 
 entity new_damage_number(struct world* world, v2f position, i32 number) {
 	entity e = new_entity(world);
+	add_componentv(world, e, struct transform, .position = position);
 	add_componentv(world, e, struct damage_num_fx,
-		.position = position,
 		.velocity = 30.0,
 		.timer = 1.2);
 
@@ -827,8 +843,9 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct coin_pickup,
-		.collider = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
+	add_componentv(world, e, struct coin_pickup, 0);
+	add_componentv(world, e, struct collider,
+		.rect = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
 	return e;
 }
@@ -842,8 +859,9 @@ entity new_heart(struct world* world, struct room* room, v2f position, i32 value
 		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 	add_component(world, pickup, struct sprite, sprite);
 	add_componentv(world, pickup, struct health_upgrade, .id = 0,
-		.collider = { position.x, position.y, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale },
 		.booster = false, .value = value == 0 ? player_constants.health_pack_value : value);
+	add_componentv(world, pickup, struct collider,
+		.rect = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 
 	return pickup;
 }

@@ -32,11 +32,12 @@ entity new_bat(struct world* world, struct room* room, v2f position, char* path_
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
 	add_componentv(world, e, struct bat, .path_name = path_name);
-	add_componentv(world, e, struct enemy, .collider = {
+	add_componentv(world, e, struct enemy,
+		.hp = 1, .damage = 1, .money_drop = 1);
+	add_componentv(world, e, struct collider, .rect = {
 		0, 0,
 		sprite.frames[0].w * sprite_scale,
-		sprite.frames[0].h * sprite_scale },
-		.hp = 1, .damage = 1, .money_drop = 1);
+		sprite.frames[0].h * sprite_scale });
 
 	if (path_name) {
 		add_componentv(world, e, struct path_follow, .path_name = path_name, .room = room, .speed = 100.0f);
@@ -55,12 +56,13 @@ entity new_spider(struct world* world, struct room* room, v2f position) {
 		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 	add_component(world, e, struct sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct enemy, .collider = {
-		0, 0,
-		sprite.rect.w * sprite_scale,
-		sprite.rect.h * sprite_scale },
+	add_componentv(world, e, struct enemy,
 		.hp = 5, .damage = 1, .money_drop = 1);
 	add_componentv(world, e, struct spider, .room = room);
+	add_componentv(world, e, struct collider, .rect = {
+		0, 0,
+		sprite.rect.w * sprite_scale,
+		sprite.rect.h * sprite_scale });
 
 	return e;
 }
@@ -75,11 +77,12 @@ entity new_drill(struct world* world, struct room* room, v2f position) {
 		.dimentions = { sprite.frames[0].w * sprite_scale, sprite.frames[0].h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct enemy, .collider = {
+	add_componentv(world, e, struct enemy,
+		.hp = 10, .damage = 1, .money_drop = 1);
+	add_componentv(world, e, struct collider, .rect = {
 		0, 0,
 		sprite.frames[0].w * sprite_scale,
-		sprite.frames[0].h * sprite_scale },
-		.hp = 10, .damage = 1, .money_drop = 1);
+		sprite.frames[0].h * sprite_scale });
 	add_componentv(world, e, struct drill, .room = room);
 
 	return e;
@@ -129,10 +132,11 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 	}
 
 	/* Spider system */
-	for (view(world, view, type_info(struct transform), type_info(struct spider), type_info(struct enemy))) {
+	for (view(world, view, type_info(struct transform), type_info(struct spider), type_info(struct enemy), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct spider* spider = view_get(&view, struct spider);
 		struct enemy* enemy = view_get(&view, struct enemy);
+		struct collider* collider = view_get(&view, struct collider);
 
 		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
 
@@ -148,9 +152,9 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			transform->position = v2f_add(transform->position, v2f_mul(spider->velocity, make_v2f(ts, ts)));
 
 			struct rect e_rect = {
-				transform->position.x + enemy->collider.x,
-				transform->position.y + enemy->collider.y,
-				enemy->collider.w, enemy->collider.h
+				transform->position.x + collider->rect.x,
+				transform->position.y + collider->rect.y,
+				collider->rect.w, collider->rect.h
 			};
 
 			v2i normal;
@@ -163,7 +167,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 					spider->velocity.x = 100;
 				}
 			} else {
-				if (handle_body_collisions(spider->room, enemy->collider, &transform->position, &spider->velocity)) {
+				if (handle_body_collisions(spider->room, collider->rect, &transform->position, &spider->velocity)) {
 					spider->velocity.x = 0.0;
 				}
 			}
@@ -171,11 +175,13 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 	}
 
 	/* Drill system */
-	for (view(world, view, type_info(struct transform), type_info(struct drill), type_info(struct enemy), type_info(struct animated_sprite))) {
+	for (view(world, view, type_info(struct transform), type_info(struct drill), type_info(struct enemy),
+		type_info(struct animated_sprite), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct drill* drill = view_get(&view, struct drill);
 		struct enemy* enemy = view_get(&view, struct enemy);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+		struct collider* collider = view_get(&view, struct collider);
 
 		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
 
@@ -205,33 +211,35 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			transform->position = v2f_add(transform->position, v2f_mul(drill->velocity, make_v2f(ts, ts)));
 
 			struct rect e_rect = {
-				transform->position.x + enemy->collider.x,
-				transform->position.y + enemy->collider.y,
-				enemy->collider.w, enemy->collider.h
+				transform->position.x + collider->rect.x,
+				transform->position.y + collider->rect.y,
+				collider->rect.w, collider->rect.h
 			};
 
-			handle_body_collisions(drill->room, enemy->collider, &transform->position, &drill->velocity);
+			handle_body_collisions(drill->room, collider->rect, &transform->position, &drill->velocity);
 		}
 	}
 
-	for (view(world, view, type_info(struct transform), type_info(struct enemy))) {
+	for (view(world, view, type_info(struct transform), type_info(struct enemy), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct enemy* enemy = view_get(&view, struct enemy);
+		struct collider* collider = view_get(&view, struct collider);
 
 		struct rect e_rect = {
-			transform->position.x + enemy->collider.x,
-			transform->position.y + enemy->collider.y,
-			enemy->collider.w, enemy->collider.h
+			transform->position.x + collider->rect.x,
+			transform->position.y + collider->rect.y,
+			collider->rect.w, collider->rect.h
 		};
 
-		for (view(world, p_view, type_info(struct transform), type_info(struct projectile))) {
+		for (view(world, p_view, type_info(struct transform), type_info(struct projectile), type_info(struct collider))) {
 			struct transform* p_transform = view_get(&p_view, struct transform);
 			struct projectile* projectile = view_get(&p_view, struct projectile);
+			struct collider* p_collider = view_get(&p_view, struct collider);
 
 			struct rect p_rect = {
-				p_transform->position.x + projectile->collider.x,
-				p_transform->position.y + projectile->collider.y,
-				projectile->collider.w, projectile->collider.h
+				p_transform->position.x + p_collider->rect.x,
+				p_transform->position.y + p_collider->rect.y,
+				p_collider->rect.w, p_collider->rect.h
 			};
 
 			if (rect_overlap(e_rect, p_rect, null)) {
