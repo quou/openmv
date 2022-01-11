@@ -91,7 +91,7 @@ bool read_raw(const char* path, u8** buf, u64* size, bool term) {
 	fread(&header_size, sizeof(header_size), 1, file);
 	u64 header_count = header_size / header_el_size;
 
-	u64 name_hash = elf_hash(path, strlen(path));
+	u64 name_hash = elf_hash((const u8*)path, strlen(path));
 
 	for (u64 i = 0; i < header_count; i++) {
 		u64 hash, offset, f_size;
@@ -135,7 +135,7 @@ struct file file_open(const char* path) {
 	fread(&header_size, sizeof(header_size), 1, handle);
 	u64 header_count = header_size / header_el_size;
 
-	u64 name_hash = elf_hash(path, strlen(path));
+	u64 name_hash = elf_hash((const u8*)path, strlen(path));
 
 	for (u64 i = 0; i < header_count; i++) {
 		u64 hash, offset, f_size;
@@ -165,6 +165,7 @@ void file_close(struct file* file) {
 
 u64 file_seek(struct file* file, u64 offset) {
 	file->cursor = offset;
+	return file->cursor;
 }
 
 u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
