@@ -9,6 +9,8 @@ struct transform {
 	v2f position;
 	v2i dimentions;
 	i32 z;
+
+	float rotation;
 };
 
 struct sprite {
@@ -20,8 +22,6 @@ struct sprite {
 	bool hidden;
 	bool inverted;
 	bool unlit;
-
-	float rotation;
 };
 
 #define animated_sprite_max_frames 16

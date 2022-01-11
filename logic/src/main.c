@@ -39,7 +39,9 @@ API void CALL on_reload(void* instance) {
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	struct ui_context* ui = udata;
 
-	ui_text_input_event(ui, text);
+	if (logic_store->show_ui) {
+		ui_text_input_event(ui, text);
+	}
 }
 
 static void on_load_ask(bool yes, void* udata) {
@@ -69,6 +71,16 @@ static void on_quit(struct menu* menu) {
 	logic_store->paused = false;
 }
 
+void init_debug_ui() {
+	struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
+	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
+
+	logic_store->debug_font = load_font("res/DejaVuSans.ttf", 12.0f);
+
+	set_window_uptr(main_window, logic_store->ui);
+	set_on_text_input(main_window, on_text_input);
+}
+
 API void CALL on_init() {
 #ifndef PLATFORM_WINDOWS
 	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
@@ -95,8 +107,6 @@ API void CALL on_init() {
 	logic_store->renderer->camera_enable = true;
 	logic_store->ui_renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
-	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
-
 	logic_store->explosion_sound = load_audio_clip("res/aud/explosion.wav");
 
 	logic_store->paused = false;
@@ -109,9 +119,6 @@ API void CALL on_init() {
 
 	prompts_init(load_font("res/CourierPrime.ttf", 25.0f));
 	shops_init();
-
-	set_window_uptr(main_window, logic_store->ui);
-	set_on_text_input(main_window, on_text_input);
 
 	struct world* world = new_world();
 	logic_store->world = world;
@@ -134,7 +141,6 @@ API void CALL on_init() {
 }
 
 API void CALL on_update(double ts) {
-	struct ui_context* ui = logic_store->ui;
 	struct renderer* renderer = logic_store->renderer;
 	struct world* world = logic_store->world;
 
@@ -147,6 +153,15 @@ API void CALL on_update(double ts) {
 	if (key_just_pressed(main_window, KEY_ESCAPE)) {
 		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
+	}
+
+	if (key_just_pressed(main_window, KEY_F12)) {
+		if (logic_store->ui) {
+			logic_store->show_ui = !logic_store->show_ui;
+		} else {
+			init_debug_ui();
+			logic_store->show_ui = true;
+		}
 	}
 
 	double time_scale;
@@ -185,9 +200,11 @@ API void CALL on_update(double ts) {
 
 	draw_room_forground(logic_store->room, renderer, logic_store->ui_renderer);
 
-	renderer_flush(renderer);
-
 	renderer_end_frame(renderer);
+
+	if (!logic_store->show_ui) {
+		renderer_flush(renderer);
+	}
 
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
@@ -199,46 +216,82 @@ API void CALL on_update(double ts) {
 	renderer_flush(logic_store->ui_renderer);
 	renderer_end_frame(logic_store->ui_renderer);
 
-	ui_begin_frame(ui);
-	
-	if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
-		ui_text(ui, logic_store->fps_buf);
+	if (logic_store->ui && logic_store->show_ui) {
+		struct ui_context* ui = logic_store->ui;
 
-		char buf[256];
-		sprintf(buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
-		ui_text(ui, buf);
+		ui_begin_frame(ui);
 
-		sprintf(buf, "Entities: %u", get_alive_entity_count(world));
-		ui_text(ui, buf);
+		for (view(world, view, type_info(struct transform))) {
+			struct transform* transform = view_get(&view, struct transform);
 
-		sprintf(buf, "Pools: %u", get_component_pool_count(world));
-		ui_text(ui, buf);
+			char info_text[32];
+			sprintf(info_text, "x: %.2f y: %.2f z: %d", transform->position.x, transform->position.y, transform->z);
+			render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14 * 2,
+				make_color(0xffffff, 255));
 
-		if (ui_button(ui, "Give Coin")) {
-			struct player* player = get_component(world, logic_store->player, struct player);
+			sprintf(info_text, "rotation: %.2f", transform->rotation);
+			render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14,
+				make_color(0xffffff, 255));
 
-			player->money += 1;
+			struct textured_quad quad = {
+				.position = { transform->position.x, transform->position.y },
+				.dimentions = { 50, 1 },
+				.color = make_color(0xff0000, 255),
+				.rotation = transform->rotation
+			};
+			renderer_push(renderer, &quad);
+
+			struct textured_quad quad2 = {
+				.position = { transform->position.x, transform->position.y },
+				.dimentions = { 1, 50 },
+				.color = make_color(0x0000ff, 255),
+				.rotation = transform->rotation
+			};
+			renderer_push(renderer, &quad2);
 		}
 
-		if (ui_button(ui, "Reload Room")) {
-			char* path = copy_string(get_room_path(logic_store->room));
-			free_room(logic_store->room);
-			logic_store->room = load_room(world, path);
-			core_free(path);
+		renderer_flush(renderer);
+		renderer_end_frame(renderer);
+		
+		if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
+			ui_text(ui, logic_store->fps_buf);
+
+			char buf[256];
+			sprintf(buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
+			ui_text(ui, buf);
+
+			sprintf(buf, "Entities: %u", get_alive_entity_count(world));
+			ui_text(ui, buf);
+
+			sprintf(buf, "Pools: %u", get_component_pool_count(world));
+			ui_text(ui, buf);
+
+			if (ui_button(ui, "Give Coin")) {
+				struct player* player = get_component(world, logic_store->player, struct player);
+
+				player->money += 1;
+			}
+
+			if (ui_button(ui, "Reload Room")) {
+				char* path = copy_string(get_room_path(logic_store->room));
+				free_room(logic_store->room);
+				logic_store->room = load_room(world, path);
+				core_free(path);
+			}
+
+			if (ui_button(ui, "Save Game")) {
+				savegame();
+			}
+
+			if (ui_button(ui, "Load Game")) {
+				loadgame();
+			}
+
+			ui_end_window(ui);
 		}
 
-		if (ui_button(ui, "Save Game")) {
-			savegame();
-		}
-
-		if (ui_button(ui, "Load Game")) {
-			loadgame();
-		}
-
-		ui_end_window(ui);
+		ui_end_frame(ui);
 	}
-
-	ui_end_frame(ui);
 }
 
 API void CALL on_deinit() {
@@ -252,7 +305,11 @@ API void CALL on_deinit() {
 
 	free_renderer(logic_store->renderer);
 	free_renderer(logic_store->ui_renderer);
-	free_ui_context(logic_store->ui);
+
+	if (logic_store->ui) {
+		free_ui_context(logic_store->ui);
+	}
+
 	free_world(logic_store->world);
 
 	savegame_deinit();

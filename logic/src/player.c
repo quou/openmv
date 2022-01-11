@@ -416,17 +416,18 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
+			float rotation;
 			struct rect collider;
 
 			if (face_up) {
-				sprite.rotation = 90;
+				rotation = 90.0f;
 
 				collider.x = (-sprite.rect.h / 2) * sprite_scale;
 				collider.y = (-sprite.rect.w / 2) * sprite_scale;
 				collider.w = sprite.rect.h * sprite_scale;
 				collider.h = sprite.rect.w * sprite_scale;
 			} else {
-				sprite.rotation = 0;
+				rotation = 0.0f;
 
 				collider.x = (-sprite.rect.w / 2) * sprite_scale;
 				collider.y = (-sprite.rect.h / 2) * sprite_scale;
@@ -437,6 +438,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			entity projectile = new_entity(world);
 			add_componentv(world, projectile, struct transform,
 				.z = 500,
+				.rotation = rotation,
 				.position = v2f_add(transform->position, pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
 			get_component(world, projectile, struct transform)->position.x += player->face == player_face_left ?

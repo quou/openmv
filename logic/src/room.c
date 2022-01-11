@@ -824,7 +824,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 		transform->position = v2f_add(transform->position, v2f_mul(particle->velocity, make_v2f(ts, ts)));
 
-		sprite->rotation += ts * 100.0f;
+		transform->rotation += ts * 100.0f;
 
 		particle->lifetime -= ts;
 		if (particle->lifetime <= 0.0) {

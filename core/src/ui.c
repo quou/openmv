@@ -227,6 +227,8 @@ void ui_begin_frame(struct ui_context* ui) {
 
 	query_window(ui->window, &w, &h);
 
+	renderer_clip(ui->renderer, make_rect(0, 0, w, h));
+
 	ui->hovered = null;
 	ui->hot = null;
 
@@ -638,4 +640,8 @@ bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 	}
 
 	return false;
+}
+
+struct renderer* ui_get_renderer(struct ui_context* ui) {
+	return ui->renderer;
 }

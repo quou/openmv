@@ -69,7 +69,7 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.origin = s->origin,
 			.inverted = s->inverted,
 			.unlit = s->unlit,
-			.rotation = s->rotation
+			.rotation = t->rotation
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {
@@ -102,7 +102,7 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.origin = s->origin,
 			.inverted = s->inverted,
 			.unlit = s->unlit,
-			.rotation = s->rotation
+			.rotation = t->rotation
 		};
 
 		render_queue_push(&queue, (struct render_queue_item) {

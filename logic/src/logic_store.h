@@ -13,6 +13,9 @@ struct logic_store {
 	struct renderer* renderer;
 	struct renderer* ui_renderer;
 	struct ui_context* ui;
+	bool show_ui;
+
+	struct font* debug_font;
 
 	struct world* world;
 	struct room* room;
