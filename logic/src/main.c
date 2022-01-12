@@ -81,6 +81,19 @@ void init_debug_ui() {
 	set_on_text_input(main_window, on_text_input);
 }
 
+void load_default_room() {
+	if (logic_store->room) {
+		free_room(logic_store->room);
+	}	
+
+	logic_store->room = load_room(logic_store->world, "res/maps/a1/incinerator.dat");
+
+	v2i spawn = get_spawn(logic_store->room);
+	struct collider* pcol = get_component(logic_store->world, logic_store->player, struct collider);
+	get_component(logic_store->world, logic_store->player, struct transform)->position =
+		make_v2f(spawn.x - (pcol->rect.w / 2), spawn.y - pcol->rect.h);
+}
+
 API void CALL on_init() {
 #ifndef PLATFORM_WINDOWS
 	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
@@ -126,18 +139,13 @@ API void CALL on_init() {
 	set_component_destroy_func(world, struct upgrade, on_upgrade_destroy);
 
 	entity player = new_player_entity(world);
-	struct player* pc = get_component(world, player, struct player);
-	struct collider* pcol = get_component(world, player, struct collider);
 
 	logic_store->player = player;
 
 	if (savegame_exists()) {
 		loadgame();
 	} else {
-		logic_store->room = load_room(world, "res/maps/a1/incinerator.dat");
-
-		v2i spawn = get_spawn(logic_store->room);
-		get_component(world, player, struct transform)->position = make_v2f(spawn.x - (pcol->rect.w / 2), spawn.y - pcol->rect.h);
+		load_default_room();
 	}
 }
 

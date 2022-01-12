@@ -39,3 +39,5 @@ struct logic_store {
 };
 
 extern struct logic_store* logic_store;
+
+void load_default_room();

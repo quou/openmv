@@ -116,7 +116,11 @@ const struct player_constants player_constants = {
 
 static void on_player_die(bool yes, void* udata) {
 	if (yes) {
-		loadgame();
+		if (savegame_exists()) {
+			loadgame();
+		} else {
+			load_default_room();
+		}
 	} else {
 		set_window_should_close(main_window, true);
 	}
@@ -272,7 +276,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				struct rect up_rect = { 
 					u_transform->position.x + u_collider->rect.x,
 					u_transform->position.y + u_collider->rect.y,
-					u_collider->rect.w, u_collider->rect.y
+					u_collider->rect.w, u_collider->rect.h
 				};
 
 				if (rect_overlap(player_rect, up_rect, null)) {
@@ -296,7 +300,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			struct rect up_rect = { 
 				u_transform->position.x + u_collider->rect.x,
 				u_transform->position.y + u_collider->rect.y,
-				u_collider->rect.w, u_collider->rect.y
+				u_collider->rect.w, u_collider->rect.h
 			};
 
 			if (rect_overlap(player_rect, up_rect, null)) {
@@ -321,6 +325,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 					}
 
 					play_audio_clip(player->heart_sound);
+					new_impact_effect(world, v2f_add(u_transform->position, make_v2f(up_rect.w / 2, up_rect.h / 2)), animsprid_poof);
 				}
 				if (upgrade->id != 0) {
 					player->hp_ups |= upgrade->id;

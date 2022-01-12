@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="88">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="39" height="12" tilewidth="16" tileheight="16" infinite="0" nextlayerid="17" nextobjectid="98">
  <editorsettings>
   <export target="incinerator.dat" format="dat"/>
  </editorsettings>
@@ -26,7 +26,7 @@
 137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137,138,137
 </data>
  </layer>
- <layer id="3" name="midground" width="39" height="12">
+ <layer id="3" name="midground" width="39" height="12" locked="1">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -58,7 +58,7 @@
 8,8,8,8,8,8,8,8,31,31,31,31,31,31,31,31,31,31,31,31,31,8,8,8,8,31,31,31,31,31,31,8,8,8,8,8,8,8,8
 </data>
  </layer>
- <objectgroup id="13" name="enemies" locked="1">
+ <objectgroup id="13" name="enemies">
   <object id="76" name="bat" x="144" y="80">
    <point/>
   </object>
@@ -66,10 +66,12 @@
  <objectgroup id="11" name="entity_spawners" locked="1">
   <object id="17" template="../../templates/entity_spawner.tx" x="240" y="0"/>
  </objectgroup>
- <objectgroup id="16" name="save_points">
+ <objectgroup id="16" name="save_points" locked="1">
   <object id="87" x="96" y="128" width="16" height="16"/>
  </objectgroup>
- <objectgroup id="15" name="upgrade_pickups"/>
+ <objectgroup id="15" name="upgrade_pickups" locked="1">
+  <object id="90" template="../../templates/health_pack.tx" x="160" y="96"/>
+ </objectgroup>
  <objectgroup id="5" name="meta" visible="0" locked="1">
   <object id="2" name="camera_bounds" x="0" y="0" width="617.333" height="192"/>
  </objectgroup>
@@ -123,7 +125,7 @@
    <point/>
   </object>
  </objectgroup>
- <objectgroup id="8" name="dialogue_triggers" locked="1">
+ <objectgroup id="8" name="dialogue_triggers">
   <object id="13" x="48" y="128" width="16" height="16">
    <properties>
     <property name="on_next" value="broken_robot_on_next"/>
