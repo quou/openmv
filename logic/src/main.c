@@ -173,6 +173,10 @@ API void CALL on_update(double ts) {
 		}
 	}
 
+	if (logic_store->show_ui && key_just_pressed(main_window, KEY_F11)) {
+		logic_store->show_components = !logic_store->show_components;
+	}
+
 	double time_scale;
 	if (logic_store->frozen || logic_store->paused) {
 		time_scale = 0.0;
@@ -233,14 +237,42 @@ API void CALL on_update(double ts) {
 		for (view(world, view, type_info(struct transform))) {
 			struct transform* transform = view_get(&view, struct transform);
 
-			char info_text[32];
-			sprintf(info_text, "x: %.2f y: %.2f z: %d", transform->position.x, transform->position.y, transform->z);
-			render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14 * 2,
+			if (logic_store->show_components) {
+				struct type_info types[32];
+
+				u32 c = get_entity_component_types(world, view.e, types, 32);
+
+				char info_text[32];
+				sprintf(info_text, "id: %u version: %u", get_entity_id(view.e), get_entity_version(view.e));
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - (14 * 3) - (c * 14),
+					make_color(0xffffff, 255));
+
+				sprintf(info_text, "x: %.2f y: %.2f z: %d", transform->position.x, transform->position.y, transform->z);
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - (14 * 2) - (c * 14),
+					make_color(0xffffff, 255));
+
+				sprintf(info_text, "rotation: %.2f", transform->rotation);
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14 - (c * 14),
 				make_color(0xffffff, 255));
 
-			sprintf(info_text, "rotation: %.2f", transform->rotation);
-			render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14,
-				make_color(0xffffff, 255));
+				for (u32 i = 0; i < c; i++) {
+					render_text(renderer, logic_store->debug_font, types[i].name, transform->position.x, transform->position.y - 14 - (i * 14),
+						make_color(0xffffff, 255));
+				}
+			} else {
+				char info_text[32];
+				sprintf(info_text, "id: %u version: %u", get_entity_id(view.e), get_entity_version(view.e));
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - (14 * 3),
+					make_color(0xffffff, 255));
+
+				sprintf(info_text, "x: %.2f y: %.2f z: %d", transform->position.x, transform->position.y, transform->z);
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - (14 * 2),
+					make_color(0xffffff, 255));
+
+				sprintf(info_text, "rotation: %.2f", transform->rotation);
+				render_text(renderer, logic_store->debug_font, info_text, transform->position.x, transform->position.y - 14,
+					make_color(0xffffff, 255));
+			}
 
 			struct textured_quad quad = {
 				.position = { transform->position.x, transform->position.y },

@@ -58,7 +58,7 @@
 8,8,8,8,8,8,8,8,31,31,31,31,31,31,31,31,31,31,31,31,31,8,8,8,8,31,31,31,31,31,31,8,8,8,8,8,8,8,8
 </data>
  </layer>
- <objectgroup id="13" name="enemies">
+ <objectgroup id="13" name="enemies" locked="1">
   <object id="76" name="bat" x="144" y="80">
    <point/>
   </object>
@@ -69,9 +69,7 @@
  <objectgroup id="16" name="save_points" locked="1">
   <object id="87" x="96" y="128" width="16" height="16"/>
  </objectgroup>
- <objectgroup id="15" name="upgrade_pickups" locked="1">
-  <object id="90" template="../../templates/health_pack.tx" x="160" y="96"/>
- </objectgroup>
+ <objectgroup id="15" name="upgrade_pickups"/>
  <objectgroup id="5" name="meta" visible="0" locked="1">
   <object id="2" name="camera_bounds" x="0" y="0" width="617.333" height="192"/>
  </objectgroup>

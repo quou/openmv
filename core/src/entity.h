@@ -60,6 +60,8 @@ API entity new_entity(struct world* world);
 API void destroy_entity(struct world* world, entity e);
 API bool entity_valid(struct world* world, entity e);
 
+API u32 get_entity_component_types(struct world* world, entity e, struct type_info* info, u32 count);
+
 API u32 get_component_pool_count(struct world* world);
 API u32 get_alive_entity_count(struct world* world);
 

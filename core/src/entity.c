@@ -352,6 +352,23 @@ bool entity_valid(struct world* world, entity e) {
 	return id < world->entity_count && world->entities[id] == e;
 }
 
+u32 get_entity_component_types(struct world* world, entity e, struct type_info* info, u32 count) {
+	if (count == 0) { return 0; }
+
+	u32 c = 0;
+
+	for (u32 i = 0; i < world->pool_count; i++) {
+		if (pool_has(&world->pools[i], e)) {
+			info[c++] = world->pools[i].type;
+			if (c > count) {
+				return c;
+			}
+		}
+	}
+
+	return c;
+}
+
 void _set_component_create_func(struct world* world, struct type_info type, component_create_func f) {
 	get_pool(world, type)->on_create = f;
 }
