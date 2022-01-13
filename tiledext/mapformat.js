@@ -158,18 +158,18 @@ function write_layer(tilesets, layer, file) {
 			write_str(obj.name, file);
 			write_str(obj.type, file);
 
-			if (obj.polygon.length > 0) { /* Polygon */
+			if (obj.shape == MapObject.Polygon || obj.shape == MapObject.Polyline) {
 				write_i32(2, file);
 				write_u32(obj.polygon.length, file);
 				for (var point of obj.polygon) {
 					write_f32(obj.x + point.x, file);
 					write_f32(obj.y + point.y, file);
 				}
-			} else if (obj.width == 0 && obj.height == 0) { /* Point */
+			} else if (obj.shape == MapObject.Point) {
 				write_i32(1, file);
 				write_f32(obj.x, file);
 				write_f32(obj.y, file);
-			} else { /* Rectangle */
+			} else {
 				write_i32(0, file);
 				write_f32(obj.x, file);
 				write_f32(obj.y, file);
