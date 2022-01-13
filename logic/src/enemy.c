@@ -88,6 +88,27 @@ entity new_drill(struct world* world, struct room* room, v2f position) {
 	return e;
 }
 
+entity new_scav(struct world* world, struct room* room, v2f position) {
+	entity e = new_entity(world);
+
+	struct animated_sprite sprite = get_animated_sprite(random_chance(50) ? animsprid_scav_idle_left : animsprid_scav_idle_right);
+
+	add_componentv(world, e, struct transform,
+		.position = { position.x - sprite.frames[0].w * sprite_scale, position.y - sprite.frames[0].h * sprite_scale },
+		.dimentions = { sprite.frames[0].w * sprite_scale, sprite.frames[0].h * sprite_scale });
+	add_component(world, e, struct animated_sprite, sprite);
+	add_componentv(world, e, struct room_child, .parent = room);
+	add_componentv(world, e, struct enemy,
+		.hp = 10, .damage = 1, .money_drop = 1);
+	add_componentv(world, e, struct collider, .rect = {
+		0, 0,
+		sprite.frames[0].w * sprite_scale,
+		sprite.frames[0].h * sprite_scale });
+	add_componentv(world, e, struct scav, .room = room);
+
+	return e;
+}
+
 void enemy_system(struct world* world, struct room* room, double ts) {
 	/* Bat system */
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
@@ -220,6 +241,144 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		}
 	}
 
+	/* Scavenger system */
+	for (view(world, view, type_info(struct transform), type_info(struct scav), type_info(struct enemy),
+		type_info(struct animated_sprite), type_info(struct collider))) {
+		struct transform* transform = view_get(&view, struct transform);
+		struct scav* scav = view_get(&view, struct scav);
+		struct enemy* enemy = view_get(&view, struct enemy);
+		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
+		struct collider* collider = view_get(&view, struct collider);
+
+		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
+		struct collider* p_collider = get_component(world, logic_store->player, struct collider);
+
+		struct rect p_rect = {
+			(i32)p_transform->position.x + p_collider->rect.x,
+			(i32)p_transform->position.y + p_collider->rect.y,
+			p_collider->rect.w, p_collider->rect.h
+		};
+
+		float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+
+		if (!scav->triggered) {
+
+			if (dist_sqrd < 100000.0f) {
+				scav->triggered = true;
+			}
+		} else {
+			float dist = sqrtf(dist_sqrd);
+
+			scav->velocity.y += g_gravity * ts;
+
+			if (dist > 300.0f) {
+				if (p_transform->position.x < transform->position.x) {
+					scav->velocity.x -= 2000 * ts;
+				} else {
+					scav->velocity.x += 2000 * ts;
+				}
+			} else {
+				if (p_transform->position.x < transform->position.x) {
+					scav->velocity.x += 800 * ts;
+				} else {
+					scav->velocity.x -= 800 * ts;
+				}
+			}
+
+			if (scav->velocity.x > 300) {
+				scav->velocity.x = 300;
+			} else if (scav->velocity.x < -300) {
+				scav->velocity.x = -300;
+			}
+
+			v2f to_player = v2f_sub(transform->position, p_transform->position);
+
+			u32 face;
+			v2f muzzle_pos;
+
+			struct rect los_rect;
+			if (to_player.x > 0.0f) {
+				los_rect = (struct rect) {
+					transform->position.x - 300, transform->position.y + 8,
+					300, 1
+				};
+
+				face = player_face_left; /* ? */
+				muzzle_pos = (v2f) { 4 * sprite_scale, 11 * sprite_scale };
+
+				if (sprite->id != animsprid_scav_run_right) {
+					*sprite = get_animated_sprite(animsprid_scav_run_right);
+				}
+			} else if (to_player.x < 0.0f) {
+				los_rect = (struct rect) {
+					transform->position.x, transform->position.y + 8,
+					300, 1
+				};
+
+				face = player_face_right;
+				muzzle_pos = (v2f) { 12 * sprite_scale, 11 * sprite_scale };
+
+				if (sprite->id != animsprid_scav_run_left) {
+					*sprite = get_animated_sprite(animsprid_scav_run_left);
+				}
+			}
+
+			scav->shoot_cooldown -= ts;
+			if (dist > 200.0f && rect_overlap(p_rect, los_rect, null) && scav->shoot_cooldown <= 0.0) {
+				scav->shoot_cooldown = 1.0;
+
+				/* Spawn the projectile */
+				struct sprite sprite = get_sprite(sprid_projectile);
+				float rotation = 0.0;
+				struct rect col;
+
+				col.x = (-sprite.rect.h / 2) * sprite_scale;
+				col.y = (-sprite.rect.w / 2) * sprite_scale;
+				col.w = sprite.rect.h * sprite_scale;
+				col.h = sprite.rect.w * sprite_scale;
+
+				entity projectile = new_entity(world);
+				add_componentv(world, projectile, struct transform,
+					.z = 500,
+					.rotation = rotation,
+					.position = v2f_add(transform->position, muzzle_pos),
+					.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(sprite.rect.w, sprite.rect.h)));
+				get_component(world, projectile, struct transform)->position.x += face == player_face_left ?
+					-20 : 20;
+				add_component(world, projectile, struct sprite, sprite);
+				add_componentv(world, projectile, struct projectile,
+					.face = face,
+					.up = false,
+					.lifetime = 1.0,
+					.speed = 1000.0f,
+					.damage = 1,
+					.from = view.e);
+				add_componentv(world, projectile, struct collider,
+					.rect = col);
+
+				/* Spawn the muzzle flash */
+				struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);
+				entity flash = new_entity(world);
+				add_componentv(world, flash, struct transform,
+					.z = 500,
+					.position = v2f_add(transform->position, muzzle_pos),
+					.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
+				add_component(world, flash, struct animated_sprite, f_sprite);
+				add_componentv(world, flash, struct anim_fx);
+			}
+
+			transform->position = v2f_add(transform->position, v2f_mul(scav->velocity, make_v2f(ts, ts)));
+
+			struct rect e_rect = {
+				transform->position.x + collider->rect.x,
+				transform->position.y + collider->rect.y,
+				collider->rect.w, collider->rect.h
+			};
+
+			handle_body_collisions(scav->room, collider->rect, &transform->position, &scav->velocity);
+		}
+	}
+
 	for (view(world, view, type_info(struct transform), type_info(struct enemy), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct enemy* enemy = view_get(&view, struct enemy);
@@ -242,7 +401,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				p_collider->rect.w, p_collider->rect.h
 			};
 
-			if (rect_overlap(e_rect, p_rect, null)) {
+			if (projectile->from != view.e && rect_overlap(e_rect, p_rect, null)) {
 				new_impact_effect(world, p_transform->position, animsprid_blood);
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }

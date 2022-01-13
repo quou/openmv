@@ -297,6 +297,8 @@ struct room* load_room(struct world* world, const char* path) {
 								new_spider(world, room, pos);
 							} else if (strcmp(object->name, "drill") == 0) {
 								new_drill(world, room, pos);
+							} else if (strcmp(object->name, "scav") == 0) {
+								new_scav(world, room, pos);
 							}
 						}
 					}

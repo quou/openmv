@@ -92,6 +92,8 @@ struct projectile {
 	double lifetime;
 	float speed;
 
+	entity from;
+
 	i32 damage;
 };
 

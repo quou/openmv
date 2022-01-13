@@ -149,6 +149,25 @@ entity new_player_entity(struct world* world) {
 	return e;
 }
 
+static void player_take_damage(struct world* world, entity p, i32 amount) {
+	struct transform* transform = get_component(world, p, struct transform);
+	struct player* player = get_component(world, p, struct player);
+
+	player->invul = true;
+	player->invul_timer = player_constants.invul_time;
+	player->invul_flash_timer = player_constants.invul_flash_interval;
+	player->visible = false;
+
+	new_damage_number(world, transform->position, -amount);
+
+	player->hp -= amount;
+	play_audio_clip(player->hurt_sound);
+
+	if (player->hp <= 0) {
+		kill_player(world, p);
+	}
+}
+
 void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts) {
 	for (view(world, view,
 			type_info(struct transform),
@@ -374,20 +393,26 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				if (rect_overlap(player_rect, e_rect, &n)) {
 					player->velocity = v2f_mul(make_v2f(-n.x, -n.y), player_constants.knockback);
 
-					player->invul = true;
-					player->invul_timer = player_constants.invul_time;
-					player->invul_flash_timer = player_constants.invul_flash_interval;
-					player->visible = false;
+					player_take_damage(world, view.e, enemy->damage);
 
-					new_damage_number(world, transform->position, -enemy->damage);
+					break;
+				}
+			}
 
-					player->hp -= enemy->damage;
-					play_audio_clip(player->hurt_sound);
+			for (view(world, p_view, type_info(struct transform), type_info(struct projectile), type_info(struct collider))) {
+				struct transform* p_transform = view_get(&p_view, struct transform);
+				struct projectile* projectile = view_get(&p_view, struct projectile);
+				struct collider* p_collider = view_get(&p_view, struct collider);
 
-					if (player->hp <= 0) {
-						kill_player(world, view.e);
-					}
+				struct rect p_rect = {
+					p_transform->position.x + p_collider->rect.x,
+					p_transform->position.y + p_collider->rect.y,
+					p_collider->rect.w, p_collider->rect.h
+				};
 
+				if (projectile->from != view.e && rect_overlap(player_rect, p_rect, null)) {
+					player_take_damage(world, view.e, projectile->damage);
+					destroy_entity(world, p_view.e);
 					break;
 				}
 			}
@@ -435,22 +460,22 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			/* Spawn the projectile */
 			struct sprite sprite = get_sprite(sprid_projectile);
 			float rotation;
-			struct rect collider;
+			struct rect p_rect;
 
 			if (face_up) {
 				rotation = 90.0f;
 
-				collider.x = (-sprite.rect.h / 2) * sprite_scale;
-				collider.y = (-sprite.rect.w / 2) * sprite_scale;
-				collider.w = sprite.rect.h * sprite_scale;
-				collider.h = sprite.rect.w * sprite_scale;
+				p_rect.x = (-sprite.rect.h / 2) * sprite_scale;
+				p_rect.y = (-sprite.rect.w / 2) * sprite_scale;
+				p_rect.w = sprite.rect.h * sprite_scale;
+				p_rect.h = sprite.rect.w * sprite_scale;
 			} else {
 				rotation = 0.0f;
 
-				collider.x = (-sprite.rect.w / 2) * sprite_scale;
-				collider.y = (-sprite.rect.h / 2) * sprite_scale;
-				collider.w = sprite.rect.w * sprite_scale;
-				collider.h = sprite.rect.h * sprite_scale;
+				p_rect.x = (-sprite.rect.w / 2) * sprite_scale;
+				p_rect.y = (-sprite.rect.h / 2) * sprite_scale;
+				p_rect.w = sprite.rect.w * sprite_scale;
+				p_rect.h = sprite.rect.h * sprite_scale;
 			}
 
 			entity projectile = new_entity(world);
@@ -467,9 +492,10 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.up = face_up,
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
-				.damage = 4);
+				.damage = 4,
+				.from = view.e);
 			add_componentv(world, projectile, struct collider,
-				.rect = collider);
+				.rect = p_rect);
 
 			/* Spawn the muzzle flash */
 			struct animated_sprite f_sprite = get_animated_sprite(animsprid_muzzle_flash);

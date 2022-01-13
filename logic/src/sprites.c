@@ -373,6 +373,54 @@ struct animated_sprite anim_sprites[] = {
 		.frame_count = 5,
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_scav_run_left] = {
+		.id = animsprid_scav_run_left,
+		.texture = (struct texture*)texid_bad,
+		.frames = {
+			{ 0,  16, 16, 16 },
+			{ 16, 16, 16, 16 },
+			{ 32, 16, 16, 16 }
+		},
+		.speed = 8.9,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_scav_run_right] = {
+		.id = animsprid_scav_run_right,
+		.texture = (struct texture*)texid_bad,
+		.frames = {
+			{ 0,  32, 16, 16 },
+			{ 16, 32, 16, 16 },
+			{ 32, 32, 16, 16 }
+		},
+		.speed = 8.9,
+		.frame_count = 3,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_scav_idle_left] = {
+		.id = animsprid_scav_idle_left,
+		.texture = (struct texture*)texid_bad,
+		.frames = {
+			{ 0,  48, 16, 16 }
+		},
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
+	[animsprid_scav_idle_right] = {
+		.id = animsprid_scav_idle_right,
+		.texture = (struct texture*)texid_bad,
+		.frames = {
+			{ 16, 48, 16, 16 }
+		},
+		.speed = 0,
+		.frame_count = 1,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
 	}
 };
 
