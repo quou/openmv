@@ -1,5 +1,3 @@
-include "dialogue"
-
 project "logic"
 	kind "SharedLib"
 	language "C"

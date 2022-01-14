@@ -10,17 +10,14 @@
 u8* buffer;
 
 static const char* files[] = {
-	"premake5.lua",
 	"core/premake5.lua",
 	"bootstrapper/premake5.lua",
 	"logic/premake5.lua",
 	"res/CourierPrime.ttf",
 	"res/shaders/sprite.glsl",
-	"lua54/premake5.lua",
-	"lua54/LICENSE",
 	"util/packer/premake5.lua",
 	"util/mksdk/premake5.lua",
-	"util/script_tester/premake5.lua",
+	"util/test/premake5.lua",
 	null
 };
 
@@ -29,9 +26,7 @@ static const char* dirs[] = {
 	"bootstrapper/src/",
 	"util/packer/src/",
 	"util/mksdk/src/",
-	"util/script_tester/src/",
-	"util/script_tester/res/",
-	"lua54/src/",
+	"util/test/src/",
 	null
 };
 
@@ -104,6 +99,7 @@ i32 main() {
 	mtar_open(&tar, "sdk.tar", "w");
 
 	add_file_ex(&tar, "util/mksdk/template/logic.c", "logic/src/main.c");
+	add_file_ex(&tar, "util/mksdk/template/premake5.lua", "premake5.lua");
 	add_file_ex(&tar, "util/mksdk/template/packed.include", "packed.include");
 
 	for (const char** dirname = dirs; *dirname != null; dirname++) {
