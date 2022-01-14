@@ -493,7 +493,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.lifetime = player_constants.projectile_lifetime,
 				.speed = player_constants.projectile_speed,
 				.damage = 4,
-				.from = view.e);
+				.from = logic_store->player);
 			add_componentv(world, projectile, struct collider,
 				.rect = p_rect);
 

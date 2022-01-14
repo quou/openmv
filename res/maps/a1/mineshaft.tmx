@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="44" height="34" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="57">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="44" height="34" tilewidth="16" tileheight="16" infinite="0" nextlayerid="14" nextobjectid="73">
  <editorsettings>
   <export target="mineshaft.dat" format="dat"/>
  </editorsettings>
@@ -144,7 +144,7 @@
    </properties>
    <point/>
   </object>
-  <object id="50" name="scav" x="496" y="352">
+  <object id="63" name="scav" x="512" y="352">
    <point/>
   </object>
  </objectgroup>

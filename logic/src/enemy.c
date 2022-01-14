@@ -324,7 +324,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			}
 
 			scav->shoot_cooldown -= ts;
-			if (dist > 200.0f && rect_overlap(p_rect, los_rect, null) && scav->shoot_cooldown <= 0.0) {
+			if (rect_overlap(p_rect, los_rect, null) && scav->shoot_cooldown <= 0.0) {
 				scav->shoot_cooldown = 1.0;
 
 				/* Spawn the projectile */
@@ -350,7 +350,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 					.face = face,
 					.up = false,
 					.lifetime = 1.0,
-					.speed = 1000.0f,
+					.speed = 500.0f,
 					.damage = 1,
 					.from = view.e);
 				add_componentv(world, projectile, struct collider,
@@ -401,7 +401,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				p_collider->rect.w, p_collider->rect.h
 			};
 
-			if (projectile->from != view.e && rect_overlap(e_rect, p_rect, null)) {
+			if (projectile->from == logic_store->player && rect_overlap(e_rect, p_rect, null)) {
 				new_impact_effect(world, p_transform->position, animsprid_blood);
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }
