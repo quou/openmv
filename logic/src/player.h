@@ -89,8 +89,10 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position);
 struct projectile {
 	i32 face;
 	bool up;
-	double lifetime;
+	float distance;
 	float speed;
+
+	v2f original_position;
 
 	entity from;
 

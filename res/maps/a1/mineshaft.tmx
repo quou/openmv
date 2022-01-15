@@ -131,7 +131,7 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup id="11" name="enemies">
+ <objectgroup id="11" name="enemies" locked="1">
   <object id="44" name="spider" x="576" y="496">
    <point/>
   </object>

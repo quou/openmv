@@ -52,7 +52,7 @@ struct player_constants {
 	double invul_time;
 	double invul_flash_interval;
 
-	double projectile_lifetime;
+	float projectile_distance;
 	double projectile_speed;
 
 	double shoot_cooldown;
@@ -92,7 +92,7 @@ const struct player_constants player_constants = {
 	.invul_time = 1.5,
 	.invul_flash_interval = 0.05,
 	
-	.projectile_lifetime = 1.0,
+	.projectile_distance = 200,
 	.projectile_speed = 1000.0,
 
 	.shoot_cooldown = 0.1,
@@ -126,7 +126,15 @@ static void on_player_die(bool yes, void* udata) {
 	}
 }
 
+static void on_projectile_create(struct world* world, entity e, void* component) {
+	struct projectile* projectile = (struct projectile*)component;
+
+	projectile->original_position = get_component(world, e, struct transform)->position;
+}
+
 entity new_player_entity(struct world* world) {
+	set_component_create_func(world, struct projectile, on_projectile_create);
+
 	struct texture* tex = load_texture("res/bmp/char.bmp");
 
 	entity e = new_entity(world);
@@ -490,7 +498,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
 				.up = face_up,
-				.lifetime = player_constants.projectile_lifetime,
+				.distance = player_constants.projectile_distance,
 				.speed = player_constants.projectile_speed,
 				.damage = 4,
 				.from = logic_store->player);
@@ -769,8 +777,10 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			transform->position.x += projectile->speed * ts;
 		}
 
-		projectile->lifetime -= ts;
-		if (projectile->lifetime <= 0.0) {
+		float dist = sqrtf(powf(transform->position.x - projectile->original_position.x, 2.0f)
+			+ powf(transform->position.y - projectile->original_position.y, 2.0f));
+
+		if (dist > projectile->distance) {
 			new_impact_effect(world, transform->position, animsprid_projectile_impact);
 			destroy_entity(world, view.e);
 		} else {

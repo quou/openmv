@@ -349,7 +349,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				add_componentv(world, projectile, struct projectile,
 					.face = face,
 					.up = false,
-					.lifetime = 1.0,
+					.distance = 100,
 					.speed = 500.0f,
 					.damage = 1,
 					.from = view.e);
