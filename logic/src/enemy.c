@@ -99,7 +99,7 @@ entity new_scav(struct world* world, struct room* room, v2f position) {
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
 	add_componentv(world, e, struct enemy,
-		.hp = 10, .damage = 1, .money_drop = 1);
+		.hp = 10, .damage = 1, .money_drop = 3);
 	add_componentv(world, e, struct collider, .rect = {
 		0, 0,
 		sprite.frames[0].w * sprite_scale,

@@ -370,7 +370,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 
 			c_transform->position = v2f_add(c_transform->position, v2f_mul(coin->velocity, make_v2f(ts, ts)));
 	
-			handle_body_collisions(*room, c_collider->rect, &c_transform->position, &coin->velocity);
+			if (handle_body_collisions(*room, c_collider->rect, &c_transform->position, &coin->velocity)) {
+				coin->velocity.x = 0.0f;
+			}
 
 			struct rect c_rect = {
 				c_transform->position.x + c_collider->rect.x,
@@ -884,7 +886,7 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct coin_pickup, 0);
+	add_componentv(world, e, struct coin_pickup, .velocity.x = (float)random_double(-100, 100));
 	add_componentv(world, e, struct collider,
 		.rect = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
