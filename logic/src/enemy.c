@@ -262,7 +262,6 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
 
 		if (!scav->triggered) {
-
 			if (dist_sqrd < 100000.0f) {
 				scav->triggered = true;
 			}
@@ -305,6 +304,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				face = player_face_left; /* ? */
 				muzzle_pos = (v2f) { 4 * sprite_scale, 11 * sprite_scale };
+				collider->rect = make_rect(3 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale);
 
 				if (sprite->id != animsprid_scav_run_right) {
 					*sprite = get_animated_sprite(animsprid_scav_run_right);
@@ -317,6 +317,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				face = player_face_right;
 				muzzle_pos = (v2f) { 12 * sprite_scale, 11 * sprite_scale };
+				collider->rect = make_rect(4 * sprite_scale, 1 * sprite_scale, 9 * sprite_scale, 15 * sprite_scale);
 
 				if (sprite->id != animsprid_scav_run_left) {
 					*sprite = get_animated_sprite(animsprid_scav_run_left);
@@ -401,7 +402,8 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				p_collider->rect.w, p_collider->rect.h
 			};
 
-			if (projectile->from == logic_store->player && rect_overlap(e_rect, p_rect, null)) {
+			if (projectile->from == logic_store->player
+				&& rect_overlap(e_rect, p_rect, null)) {
 				new_impact_effect(world, p_transform->position, animsprid_blood);
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }
