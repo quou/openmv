@@ -349,7 +349,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				add_componentv(world, projectile, struct projectile,
 					.face = face,
 					.up = false,
-					.distance = 100,
+					.distance = 200,
 					.speed = 500.0f,
 					.damage = 1,
 					.from = view.e);
@@ -410,34 +410,33 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				enemy->hp -= projectile->damage;
 
-				struct player* player = get_component(world, logic_store->player, struct player);
-
 				enemy->invul = true;
 				enemy->invul_timer = 0.1;
+			}
+		}
 
-				if (enemy->hp <= 0) {
-					/* Chance to get a heart is much higher if the player has low hp. */
-					double chance = 5;
-					if (player->hp < player->max_hp) {
-						chance = 30;
-					}
+		struct player* player = get_component(world, logic_store->player, struct player);
+		if (enemy->hp <= 0) {
+			/* Chance to get a heart is much higher if the player has low hp. */
+			double chance = 5;
+			if (player->hp < player->max_hp) {
+				chance = 30;
+			}
 
-					if (random_chance(chance)) {
-						struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
+			if (random_chance(chance)) {
+				struct rect heart_rect = get_sprite(sprid_upgrade_health_pack).rect;
 
-						new_heart(world, room, transform->position, 1);
-					} else {
-						struct rect coin_rect = get_sprite(sprid_coin).rect;
+				new_heart(world, room, transform->position, 1);
+			} else {
+				struct rect coin_rect = get_sprite(sprid_coin).rect;
 
-						for (i32 i = 0; i < enemy->money_drop; i++) {
-							new_coin_pickup(world, room, transform->position);
-						}
-					}
-
-					new_impact_effect(world, transform->position, animsprid_poof);
-					destroy_entity(world, view.e);
+				for (i32 i = 0; i < enemy->money_drop; i++) {
+					new_coin_pickup(world, room, transform->position);
 				}
 			}
+
+			new_impact_effect(world, transform->position, animsprid_poof);
+			destroy_entity(world, view.e);
 		}
 	}
 
