@@ -190,8 +190,8 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	const float x = quad->position.x;
 	const float y = quad->position.y;
 
+	/* I thought this was causing the lack of performance, but removing it had no effect. */
 	m4f transform = m4f_translate(m4f_identity(), make_v3f(quad->position.x, quad->position.y, 0.0f));
-
 	transform = m4f_translate(transform, make_v3f(quad->origin.x, quad->origin.y, 0.0f));
 	transform = m4f_rotate(transform, (float)torad(quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
 	transform = m4f_scale(transform, make_v3f(quad->dimentions.x, quad->dimentions.y, 0.0f));

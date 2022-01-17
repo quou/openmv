@@ -3,6 +3,16 @@
 #include "common.h"
 #include "core.h"
 
+/* This is the real `core' of any games using OpenMV's core; It is a simple ECS.
+ *
+ * It is based on EnTT's idea of using a sparse set to store component data. It is
+ * fast enough for pretty much any game that doesn't need more than a few hundred
+ * entities on-screen at once.
+ *
+ * ECS was used more as a structural choice, because I like working with it, rather
+ * than one specifically for performance. As such, this is not the fastest ECS in the
+ * world. */
+
 #define add_componentv(w_, e_, t_, ...) \
 	do { \
 		t_ init = (t_) { __VA_ARGS__ }; \

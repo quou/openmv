@@ -20,11 +20,11 @@
 
 struct logic_store* logic_store;
 
-API u64 CALL get_storage_size() {
+API u64 CDECL get_storage_size() {
 	return sizeof(struct logic_store);
 }
 
-API void CALL on_reload(void* instance) {
+API void CDECL on_reload(void* instance) {
 	logic_store = instance;
 
 	/* Sprites are also reloaded every time the code is.
@@ -94,7 +94,7 @@ void load_default_room() {
 		make_v2f(spawn.x - (pcol->rect.w / 2), spawn.y - pcol->rect.h);
 }
 
-API void CALL on_init() {
+API void CDECL on_init() {
 #ifndef PLATFORM_WINDOWS
 	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
 
@@ -149,7 +149,7 @@ API void CALL on_init() {
 	}
 }
 
-API void CALL on_update(double ts) {
+API void CDECL on_update(double ts) {
 	struct renderer* renderer = logic_store->renderer;
 	struct world* world = logic_store->world;
 
@@ -351,7 +351,7 @@ API void CALL on_update(double ts) {
 	}
 }
 
-API void CALL on_deinit() {
+API void CDECL on_deinit() {
 	close_dynlib(logic_store->dialogue_lib);
 
 	shops_deinit();

@@ -38,7 +38,7 @@ typedef uint64_t u64;
 #endif
 
 #if defined(_MSC_VER)
-	#define CALL __cdecl
+	#define CDECL __cdecl
 #else
-	#define CALL
+	#define CDECL
 #endif

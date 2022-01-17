@@ -4,6 +4,12 @@
 #include "entity.h"
 #include "video.h"
 
+/* There's an interesting bug with rooms where the memory usage
+ * reported by core_get_memory_usage decreases every time a room
+ * is freed... I'm not sure why this is the case. I don't think it
+ * is a bug with the memory tracking, since it doesn't happen in
+ * other areas of the codebase. */
+
 struct room;
 struct player;
 

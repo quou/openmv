@@ -101,6 +101,13 @@ struct light {
 	float intensity;
 };
 
+/* For some reason the renderer is really slow, and I do not know
+ * why. It *should* be fast; It doesn't cause too many draw calls
+ * and it isn't doing too much maths. At first I thought the matrix
+ * transformation was slowing it down, but removing rotations had
+ * zero effect on ther performance.
+ *
+ * Fix this, somehow. */
 struct renderer {
 	struct shader shader;
 	struct vertex_buffer vb;
@@ -142,8 +149,15 @@ struct font;
 
 API i32 render_text(struct renderer* renderer, struct font* font,
 		const char* text, i32 x, i32 y, struct color color);
+
+/* Draw text with a specified number of characters. */
 API i32 render_text_n(struct renderer* renderer, struct font* font,
 		const char* text, u32 n, i32 x, i32 y, struct color color);
+
+/* This function draws text with icons. There is only one icon
+ * at the moment, that being a coin. This shouldn't really be in
+ * the core, rather it should be in the logic since it is specific
+ * to the game... */
 API i32 render_text_fancy(struct renderer* renderer, struct font* font,
 		const char* text, u32 n, i32 x, i32 y, struct color color,
 		struct textured_quad* coin);

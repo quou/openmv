@@ -58,14 +58,14 @@ coroutine_end
 
 struct coroutine broken_robot_co;
 
-API void CALL broken_robot_on_next() {
+API void CDECL broken_robot_on_next() {
 	coroutine_resume(broken_robot_co);
 }
 
-API void CALL broken_robot_on_play(void* ctx) {
+API void CDECL broken_robot_on_play(void* ctx) {
 	broken_robot_co = new_coroutine(broken_robot_play, ctx);
 }
 
-API void CALL miner_robot_on_play(void* ctx) {
+API void CDECL miner_robot_on_play(void* ctx) {
 	dialogue_message("......", ctx);
 }
