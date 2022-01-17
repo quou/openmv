@@ -404,16 +404,17 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 			if (projectile->from == logic_store->player
 				&& rect_overlap(e_rect, p_rect, null)) {
-				new_impact_effect(world, p_transform->position, animsprid_blood);
+
 				i32 dmg = projectile->damage;
 				if (dmg > enemy->hp) { dmg = enemy->hp; }
-				new_damage_number(world, transform->position, -dmg);
-				destroy_entity(world, p_view.e);
 
 				enemy->hp -= projectile->damage;
-
 				enemy->invul = true;
 				enemy->invul_timer = 0.1;
+
+				new_impact_effect(world, p_transform->position, animsprid_blood);
+				new_damage_number(world, transform->position, -dmg);
+				destroy_entity(world, p_view.e);
 			}
 		}
 
