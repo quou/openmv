@@ -28,4 +28,4 @@ struct coroutine {
 	i32 state;
 };
 
-struct coroutine new_coroutine(coroutine_func func, void* udata);
+API struct coroutine new_coroutine(coroutine_func func, void* udata);

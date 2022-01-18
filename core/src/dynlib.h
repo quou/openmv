@@ -9,7 +9,7 @@
  * Not sure if that's possible without dumping them to external files
  * before loading. */
 
-void* open_dynlib(const char* path);
-void close_dynlib(void* handle);
-void* dynlib_get_sym(void* handle, const char* name);
-const char* dynlib_get_error();
+API void* open_dynlib(const char* path);
+API void close_dynlib(void* handle);
+API void* dynlib_get_sym(void* handle, const char* name);
+API const char* dynlib_get_error();

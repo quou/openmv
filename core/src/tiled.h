@@ -115,5 +115,5 @@ struct tiled_map {
 	struct table* properties;
 };
 
-struct tiled_map* load_map(const char* filename);
-void free_map(struct tiled_map* map);
+API struct tiled_map* load_map(const char* filename);
+API void free_map(struct tiled_map* map);

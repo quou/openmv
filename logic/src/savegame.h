@@ -30,5 +30,5 @@ struct persistent {
 	} as;
 };
 
-void set_persistent(const char* name, u32 type, const void* val);
-struct persistent* get_persistent(const char* name);
+API void set_persistent(const char* name, u32 type, const void* val);
+API struct persistent* get_persistent(const char* name);
