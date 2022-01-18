@@ -69,10 +69,6 @@ The default project also creates a loading screen while the `on_init` function
 in the logic project is running. Comment out lines 31-64 in
 `bootstrapper/src/main.c` to remove this if you don't want it.
 
-If you want to change the window settings (default: "OpenMV", 1366x768), edit
-line 16 in `bootstrapper/src/main.c`. Multiple windows won't work, I don't
-think (I haven't tried it).
-
 ## Levels
 Levels are created using the Tiled level editor and exported using a custom binary
 format. An extension for Tiled to add this format can be found in
