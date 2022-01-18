@@ -36,6 +36,10 @@ API void CDECL on_reload(void* instance) {
 	preload_sprites();
 }
 
+API struct window* CDECL create_window() {
+	return new_window(make_v2i(1366, 768), "OpenMV", false);
+}
+
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	struct ui_context* ui = udata;
 
@@ -188,6 +192,7 @@ API void CDECL on_update(double ts) {
 
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
+	logic_store->ui_renderer->dimentions = make_v2i(win_w, win_h);
 	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (!logic_store->frozen && !logic_store->paused) {
@@ -209,9 +214,9 @@ API void CDECL on_update(double ts) {
 
 	render_system(world, renderer, timestep);
 
-	hud_system(world, logic_store->ui_renderer);
-
 	draw_room_forground(logic_store->room, renderer, logic_store->ui_renderer);
+
+	hud_system(world, logic_store->ui_renderer);
 
 	renderer_end_frame(renderer);
 

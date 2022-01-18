@@ -676,8 +676,8 @@ void camera_system(struct world* world, struct renderer* renderer, struct room* 
 }
 
 void hud_system(struct world* world, struct renderer* renderer) {
-	i32 win_w, win_h;
-	query_window(main_window, &win_w, &win_h);
+	i32 win_w = renderer->dimentions.x;
+	i32 win_h = renderer->dimentions.y;
 
 	for (view(world, view, type_info(struct player))) {
 		struct player* player = view_get(&view, struct player);
@@ -691,6 +691,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			.dimentions = { hp_sprite.rect.w * sprite_scale, hp_sprite.rect.h * sprite_scale },
 			.rect = hp_sprite.rect,
 			.color = hp_sprite.color,
+			.unlit = true
 		};
 		struct textured_quad hp_bar_quad = {
 			.texture = hp_sprite.texture,
@@ -704,6 +705,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			},
 			.rect = hp_bar_sprite.rect,
 			.color = hp_bar_sprite.color,
+			.unlit = true
 		};
 		struct textured_quad coin_quad = {
 			.texture = coin_sprite.texture,
@@ -711,6 +713,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 			.dimentions = { coin_sprite.rect.w * sprite_scale, coin_sprite.rect.h * sprite_scale },
 			.rect = coin_sprite.rect,
 			.color = coin_sprite.color,
+			.unlit = true
 		};
 		renderer_push(renderer, &hp_quad);
 		renderer_push(renderer, &hp_bar_quad);
@@ -757,6 +760,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 				.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale },
 				.rect = rect,
 				.color = make_color(0xffffffff, 255),
+				.unlit = true
 			};
 			renderer_push(renderer, &num_quad);
 

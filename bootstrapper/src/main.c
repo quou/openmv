@@ -13,19 +13,20 @@ int main() {
 
 	init_time();
 
-	main_window = new_window(1366, 768, "OpenMV");
+#if defined(PLATFORM_LINUX)
+	const char* lib_path = "./liblogic.so";
+#else
+	const char* lib_path = "logic.dll";
+#endif
+
+	struct script_context* scripts = new_script_context(lib_path);
+	main_window = script_call_create_window(scripts);
 
 	video_init();
 	audio_init();
 	res_init();
 
 	init_time();
-
-#if defined(PLATFORM_LINUX)
-	const char* lib_path = "./liblogic.so";
-#else
-	const char* lib_path = "logic.dll";
-#endif
 
 	/* Loading screen */
 	{
@@ -63,7 +64,7 @@ int main() {
 		free_font(font);
 	}
 
-	struct script_context* scripts = new_script_context(lib_path);
+	scripts_allocate_storage(scripts);
 	call_on_init(scripts);
 
 	u64 now = get_time(), last = now; 

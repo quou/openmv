@@ -202,8 +202,8 @@ end:
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-struct window* new_window(i32 width, i32 height, const char* title) {
-	struct window* window = core_alloc(sizeof(struct window));
+struct window* new_window(v2i size, const char* title, bool resizable) {
+	struct window* window = core_calloc(1, sizeof(struct window));
 
 	window->uptr = null;
 	window->open = false;
@@ -222,10 +222,13 @@ struct window* new_window(i32 width, i32 height, const char* title) {
 
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 	DWORD dw_style = WS_CAPTION | WS_SYSMENU |
-		WS_MINIMIZEBOX | WS_VISIBLE |
-		WS_THICKFRAME | WS_MAXIMIZEBOX;
+		WS_MINIMIZEBOX | WS_VISIBLE;
+	
+	if (resizable) {
+		dw_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+	}
 
-	RECT win_rect = { 0, 0, width, height };
+	RECT win_rect = { 0, 0, size.x, size.y };
 	AdjustWindowRectEx(&win_rect, dw_style, FALSE, dw_ex_style);
 	i32 create_width = win_rect.right - win_rect.left;
 	i32 create_height = win_rect.bottom - win_rect.top;

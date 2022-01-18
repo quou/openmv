@@ -46,8 +46,8 @@ struct window {
 	on_text_input_func on_text_input;
 };
 
-struct window* new_window(i32 width, i32 height, const char* title) {
-	struct window* window = core_alloc(sizeof(struct window));
+struct window* new_window(v2i size, const char* title, bool resizable) {
+	struct window* window = core_calloc(1, sizeof(struct window));
 
 	window->uptr = null;
 	window->open = false;
@@ -69,9 +69,25 @@ struct window* new_window(i32 width, i32 height, const char* title) {
 			PointerMotionMask   |
 			StructureNotifyMask;
 
-	window->window = XCreateWindow(window->display, root, 0, 0, width, height, 0,
+	window->window = XCreateWindow(window->display, root, 0, 0, size.x, size.y, 0,
 			window->visual->depth, InputOutput, window->visual->visual,
 			CWColormap | CWEventMask, &window->attribs);
+
+	if (!resizable) {
+		/* This works by setting the miniumum and maximum heights of the window
+		 * to the input width and height. I'm not sure if this is the correct
+		 * way to do it, but it works, and even removes the maximise button */
+		XSizeHints* hints = XAllocSizeHints();
+		hints->flags = PMinSize | PMaxSize;
+		hints->min_width = size.x;
+		hints->min_height = size.y;
+		hints->max_width = size.x;
+		hints->max_height = size.y;
+
+		XSetWMNormalHints(window->display, window->window, hints);
+
+		XFree(hints);
+	}
 
 	Atom delete_window = XInternAtom(window->display, "WM_DELETE_WINDOW", False);
 	XSetWMProtocols(window->display, window->window, &delete_window, 1);
@@ -360,6 +376,10 @@ void update_events(struct window* window) {
 			}
 		}
 	}
+}
+
+void set_window_size(struct window* window, v2i size) {
+
 }
 
 void query_window(struct window* window, i32* width, i32* height) {

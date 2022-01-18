@@ -9,6 +9,8 @@
 
 const char* working_script_name = "./workasm.dll";
 
+typedef struct window* (*script_on_create_window_func)();
+
 typedef void (*script_on_init_func)();
 typedef void (*script_on_update_func)(double ts);
 typedef void (*script_on_deinit_func)();
@@ -113,6 +115,10 @@ struct script_context* new_script_context(const char* lib_path) {
 
 	open_funcs(ctx);
 
+	return ctx;
+}
+
+void scripts_allocate_storage(struct script_context* ctx) {
 	if (ctx->get_storage_size) {
 		u64 size = ctx->get_storage_size();
 
@@ -124,8 +130,6 @@ struct script_context* new_script_context(const char* lib_path) {
 			ctx->on_reload(ctx->instance);
 		}
 	}
-	
-	return ctx;
 }
 
 void free_script_context(struct script_context* ctx) {
@@ -138,6 +142,17 @@ void free_script_context(struct script_context* ctx) {
 	}
 
 	core_free(ctx);
+}
+
+struct window* script_call_create_window(struct script_context* ctx) {
+	script_on_create_window_func f = (script_on_create_window_func)dynlib_get_sym(ctx->handle, "create_window");
+	if (!f) {
+		fprintf(stderr, "Failed to locate function `create_window'.\n");
+	} else {
+		return f();
+	}
+
+	return null;
 }
 
 void script_context_update(struct script_context* ctx, double ts) {
