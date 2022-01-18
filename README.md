@@ -66,7 +66,7 @@ frame. Edit the code in `logic/src/main.c` to create your game logic. All the
 code compiled in this project is hot-reloadable, meaning you can re-compile
 it and have the code update in real time without needing to restart the program.
 The default project also creates a loading screen while the `on_init` function
-in the logic project is running. Comment out lines 31-64 in
+in the logic project is running. Comment out lines 32-65 in
 `bootstrapper/src/main.c` to remove this if you don't want it.
 
 ## Levels
