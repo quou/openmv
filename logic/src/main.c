@@ -37,7 +37,7 @@ API void CDECL on_reload(void* instance) {
 }
 
 API struct window* CDECL create_window() {
-	return new_window(make_v2i(1366, 768), "OpenMV", false);
+	return new_window(make_v2i(1366, 768), "OpenMV", true);
 }
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
@@ -122,6 +122,7 @@ API void CDECL on_init() {
 	struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 	logic_store->renderer->camera_enable = true;
+	logic_store->hud_renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 	logic_store->ui_renderer = new_renderer(sprite_shader, make_v2i(1366, 768));
 
 	logic_store->explosion_sound = load_audio_clip("res/aud/explosion.wav");
@@ -216,7 +217,8 @@ API void CDECL on_update(double ts) {
 
 	draw_room_forground(logic_store->room, renderer, logic_store->ui_renderer);
 
-	hud_system(world, logic_store->ui_renderer);
+	hud_system(world, logic_store->hud_renderer);
+	renderer_flush(logic_store->hud_renderer);
 
 	renderer_end_frame(renderer);
 
