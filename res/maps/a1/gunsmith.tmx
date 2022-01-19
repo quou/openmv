@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="22" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="34">
+<map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="22" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="11" nextobjectid="35">
  <editorsettings>
   <export target="gunsmith.dat" format="dat"/>
  </editorsettings>
@@ -7,7 +7,7 @@
  <tileset firstgid="131" source="../../tilesets/backgrounds.tsx"/>
  <tileset firstgid="139" source="../../tilesets/item.tsx"/>
  <tileset firstgid="147" source="../../tilesets/npc.tsx"/>
- <layer id="1" name="background" width="22" height="13">
+ <layer id="1" name="background" width="22" height="13" locked="1">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,135,136,0,0,0,0,
@@ -24,7 +24,7 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <layer id="7" name="midground" width="22" height="13">
+ <layer id="7" name="midground" width="22" height="13" locked="1">
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -58,7 +58,15 @@
 8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8
 </data>
  </layer>
- <objectgroup color="#00aa00" id="9" name="slopes">
+ <objectgroup id="10" name="dialogue_triggers">
+  <object id="34" x="80" y="128" width="32" height="32">
+   <properties>
+    <property name="on_next" value="gunsmith_on_next"/>
+    <property name="on_play" value="gunsmith_on_play"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup color="#00aa00" id="9" name="slopes" locked="1">
   <object id="32" x="80" y="160">
    <polyline points="0,0 -32,-16"/>
   </object>
@@ -66,10 +74,10 @@
    <polyline points="0,0 16.4375,-7.0625"/>
   </object>
  </objectgroup>
- <objectgroup id="3" name="save_points">
+ <objectgroup id="3" name="save_points" locked="1">
   <object id="19" x="272" y="144" width="16" height="16"/>
  </objectgroup>
- <objectgroup id="4" name="doors">
+ <objectgroup id="4" name="doors" locked="1">
   <object id="4" template="../../templates/door.tx" x="224" y="144">
    <properties>
     <property name="change_to" value="res/maps/a1/cave.dat"/>
@@ -77,12 +85,12 @@
    </properties>
   </object>
  </objectgroup>
- <objectgroup color="#0000ff" id="5" name="entrances">
+ <objectgroup color="#0000ff" id="5" name="entrances" locked="1">
   <object id="5" name="main_door" x="232" y="160">
    <point/>
   </object>
  </objectgroup>
- <objectgroup color="#00ff00" id="6" name="collisions">
+ <objectgroup color="#00ff00" id="6" name="collisions" locked="1">
   <object id="26" x="288" y="0" width="64" height="208"/>
   <object id="27" x="0" y="160" width="288" height="48"/>
   <object id="28" x="0" y="0" width="48" height="160"/>

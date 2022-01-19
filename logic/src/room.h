@@ -29,7 +29,10 @@ void handle_body_interactions(struct room** room, struct rect rect, entity body,
 void room_transition_to(struct room** room, entity body, struct rect collider, const char* path, const char* entrance);
 bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal);
 
+typedef void (*dialogue_ask_submit_func)(bool, void*);
+
 API void dialogue_message(const char* text, void* ctx);
+API void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ctx);
 
 char* get_room_path(struct room* room);
 

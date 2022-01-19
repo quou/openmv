@@ -1150,6 +1150,30 @@ static void on_dialogue_message_finish(void* ctx) {
 	*(bool*)ctx = true;
 }
 
+struct dialogue_ask_udata {
+	void* ctx;
+	dialogue_ask_submit_func on_submit;
+};
+
+void on_dialogue_ask_finish(bool yes, void* uptr) {
+	struct dialogue_ask_udata* udata = uptr;
+
+	*(bool*)udata->ctx = true;
+
+	udata->on_submit(yes, udata->ctx);
+
+	core_free(udata);
+}
+
+void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ctx) {
+	struct dialogue_ask_udata* udata = core_alloc(sizeof(struct dialogue_ask_udata));
+
+	udata->ctx = ctx;
+	udata->on_submit = on_submit;
+
+	prompt_ask(text, on_dialogue_ask_finish, udata);
+}
+
 void dialogue_message(const char* text, void* ctx) {
 	message_prompt_ex(text, on_dialogue_message_finish, ctx);
 }
