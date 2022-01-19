@@ -368,6 +368,7 @@ API void CDECL on_deinit() {
 	free_room(logic_store->room);
 
 	free_renderer(logic_store->renderer);
+	free_renderer(logic_store->hud_renderer);
 	free_renderer(logic_store->ui_renderer);
 
 	if (logic_store->ui) {
