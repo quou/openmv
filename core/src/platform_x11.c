@@ -19,6 +19,7 @@ struct window {
 	i32 w, h;
 
 	bool open;
+	bool resizable;
 
 	Display* display;
 	Window window;
@@ -48,6 +49,8 @@ struct window {
 
 struct window* new_window(v2i size, const char* title, bool resizable) {
 	struct window* window = core_calloc(1, sizeof(struct window));
+
+	window->resizable = resizable;
 
 	window->uptr = null;
 	window->open = false;
@@ -379,7 +382,23 @@ void update_events(struct window* window) {
 }
 
 void set_window_size(struct window* window, v2i size) {
+	if (!window->resizable) {
+		/* This works by setting the miniumum and maximum heights of the window
+		 * to the input width and height. I'm not sure if this is the correct
+		 * way to do it, but it works, and even removes the maximise button */
+		XSizeHints* hints = XAllocSizeHints();
+		hints->flags = PMinSize | PMaxSize;
+		hints->min_width = size.x;
+		hints->min_height = size.y;
+		hints->max_width = size.x;
+		hints->max_height = size.y;
 
+		XSetWMNormalHints(window->display, window->window, hints);
+
+		XFree(hints);
+	}
+
+	XResizeWindow(window->display, window->window, size.x, size.y);
 }
 
 void query_window(struct window* window, i32* width, i32* height) {

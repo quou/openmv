@@ -418,3 +418,7 @@ i32 get_scroll(struct window* window) {
 void set_window_should_close(struct window* window, bool close) {
 	window->open = !close;
 }
+
+void set_window_size(struct window* window, v2i size) {
+	SetWindowPos(window->hwnd, 0, 0, 0, size.x, size.y, SWP_NOMOVE);
+}
