@@ -103,7 +103,13 @@ API void view_next(struct view* view);
 
 #define entity_buffer_default_alloc 8
 
-/* Only starts heap allocating once the count overflows the
+/* The purpose of this entity buffer was for when the ECS used
+ * to have trouble destroying entities while iterating a view,
+ * so pushing them to a buffer and destroying them after the view
+ * had finished was the workaround. That issue has since been
+ * fixed properly. It is kept here for historical reasons.
+ *
+ * Only starts heap allocating once the count overflows the
  * initial allocation capacity. This is to try to avoid two
  * heap allocations if they aren't necessary. */
 struct entity_buffer {
