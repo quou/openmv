@@ -218,13 +218,14 @@ API void CDECL on_update(double ts) {
 	draw_room_forground(logic_store->room, renderer, logic_store->ui_renderer);
 
 	hud_system(world, logic_store->hud_renderer);
-	renderer_flush(logic_store->hud_renderer);
 
 	renderer_end_frame(renderer);
 
 	if (!logic_store->show_ui) {
 		renderer_flush(renderer);
 	}
+
+	renderer_end_frame(logic_store->hud_renderer);
 
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
