@@ -22,8 +22,19 @@ entity make_handle(entity_id id, entity_version v) {
 struct pool;
 
 #define free_queue_size 256
+#define pool_table_load_factor 0.75
+
+struct pool_table_el {
+	u32 key;
+	u32 val_idx;
+	bool taken;
+};
 
 struct world {
+	struct pool_table_el* pool_table;
+	u32 pool_table_count;
+	u32 pool_table_capacity;
+
 	struct pool* pools;
 	u32 pool_count;
 	u32 pool_capacity;
@@ -253,47 +264,85 @@ static void release_entity(struct world* world, entity e, entity_version desired
 	world->avail_id = id;
 }
 
-static struct pool* get_pool(struct world* world, struct type_info type) {
-	struct pool* r = null;
+static struct pool_table_el* find_pool_el(struct pool_table_el* els, u32 capacity, u32 key) {
+	u32 idx = key % capacity;
 
-	for (u32 i = 0; i < world->pool_count; i++) {
-		if (world->pools[i].type.id == type.id) {
-			r = &world->pools[i];
-		}
-	}
-
-	if (r) {
-		return r;
-	} else {
-		if (world->pool_count >= world->pool_capacity) {
-			u32 pool_capacity = world->pool_capacity < 8 ? 8 : world->pool_capacity * 2;
-			void* new_alloc = core_alloc(pool_capacity * sizeof(struct pool));
-			memcpy(new_alloc, world->pools, world->pool_capacity * sizeof(struct pool));
-			
-			if (world->pools) {
-				if (world->iteration_scope >= 0) {
-					world_push_free(world, world->pools);
-				} else {
-					core_free(world->pools);
-				}
-			}
-
-			world->pools = new_alloc;
-			world->pool_capacity = pool_capacity;
+	for (;;) {
+		struct pool_table_el* el = els + idx;
+		if (!el->taken || el->key == key) {
+			return el;
 		}
 
-		struct pool* new = &world->pools[world->pool_count++];
-		init_pool(new, world, type);
-		return new;
+		idx = (idx + 1) % capacity;
 	}
 }
 
-static struct pool* get_pool_no_create(struct world* world, struct type_info type) {
-	for (u32 i = 0; i < world->pool_count; i++) {
-		if (world->pools[i].type.id == type.id) {
-			return &world->pools[i];
-		}
+static void pool_table_resize(struct world* world, u32 capacity) {
+	struct pool_table_el* els = core_calloc(capacity, sizeof(struct pool_table_el));
+
+	for (u32 i = 0; i < world->pool_table_capacity; i++) {
+		struct pool_table_el* el = world->pool_table + i;
+		if (!el->taken) { continue; }
+
+		struct pool_table_el* dst = find_pool_el(els, capacity, el->key);
+		dst->key = el->key;
+		dst->val_idx = el->val_idx;
+		dst->taken = el->taken;
 	}
+
+	if (world->pool_table) { core_free(world->pool_table); }
+
+	world->pool_table = els;
+	world->pool_table_capacity = capacity;
+}
+
+static struct pool* get_pool(struct world* world, struct type_info type) {
+	if (world->pool_table_count == 0) { goto create_new_pool; }
+
+	struct pool_table_el* el = find_pool_el(world->pool_table, world->pool_table_capacity, type.id);
+	if (el->taken) { return world->pools + el->val_idx; }
+
+create_new_pool:
+
+	if (world->pool_table_count >= world->pool_table_capacity * pool_table_load_factor) {
+		u32 capacity = world->pool_table_capacity < 8 ? 8 : world->pool_table_capacity * 2;
+		pool_table_resize(world, capacity);
+	}
+
+	el = find_pool_el(world->pool_table, world->pool_table_capacity, type.id);
+	el->taken = true;
+	el->key = type.id;
+	el->val_idx = world->pool_count;
+
+	world->pool_table_count++;
+
+	if (world->pool_count >= world->pool_capacity) {
+		u32 pool_capacity = world->pool_capacity < 8 ? 8 : world->pool_capacity * 2;
+		void* new_alloc = core_alloc(pool_capacity * sizeof(struct pool));
+		memcpy(new_alloc, world->pools, world->pool_capacity * sizeof(struct pool));
+		
+		if (world->pools) {
+			if (world->iteration_scope >= 0) {
+				world_push_free(world, world->pools);
+			} else {
+				core_free(world->pools);
+			}
+		}
+
+		world->pools = new_alloc;
+		world->pool_capacity = pool_capacity;
+	}
+
+	struct pool* new = &world->pools[world->pool_count++];
+	init_pool(new, world, type);
+	return new;
+}
+
+static struct pool* get_pool_no_create(struct world* world, struct type_info type) {
+	if (world->pool_table_count == 0) { return null; }
+
+	struct pool_table_el* el = find_pool_el(world->pool_table, world->pool_table_capacity, type.id);
+	if (el->taken) { return world->pools + el->val_idx; }
 
 	return null;
 }
@@ -315,6 +364,10 @@ void free_world(struct world* world) {
 		}
 
 		core_free(world->pools);
+	}
+
+	if (world->pool_table) {
+		core_free(world->pool_table);
 	}
 
 	if (world->entities) {
