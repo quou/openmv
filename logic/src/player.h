@@ -43,6 +43,11 @@ struct player {
 
 	i32 money;
 
+	float projectile_distance;
+	float projectile_speed;
+	double shoot_cooldown;
+	i32 level;
+
 	struct audio_clip* land_sound;
 	struct audio_clip* shoot_sound;
 	struct audio_clip* hurt_sound;

@@ -52,10 +52,16 @@ struct player_constants {
 	double invul_time;
 	double invul_flash_interval;
 
-	float projectile_distance;
-	double projectile_speed;
+	float projectile_distance_lvl1;
+	float projectile_distance_lvl2;
+	float projectile_distance_lvl3;
+	float projectile_speed_lvl1;
+	float projectile_speed_lvl2;
+	float projectile_speed_lvl3;
 
-	double shoot_cooldown;
+	double shoot_cooldown_lvl1;
+	double shoot_cooldown_lvl2;
+	double shoot_cooldown_lvl3;
 
 	v2f left_muzzle_pos;
 	v2f right_muzzle_pos;
@@ -92,10 +98,16 @@ const struct player_constants player_constants = {
 	.invul_time = 1.5,
 	.invul_flash_interval = 0.05,
 	
-	.projectile_distance = 200,
-	.projectile_speed = 1000.0,
+	.projectile_distance_lvl1 = 200,
+	.projectile_distance_lvl2 = 300,
+	.projectile_distance_lvl3 = 350,
+	.projectile_speed_lvl1 = 1000,
+	.projectile_speed_lvl2 = 1100,
+	.projectile_speed_lvl3 = 1200,
 
-	.shoot_cooldown = 0.1,
+	.shoot_cooldown_lvl1 = 0.145,
+	.shoot_cooldown_lvl2 = 0.1,
+	.shoot_cooldown_lvl3 = 0.1,
 
 	.left_muzzle_pos =  { 4 * sprite_scale, 11 * sprite_scale },
 	.right_muzzle_pos = { 12  * sprite_scale, 11 * sprite_scale },
@@ -145,6 +157,8 @@ entity new_player_entity(struct world* world) {
 		.hp = player_constants.default_hp,
 		.max_hp = player_constants.default_hp,
 
+		.level = 1,
+
 		.land_sound = load_audio_clip("res/aud/land.wav"),
 		.shoot_sound = load_audio_clip("res/aud/shoot.wav"),
 		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
@@ -186,6 +200,27 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		struct player* player = view_get(&view, struct player);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
 		struct collider* collider = view_get(&view, struct collider);
+
+		switch (player->level) {
+			case 1:
+				player->projectile_distance = player_constants.projectile_distance_lvl1;
+				player->projectile_speed = player_constants.projectile_speed_lvl1;
+				player->shoot_cooldown = player_constants.shoot_cooldown_lvl1;
+				break;
+			case 2:
+				player->projectile_distance = player_constants.projectile_distance_lvl2;
+				player->projectile_speed = player_constants.projectile_speed_lvl2;
+				player->shoot_cooldown = player_constants.shoot_cooldown_lvl2;
+				break;
+			case 3:
+				player->projectile_distance = player_constants.projectile_distance_lvl3;
+				player->projectile_speed = player_constants.projectile_speed_lvl3;
+				player->shoot_cooldown = player_constants.shoot_cooldown_lvl3;
+				break;
+			default:
+				player->level = 1;
+				break;
+		}
 
 		if (!player->dashing) {
 			player->velocity.y += player_constants.gravity * ts;
@@ -446,8 +481,9 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		sprite = view_get(&view, struct animated_sprite);
 		
 		player->shoot_timer -= ts;
-		if (key_just_pressed(main_window, mapped_key("fire")) && player->shoot_timer <= 0.0) {
-			player->shoot_timer = player_constants.shoot_cooldown;
+		if ((key_just_pressed(main_window, mapped_key("fire")) || (player->level == 3 && key_pressed(main_window, mapped_key("fire"))))
+			&& player->shoot_timer <= 0.0) {
+			player->shoot_timer = player->shoot_cooldown;
 
 			play_audio_clip(player->shoot_sound);
 
@@ -500,8 +536,8 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			add_componentv(world, projectile, struct projectile,
 				.face = player->face,
 				.up = face_up,
-				.distance = player_constants.projectile_distance,
-				.speed = player_constants.projectile_speed,
+				.distance = player->projectile_distance,
+				.speed = player->projectile_speed,
 				.damage = 4,
 				.from = logic_store->player);
 			add_componentv(world, projectile, struct collider,
