@@ -121,6 +121,9 @@ enum {
 	tok_left_paren = 0,
 	tok_right_paren,
 	tok_add,
+	tok_mul,
+	tok_div,
+	tok_sub,
 	tok_number,
 	tok_end,
 	tok_error
@@ -191,6 +194,9 @@ static struct token next_tok(struct parser* parser) {
 		case '(': return make_token(parser, tok_left_paren, 1);
 		case ')': return make_token(parser, tok_right_paren, 1);
 		case '+': return make_token(parser, tok_add, 1);
+		case '-': return make_token(parser, tok_sub, 1);
+		case '*': return make_token(parser, tok_mul, 1);
+		case '/': return make_token(parser, tok_div, 1);
 
 		case '0': case '1': case '2': case '3':
 		case '4': case '5': case '6': case '7':
@@ -264,6 +270,18 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_add, parser->line);
+		} else if (tok.type == tok_sub) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_sub, parser->line);
+		} else if (tok.type == tok_div) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_div, parser->line);
+		} else if (tok.type == tok_mul) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_mul, parser->line);
 		}
 		
 		advance();
