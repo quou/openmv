@@ -140,6 +140,7 @@ struct parser {
 	u32 line;
 	const char* cur;
 	const char* start;
+	struct token token;
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -238,21 +239,23 @@ static struct token next_tok(struct parser* parser) {
 #define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
 
 static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message) {
-	u32 col = ((u32)(parser->cur - parser->start) - parser->line) + 1;
+	u32 col = 0;
 
-	u32 line_len = 0;
-	const char* c = parser->cur - col;
-	while (*c && *c != '\n') {
+	for (const char* c = parser->cur; *c != '\n' && c != parser->start; c--) {
+		col++;
+	}
+
+	u32 line_len = col;
+	for (const char* c = parser->cur; *c && *c != '\n'; c++) {
 		line_len++;
-		c++;
 	}
 
 	fprintf(ctx->error, "\033[1;31merror \033[0m");
-	fprintf(ctx->error, "[line %d:%d]: %s\n", parser->line, col + 1, message);
-	fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len, parser->cur - col);
+	fprintf(ctx->error, "[line %d:%d]: %s\n", parser->line, col, message);
+	fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len, parser->cur - col + 1);
 	fprintf(ctx->error, "            ");
 	fprintf(ctx->error, "\033[1;35m");
-	for (u32 i = 0; i < col; i++) {
+	for (u32 i = 0; i < col - 1; i++) {
 		fprintf(ctx->error, "~");
 	}
 	fprintf(ctx->error, "^\033[0m\n");
@@ -291,10 +294,15 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_num(n));
 		lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 		lsp_chunk_add_op(ctx, chunk, a, parser->line);
+	} else if (tok.type == tok_end) {
+		parser->token = tok;
+		return true;
 	} else {
 		parse_error(ctx, parser, "Unexpected token.");
 		return false;
 	}
+
+	parser->token = tok;
 
 	return true;
 }
@@ -307,10 +315,12 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	parser.start = str;
 	parser.cur = str - 1;
 
-	if (parse(ctx, &parser, &chunk)) {
-		lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
-		return lsp_eval(ctx, &chunk);
+	while (parser.token.type != tok_end) {
+		if (!parse(ctx, &parser, &chunk)) {
+			return lsp_make_nil();
+		}
 	}
 
-	return lsp_make_nil();
+	lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
+	return lsp_eval(ctx, &chunk);
 }
