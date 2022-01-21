@@ -1,7 +1,8 @@
 #include "common.h"
 #include "core.h"
-#include "test.h"
 #include "coroutine.h"
+#include "lsp.h"
+#include "test.h"
 
 static coroutine_decl(test_coroutine)
 	*(i32*)co_udata = 10;
@@ -36,9 +37,20 @@ bool coroutine_test() {
 	return true;
 }
 
+bool lsp_add_test() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(+ (+ 30 10) (+ 40 2))");
+
+	free_lsp_state(ctx);
+
+	return v.as.num == 82.0f;
+}
+
 i32 main() {
 	struct test_func funcs[] = {
 		make_test_func(coroutine_test),
+		make_test_func(lsp_add_test),
 	};
 
 	run_tests(funcs, sizeof(funcs) / sizeof(*funcs));
