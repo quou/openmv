@@ -25,6 +25,8 @@ struct lsp_val {
 struct lsp_state* new_lsp_state(void* error, void* info);
 void free_lsp_state(struct lsp_state* state);
 
+void lsp_set_simple_errors(struct lsp_state* state, bool simple);
+
 void           lsp_push(struct lsp_state* ctx, struct lsp_val val);
 struct lsp_val lsp_pop(struct lsp_state* ctx);
 

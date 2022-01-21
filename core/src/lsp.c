@@ -31,6 +31,8 @@ struct lsp_state {
 	struct lsp_val stack[stack_size];
 	struct lsp_val* stack_top;
 
+	bool simple_errors;
+
 	u8* ip;
 
 	FILE* error;
@@ -76,6 +78,10 @@ struct lsp_state* new_lsp_state(void* error, void* info) {
 
 void free_lsp_state(struct lsp_state* state) {
 	core_free(state);
+}
+
+void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
+	state->simple_errors = simple;
 }
 
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {
@@ -250,15 +256,55 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		line_len++;
 	}
 
-	fprintf(ctx->error, "\033[1;31merror \033[0m");
-	fprintf(ctx->error, "[line %d:%d]: %s\n", parser->line, col, message);
-	fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len, parser->cur - col + 1);
-	fprintf(ctx->error, "            ");
-	fprintf(ctx->error, "\033[1;35m");
-	for (u32 i = 0; i < col - 1; i++) {
-		fprintf(ctx->error, "~");
+	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
+		fprintf(ctx->error, "\033[1;31merror \033[0m");
+		fprintf(ctx->error, "[line %d:%d]: %s\n", parser->line, col, message);
+		
+		char to_print[256];
+		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
+
+		u32 offset = 0;
+
+		if (to_print[0] == '\n') {
+			offset++;
+		}
+
+		if (to_print[line_len - 1] == '\n') {
+			line_len--;
+		}
+
+		fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len, to_print + offset);
+		fprintf(ctx->error, "            ");
+		fprintf(ctx->error, "\033[1;35m");
+		for (u32 i = 0; i < col - 1; i++) {
+			fprintf(ctx->error, "~");
+		}
+		fprintf(ctx->error, "^\033[0m\n");
+	} else if (!ctx->simple_errors) {
+		fprintf(ctx->error, "error [line %d:%d]: %s\n", parser->line, col, message);
+		
+		char to_print[256];
+		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
+
+		u32 offset = 0;
+
+		if (to_print[0] == '\n') {
+			offset++;
+		}
+
+		if (to_print[line_len - 1] == '\n') {
+			line_len--;
+		}
+
+		fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len, to_print + offset);
+		fprintf(ctx->error, "            ");
+		for (u32 i = 0; i < col - 1; i++) {
+			fprintf(ctx->error, "~");
+		}
+		fprintf(ctx->error, "^\n");
+	} else {
+		fprintf(ctx->error, "error [line %d:%d]: %s\n", parser->line, col, message);
 	}
-	fprintf(ctx->error, "^\033[0m\n");
 }
 
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
