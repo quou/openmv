@@ -1,2 +1,4 @@
-(print (if true 1 0))
-(print (if nil "Yes" "No"))
+(print (if (not true) 1 0))
+(print (if (not nil) "Yes" "No"))
+
+(print (neg -10))

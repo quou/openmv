@@ -27,7 +27,9 @@ enum {
 	op_set,
 	op_get,
 	op_jump_if_false,
-	op_jump
+	op_jump,
+	op_not,
+	op_neg
 };
 
 struct lsp_chunk {
@@ -331,6 +333,19 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip += offset;
 				continue;
 			} break;
+			case op_not:
+				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx))));
+				break;
+			case op_neg: {
+				struct lsp_val v = lsp_pop(ctx);
+
+				if (v.type != lsp_val_num) {
+					lsp_exception(ctx, "Operand to `neg' must be a number.");
+					return lsp_make_nil();
+				}
+
+				lsp_push(ctx, lsp_make_num(-v.as.num));
+			} break;
 			default: break;
 		}
 
@@ -358,6 +373,8 @@ enum {
 	tok_false,
 	tok_cat,
 	tok_if,
+	tok_not,
+	tok_neg,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -404,7 +421,9 @@ static const char* keywords[] = {
 	[tok_true]  = "true",
 	[tok_false] = "false",
 	[tok_cat]   = "cat",
-	[tok_if]    = "if"
+	[tok_if]    = "if",
+	[tok_not]   = "not",
+	[tok_neg]   = "neg"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -490,16 +509,23 @@ static struct token next_tok(struct parser* parser) {
 		case '(': return make_token(parser, tok_left_paren, 1);
 		case ')': return make_token(parser, tok_right_paren, 1);
 		case '+': return make_token(parser, tok_add, 1);
-		case '-': return make_token(parser, tok_sub, 1);
 		case '*': return make_token(parser, tok_mul, 1);
 		case '/': return make_token(parser, tok_div, 1);
 
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-		case '8': case '9': {
+		case '-': case '0': case '1': case '2':
+		case '3': case '4': case '5': case '6':
+		case '7': case '8': case '9': {
+			if (*parser->cur == '-' && !is_digit(*(parser->cur + 1))) {
+				return make_token(parser, tok_sub, 1);
+			}
+
 			/* Length is not required, number is parsed later
 			 * using strtod. */
 			struct token t = make_token(parser, tok_number, 0);
+
+			if (*parser->cur == '-') {
+				parser->cur++;
+			}
 
 			while (is_digit(*parser->cur)) {
 				parser->cur++;
@@ -699,6 +725,12 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_print) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_print, parser->line);
+		} else if (tok.type == tok_not) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_not, parser->line);
+		} else if (tok.type == tok_neg) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_neg, parser->line);
 		} else if (tok.type == tok_set) {
 			advance();
 			expect_tok(tok_iden, "Expected an identifier.");
