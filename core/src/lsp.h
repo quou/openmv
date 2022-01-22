@@ -8,15 +8,29 @@ enum {
 	lsp_val_nil = 0,
 	lsp_val_num,
 	lsp_val_bool,
-	lsp_val_str
+	lsp_val_obj
+};
+
+enum {
+	lsp_obj_str = 0
+};
+
+struct lsp_obj {
+	u32 ref;
+	u8 type;
+	bool recyclable;
+
+	union {
+		struct { char* chars; u32 len; } str;
+	} as;
 };
 
 struct lsp_val {
 	u8 type;
 	union {
-		float num;
+		double num;
 		bool boolean;
-		struct { char* chars; u32 len; } str;
+		struct lsp_obj* obj;
 	} as;
 };
 
@@ -24,7 +38,7 @@ struct lsp_val {
 #define lsp_make_num(n_)         ((struct lsp_val) { .type = lsp_val_num,  .as.num = n_ })
 #define lsp_make_bool(b_)        ((struct lsp_val) { .type = lsp_val_bool, .as.boolean = b_ })
 
-API struct lsp_val lsp_make_str(const char* start, u32 len);
+struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
 
 API struct lsp_state* new_lsp_state(void* error, void* info);
 API void free_lsp_state(struct lsp_state* state);

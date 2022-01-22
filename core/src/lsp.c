@@ -8,7 +8,8 @@
 
 #define chunk_size 1024
 #define chunk_max_constants UINT8_MAX
-#define stack_size 256
+#define stack_size 1024
+#define max_objs 1024
 
 enum {
 	op_halt = 0,
@@ -16,6 +17,7 @@ enum {
 	op_push_nil,
 	op_push_true,
 	op_push_false,
+	op_pop,
 	op_add,
 	op_sub,
 	op_mul,
@@ -50,6 +52,9 @@ struct lsp_state {
 
 	FILE* error;
 	FILE* info;
+
+	struct lsp_obj* objs;
+	u32 obj_count;
 };
 
 static void lsp_chunk_add_op(struct lsp_state* ctx, struct lsp_chunk* chunk, u8 op, u32 line) {
@@ -75,14 +80,50 @@ static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, st
 	return chunk->const_count++;
 }
 
-struct lsp_val lsp_make_str(const char* start, u32 len) {
+static struct lsp_obj* lsp_new_obj(struct lsp_state* ctx, u8 type) {
+	for (u32 i = 0; i < ctx->obj_count; i++) {
+		if (ctx->objs[i].recyclable) {
+			ctx->objs[i].recyclable = false;
+			ctx->objs[i].type = type;
+			ctx->objs[i].ref = 1;
+			return ctx->objs + i;
+		}
+	}
+
+	if (ctx->obj_count >= max_objs) {
+		fprintf(ctx->error, "Too many objects. Maximum: %d.\n", max_objs);
+		return null;
+	}
+
+	ctx->objs[ctx->obj_count].type = type;
+	ctx->objs[ctx->obj_count].ref = 1;
+
+	return ctx->objs + ctx->obj_count++;
+}
+
+static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {	
+	switch (obj->type) {
+		case lsp_obj_str:
+			core_free(obj->as.str.chars);
+			break;
+		default: break;
+	}
+
+	memset(obj, 0, sizeof(struct lsp_obj));
+	obj->recyclable = true;
+}
+
+struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len) {
+	struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_str);
+
 	struct lsp_val v = {
-		.type = lsp_val_str,
-		.as.str.len = len,
-		.as.str.chars = core_alloc(len)
+		.type = lsp_val_obj,
+		.as.obj = obj
 	};
 
-	memcpy(v.as.str.chars, start, len);
+	obj->as.str.chars = core_alloc(len);
+	obj->as.str.len = len;
+	memcpy(obj->as.str.chars, start, len);
 
 	return v;
 }
@@ -91,17 +132,19 @@ struct lsp_state* new_lsp_state(void* error, void* info) {
 	if (!error) { error = stderr; }
 	if (!info)  { info = stdout; }
 
-	struct lsp_state* state = core_alloc(sizeof(struct lsp_chunk));
+	struct lsp_state* state = core_calloc(1, sizeof(struct lsp_chunk));
 
-	*state = (struct lsp_state) {
-		.error = error, .info = info,
-		.stack_top = state->stack
-	};
+	state->objs = core_calloc(max_objs, sizeof(struct lsp_obj));
+
+	state->error = error;
+	state->info = info;
+	state->stack_top = state->stack;
 
 	return state;
 }
 
 void free_lsp_state(struct lsp_state* state) {
+	core_free(state->objs);
 	core_free(state);
 }
 
@@ -150,6 +193,15 @@ static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 		lsp_push(ctx, lsp_make_num(a.as.num op_ b.as.num)); \
 	} while (0)
 
+static void print_obj(FILE* out, struct lsp_obj* obj) {
+	switch (obj->type) {
+		case lsp_obj_str:
+			fprintf(out, "%.*s", obj->as.str.len, obj->as.str.chars);
+			break;
+		default: break;
+	}
+}
+
 static void print_val(FILE* out, struct lsp_val val) {
 	switch (val.type) {
 		case lsp_val_nil:
@@ -161,8 +213,8 @@ static void print_val(FILE* out, struct lsp_val val) {
 		case lsp_val_bool:
 			fprintf(out, val.as.boolean ? "true" : "false");
 			break;
-		case lsp_val_str:
-			fprintf(out, "%.*s", val.as.str.len, val.as.str.chars);
+		case lsp_val_obj:
+			print_obj(out, val.as.obj);
 			break;
 		default: break;
 	}
@@ -179,6 +231,13 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 	while (1) {
 		switch (*ctx->ip) {
 			case op_halt:
+				for (u32 i = 0; i < ctx->obj_count; i++) { /* Collect garbage */
+					struct lsp_obj* obj = ctx->objs + i;
+
+					if (obj->ref == 0) {
+						lsp_free_obj(ctx, obj);
+					}
+				}
 				goto eval_halt;
 			case op_push:
 				ctx->ip++;
@@ -187,6 +246,15 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_push_nil:   lsp_push(ctx, lsp_make_nil()); break;
 			case op_push_true:  lsp_push(ctx, lsp_make_bool(true)); break;
 			case op_push_false: lsp_push(ctx, lsp_make_bool(false)); break;
+			case op_pop: {
+				struct lsp_val v = lsp_peek(ctx);
+
+				if (v.type == lsp_val_obj) {
+					v.as.obj->ref--;
+				}
+
+				lsp_pop(ctx);
+			} break;
 			case op_add: arith_op(+); break;
 			case op_sub: arith_op(-); break;
 			case op_div: arith_op(/); break;
@@ -194,26 +262,42 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_cat: {
 				struct lsp_val b = lsp_pop(ctx);
 				struct lsp_val a = lsp_pop(ctx);
-				if (a.type != lsp_val_str || b.type != lsp_val_str) {
+				if (a.type != lsp_val_obj || b.type != lsp_val_obj ||
+					a.as.obj->type != lsp_obj_str || b.as.obj->type != lsp_obj_str) {
 					lsp_exception(ctx, "Operands to `cat' must be strings.");
 					return lsp_make_nil();
 				}
 
-				u32 new_len = a.as.str.len + b.as.str.len;
-				char* new = core_alloc(a.as.str.len + b.as.str.len);
-				memcpy(new,                a.as.str.chars, a.as.str.len);
-				memcpy(new + a.as.str.len, b.as.str.chars, b.as.str.len);
+				u32 new_len = a.as.obj->as.str.len + b.as.obj->as.str.len;
+				char* new = core_alloc(new_len);
+				memcpy(new,                        a.as.obj->as.str.chars, a.as.obj->as.str.len);
+				memcpy(new + a.as.obj->as.str.len, b.as.obj->as.str.chars, b.as.obj->as.str.len);
 
-				lsp_push(ctx, (struct lsp_val) { .type = lsp_val_str, .as.str = { .len = new_len, .chars = new } } );
+				struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_str);
+				obj->as.str.chars = new;
+				obj->as.str.len = new_len;
+
+				lsp_push(ctx, (struct lsp_val) { .type = lsp_val_obj, .as.obj = obj });
 			} break;
 			case op_print:
 				print_val(ctx->info, lsp_pop(ctx));
 				fprintf(ctx->info, "\n");
 				break;
-			case op_set:
+			case op_set: {
 				ctx->ip++;
-				ctx->stack[*ctx->ip] = lsp_peek(ctx);
-				break;
+
+				struct lsp_val old = ctx->stack[*ctx->ip];
+				if (old.type == lsp_val_obj) {
+					old.as.obj->ref--;
+				}
+
+				struct lsp_val new = lsp_peek(ctx);
+				if (new.type == lsp_val_obj) {
+					new.as.obj->ref++;
+				}
+
+				ctx->stack[*ctx->ip] = new;
+			} break;
 			case op_get:
 				ctx->ip++;
 				lsp_push(ctx, ctx->stack[*ctx->ip]);
@@ -264,6 +348,8 @@ struct local {
 
 	u32 hash;
 
+	u32 depth;
+
 	u32 pos;
 };
 
@@ -272,6 +358,10 @@ struct parser {
 	const char* cur;
 	const char* start;
 	struct token token;
+
+	struct lsp_chunk* chunk;
+
+	u32 scope_depth;
 
 	struct local locals[max_locals];
 	u32 local_count;
@@ -516,8 +606,24 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 	}
 }
 
+static void parser_begin_scope(struct lsp_state* ctx, struct parser* parser) {
+	parser->scope_depth++;
+}
+
+static void parser_end_scope(struct lsp_state* ctx, struct parser* parser) {
+	parser->scope_depth--;
+
+	while (parser->local_count > 0 &&
+		parser->locals[parser->local_count - 1].depth > parser->scope_depth) {	
+		lsp_chunk_add_op(ctx, parser->chunk, op_pop, parser->line);
+		parser->local_count--;
+	}
+}
+
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
+
+	parser->chunk = chunk;
 
 	advance();
 
@@ -576,6 +682,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			if (declare) {
 				l.pos = parser->local_count;
+				l.depth = parser->scope_depth;
 			}
 
 			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
@@ -617,7 +724,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 		lsp_chunk_add_op(ctx, chunk, a, parser->line);
 	} else if (tok.type == tok_str) {
-		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_str(tok.start, tok.len));
+		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_str(ctx, tok.start, tok.len));
 		lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 		lsp_chunk_add_op(ctx, chunk, a, parser->line);
 	} else if (tok.type == tok_nil) {
@@ -647,11 +754,15 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	parser.start = str;
 	parser.cur = str - 1;
 
+	parser_begin_scope(ctx, &parser);
+
 	while (parser.token.type != tok_end) {
 		if (!parse(ctx, &parser, &chunk)) {
 			return lsp_make_nil();
 		}
 	}
+
+	parser_end_scope(ctx, &parser);
 
 	lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
 	return lsp_eval(ctx, &chunk);

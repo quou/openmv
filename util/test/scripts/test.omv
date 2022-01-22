@@ -19,5 +19,3 @@
 (set str_c (cat str_a str_b))
 
 (print str_c)
-
-82
