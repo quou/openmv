@@ -148,6 +148,12 @@ struct lsp_state* new_lsp_state(void* error, void* info) {
 }
 
 void free_lsp_state(struct lsp_state* state) {
+	for (u32 i = 0; i < state->obj_count; i++) {
+		if (!state->objs[i].recyclable) {
+			lsp_free_obj(state, state->objs + i);
+		}
+	}
+
 	core_free(state->objs);
 	core_free(state);
 }
