@@ -41,23 +41,7 @@ bool coroutine_test() {
 bool lsp_add_test() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx,
-		"(set some_var (* 10 4))\n"
-		"(print some_var)\n"
-		"(set some_var 30)\n"
-		"(print some_var)\n"
-		"(print (+ some_var (+ some_var some_var)))\n"
-		"(print some_var)\n"
-		"(set thing 100)\n"
-		"(print thing)\n"
-		"(print some_var)\n"
-		"(print (+ some_var thing))\n"
-		"(print thing)\n"
-		"(print some_var)\n"
-		"(print nil)\n"
-		"(print true)\n"
-		"(print false)\n"
-		"82");
+	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
 
 	free_lsp_state(ctx);
 	return v.as.num == 82.0f;

@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "lsp.h"
+#include "res.h"
 
 #define chunk_size 1024
 #define chunk_max_constants UINT8_MAX
@@ -568,4 +569,19 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 
 	lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
 	return lsp_eval(ctx, &chunk);
+}
+
+struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path) {
+	char* buf;
+	u64 size;
+
+	if (read_raw(file_path, (u8**)&buf, &size, true)) {
+		struct lsp_val r = lsp_do_string(ctx, buf);
+
+		core_free(buf);
+
+		return r;
+	}
+
+	return lsp_make_nil();
 }

@@ -32,3 +32,4 @@ struct lsp_val lsp_pop(struct lsp_state* ctx);
 struct lsp_val lsp_peek(struct lsp_state* ctx);
 
 struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
+struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);

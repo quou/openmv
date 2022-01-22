@@ -1,0 +1,14 @@
+(print 0)
+
+(set some_var 30)
+(set thing 60)
+
+(print some_var)
+(print thing)
+
+(print (* (+ some_var thing) 10))
+
+(print some_var)
+(print thing)
+
+82
