@@ -15,7 +15,9 @@ enum {
 	op_sub,
 	op_mul,
 	op_div,
-	op_print
+	op_print,
+	op_set,
+	op_get
 };
 
 struct lsp_chunk {
@@ -93,6 +95,10 @@ struct lsp_val lsp_pop(struct lsp_state* ctx) {
 	return *(ctx->stack_top--);
 }
 
+static u32 lsp_get_stack_count(struct lsp_state* ctx) {
+	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
+}
+
 #define arith_op(op_) do { \
 		struct lsp_val b = lsp_pop(ctx); \
 		struct lsp_val a = lsp_pop(ctx); \
@@ -133,6 +139,14 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				print_val(ctx->info, lsp_pop(ctx));
 				fprintf(ctx->info, "\n");
 				break;
+			case op_set:
+				ctx->ip++;
+				ctx->stack[*ctx->ip] = lsp_pop(ctx);
+				break;
+			case op_get:
+				ctx->ip++;
+				lsp_push(ctx, ctx->stack[*ctx->ip]);
+				break;
 			default: break;
 		}
 
@@ -151,7 +165,9 @@ enum {
 	tok_div,
 	tok_sub,
 	tok_number,
+	tok_iden,
 	tok_print,
+	tok_set,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -164,15 +180,30 @@ struct token {
 	u32 len;
 };
 
+#define max_locals 256
+
+struct local {
+	const char* start;
+	u32 len;
+
+	u32 hash;
+
+	u32 pos;
+};
+
 struct parser {
 	u32 line;
 	const char* cur;
 	const char* start;
 	struct token token;
+
+	struct local locals[max_locals];
+	u32 local_count;
 };
 
 static const char* keywords[] = {
-	[tok_print] = "print"
+	[tok_print] = "print",
+	[tok_set] = "set"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -216,6 +247,13 @@ static bool is_digit(char c) {
 	return c >= '0' && c <= '9';
 }
 
+static bool is_alpha(char c) {
+	return
+		(c >= 'a' && c <= 'z') ||
+		(c >= 'A' && c <= 'Z') ||
+		 c == '_';
+}
+
 static struct token next_tok(struct parser* parser) {
 	parser->cur++;
 
@@ -229,6 +267,21 @@ static struct token next_tok(struct parser* parser) {
 			parser->cur += len;
 			return make_token(parser, i, len);
 		}
+	}
+
+	if (is_alpha(*parser->cur)) {
+		u32 len = 0;
+		const char* c = parser->cur;
+		while (is_alpha(*c)) {
+			c++;
+			len++;
+		}
+
+		struct token tok = make_token(parser, tok_iden, len);
+
+		parser->cur = c;
+
+		return tok;
 	}
 
 	switch (*parser->cur) {
@@ -278,7 +331,12 @@ static struct token next_tok(struct parser* parser) {
 
 #define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
 
-static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message) {
+/* Over-engineered function to print an error message. It does GCC-style error printing if
+ * ctx->simple_errors is disabled, where it points to the position of the error on the line.
+ *
+ * Simple error printing is for when only a single line is allowed for the error message,
+ * such as for a status bar. */
+static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
 	u32 col = 0;
 
 	for (const char* c = parser->cur; *c != '\n' && c != parser->start; c--) {
@@ -292,7 +350,14 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 
 	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
 		fprintf(ctx->error, "\033[1;31merror \033[0m");
-		fprintf(ctx->error, "[line %d:%d]: %s\n", parser->line, col, message);
+		fprintf(ctx->error, "[line %d:%d]: ", parser->line, col);
+
+		va_list l;
+		va_start(l, message);
+		vfprintf(ctx->error, message, l);
+		va_end(l);
+
+		fprintf(ctx->error, "\n");
 		
 		char to_print[256];
 		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
@@ -315,7 +380,14 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\033[0m\n");
 	} else if (!ctx->simple_errors) {
-		fprintf(ctx->error, "error [line %d:%d]: %s\n", parser->line, col, message);
+		fprintf(ctx->error, "error [line %d:%d]: ", parser->line, col);
+
+		va_list l;
+		va_start(l, message);
+		vfprintf(ctx->error, message, l);
+		va_end(l);
+
+		fprintf(ctx->error, "\n");
 		
 		char to_print[256];
 		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
@@ -337,7 +409,14 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\n");
 	} else {
-		fprintf(ctx->error, "error [line %d:%d]: %s\n", parser->line, col, message);
+		fprintf(ctx->error, "error [line %d:%d]: ", parser->line, col);
+
+		va_list l;
+		va_start(l, message);
+		vfprintf(ctx->error, message, l);
+		va_end(l);
+
+		fprintf(ctx->error, "\n");
 	}
 }
 
@@ -370,10 +449,48 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_print) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_print, parser->line);
+		} else if (tok.type == tok_set) {
+			advance();
+			expect_tok(tok_iden, "Expected an identifier.");
+
+			struct local l = {
+				.start = tok.start,
+				.len = tok.len,
+				.hash = elf_hash((const u8*)tok.start, tok.len)
+			};
+
+			parser_recurse();
+
+			l.pos = lsp_get_stack_count(ctx);
+			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
+			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
+
+			parser->locals[parser->local_count++] = l;
 		}
 		
 		advance();
 		expect_tok(tok_right_paren, "Expected `)'.");
+	} else if (tok.type == tok_iden) {
+		bool resolved = false;
+
+		for (u32 i = 0; i < parser->local_count; i++) {
+			struct local* l = parser->locals + i;
+
+			if (l->len == tok.len &&
+				memcmp(l->start, tok.start, tok.len) == 0) {
+
+				lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
+				lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
+
+				resolved = true;
+				break;
+			}
+		}
+
+		if (!resolved) {
+			parse_error(ctx, parser, "Failed to resolve identifier `%.*s'.", tok.len, tok.start);
+			return false;
+		}
 	} else if (tok.type == tok_number) {
 		double n = strtod(tok.start, null);
 		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_num(n));

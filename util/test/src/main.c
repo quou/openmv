@@ -42,7 +42,8 @@ bool lsp_add_test() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
 	struct lsp_val v = lsp_do_string(ctx,
-		"(print (+ (* 4 10) (+ 40 2)))\n"
+		"(set some_var (* 10 4))\n"
+		"(print (+ some_var (+ some_var 10)))\n"
 		"82");
 
 	free_lsp_state(ctx);
