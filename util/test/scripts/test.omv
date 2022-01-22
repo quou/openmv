@@ -3,6 +3,8 @@
 (set some_var 30)
 (set thing 60)
 
+(set some_var (+ some_var 0.55))
+
 (print some_var)
 (print thing)
 

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -41,6 +42,10 @@ struct lsp_state {
 	bool simple_errors;
 
 	u8* ip;
+
+	struct lsp_chunk* chunk;
+
+	bool exception;
 
 	FILE* error;
 	FILE* info;
@@ -107,9 +112,28 @@ static u32 lsp_get_stack_count(struct lsp_state* ctx) {
 	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
 }
 
+static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
+	u32 instruction = (u32)(ctx->ip - ctx->chunk->code) - 1;
+
+	fprintf(ctx->error, "Exception [line %d]: ", ctx->chunk->lines[instruction]);
+	
+	va_list l;
+	va_start(l, message);
+	vfprintf(ctx->error, message, l);
+	va_end(l);
+
+	fprintf(ctx->error, "\n");
+
+	ctx->exception = true;
+}
+
 #define arith_op(op_) do { \
 		struct lsp_val b = lsp_pop(ctx); \
 		struct lsp_val a = lsp_pop(ctx); \
+		if (a.type != lsp_val_num || b.type != lsp_val_num) { \
+			lsp_exception(ctx, "Operands to `%s' must be numbers.", #op_); \
+			return lsp_make_nil(); \
+		} \
 		lsp_push(ctx, lsp_make_num(a.as.num op_ b.as.num)); \
 	} while (0)
 
@@ -129,6 +153,11 @@ static void print_val(FILE* out, struct lsp_val val) {
 }
 
 static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
+	if (ctx->exception) {
+		return lsp_make_nil();
+	}
+
+	ctx->chunk = chunk;
 	ctx->ip = chunk->code;
 
 	while (1) {
@@ -322,6 +351,7 @@ static struct token next_tok(struct parser* parser) {
 			}
 
 			if (*parser->cur == '.') {
+				parser->cur++;
 				while (is_digit(*parser->cur)) {
 					parser->cur++;
 				}
