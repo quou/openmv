@@ -41,7 +41,9 @@ bool coroutine_test() {
 bool lsp_add_test() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(- 10 4)\n(+ (* + 10) (+ 40 2))");
+	struct lsp_val v = lsp_do_string(ctx,
+		"(print (+ (* 4 10) (+ 40 2)))\n"
+		"82");
 
 	free_lsp_state(ctx);
 	return v.as.num == 82.0f;

@@ -14,7 +14,8 @@ enum {
 	op_add,
 	op_sub,
 	op_mul,
-	op_div
+	op_div,
+	op_print
 };
 
 struct lsp_chunk {
@@ -98,6 +99,21 @@ struct lsp_val lsp_pop(struct lsp_state* ctx) {
 		lsp_push(ctx, lsp_make_num(a.as.num op_ b.as.num)); \
 	} while (0)
 
+static void print_val(FILE* out, struct lsp_val val) {
+	switch (val.type) {
+		case lsp_val_nil:
+			fprintf(out, "nil");
+			break;
+		case lsp_val_num:
+			fprintf(out, "%g", val.as.num);
+			break;
+		case lsp_val_bool:
+			fprintf(out, val.as.boolean ? "true" : "false");
+			break;
+		default: break;
+	}
+}
+
 static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 	ctx->ip = chunk->code;
 
@@ -113,6 +129,10 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_sub: arith_op(-); break;
 			case op_div: arith_op(/); break;
 			case op_mul: arith_op(*); break;
+			case op_print:
+				print_val(ctx->info, lsp_pop(ctx));
+				fprintf(ctx->info, "\n");
+				break;
 			default: break;
 		}
 
@@ -131,6 +151,8 @@ enum {
 	tok_div,
 	tok_sub,
 	tok_number,
+	tok_print,
+	tok_keyword_count,
 	tok_end,
 	tok_error
 };
@@ -147,6 +169,10 @@ struct parser {
 	const char* cur;
 	const char* start;
 	struct token token;
+};
+
+static const char* keywords[] = {
+	[tok_print] = "print"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -196,6 +222,14 @@ static struct token next_tok(struct parser* parser) {
 	skip_whitespace(parser);
 
 	if (!*parser->cur) { return (struct token) { .type = tok_end }; }
+
+	for (u32 i = tok_print; i < tok_keyword_count; i++) {
+		u32 len = (u32)strlen(keywords[i]);
+		if (memcmp(parser->cur, keywords[i], len) == 0) {
+			parser->cur += len;
+			return make_token(parser, i, len);
+		}
+	}
 
 	switch (*parser->cur) {
 		case '(': return make_token(parser, tok_left_paren, 1);
@@ -312,7 +346,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 	advance();
 
-	if (tok.type == tok_left_paren) {
+	if (tok.type == tok_error) {
+		parse_error(ctx, parser, tok.start);
+	} else if (tok.type == tok_left_paren) {
 		advance();
 
 		if (tok.type == tok_add) {
@@ -331,6 +367,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_mul, parser->line);
+		} else if (tok.type == tok_print) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_print, parser->line);
 		}
 		
 		advance();
