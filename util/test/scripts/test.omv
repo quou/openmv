@@ -13,4 +13,11 @@
 (print some_var)
 (print thing)
 
+(set str_a "Hello, ")
+(set str_b "I'm a string!")
+
+(set str_c (cat str_a str_b))
+
+(print str_c)
+
 82

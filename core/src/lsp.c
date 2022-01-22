@@ -20,6 +20,7 @@ enum {
 	op_sub,
 	op_mul,
 	op_div,
+	op_cat,
 	op_print,
 	op_set,
 	op_get
@@ -72,6 +73,18 @@ static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, st
 	chunk->consts[chunk->const_count] = val;
 
 	return chunk->const_count++;
+}
+
+struct lsp_val lsp_make_str(const char* start, u32 len) {
+	struct lsp_val v = {
+		.type = lsp_val_str,
+		.as.str.len = len,
+		.as.str.chars = core_alloc(len)
+	};
+
+	memcpy(v.as.str.chars, start, len);
+
+	return v;
 }
 
 struct lsp_state* new_lsp_state(void* error, void* info) {
@@ -148,6 +161,9 @@ static void print_val(FILE* out, struct lsp_val val) {
 		case lsp_val_bool:
 			fprintf(out, val.as.boolean ? "true" : "false");
 			break;
+		case lsp_val_str:
+			fprintf(out, "%.*s", val.as.str.len, val.as.str.chars);
+			break;
 		default: break;
 	}
 }
@@ -175,6 +191,21 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_sub: arith_op(-); break;
 			case op_div: arith_op(/); break;
 			case op_mul: arith_op(*); break;
+			case op_cat: {
+				struct lsp_val b = lsp_pop(ctx);
+				struct lsp_val a = lsp_pop(ctx);
+				if (a.type != lsp_val_str || b.type != lsp_val_str) {
+					lsp_exception(ctx, "Operands to `cat' must be strings.");
+					return lsp_make_nil();
+				}
+
+				u32 new_len = a.as.str.len + b.as.str.len;
+				char* new = core_alloc(a.as.str.len + b.as.str.len);
+				memcpy(new,                a.as.str.chars, a.as.str.len);
+				memcpy(new + a.as.str.len, b.as.str.chars, b.as.str.len);
+
+				lsp_push(ctx, (struct lsp_val) { .type = lsp_val_str, .as.str = { .len = new_len, .chars = new } } );
+			} break;
 			case op_print:
 				print_val(ctx->info, lsp_pop(ctx));
 				fprintf(ctx->info, "\n");
@@ -205,12 +236,14 @@ enum {
 	tok_div,
 	tok_sub,
 	tok_number,
+	tok_str,
 	tok_iden,
 	tok_print,
 	tok_set,
 	tok_nil,
 	tok_true,
 	tok_false,
+	tok_cat,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -249,7 +282,8 @@ static const char* keywords[] = {
 	[tok_set]   = "set",
 	[tok_nil]   = "nil",
 	[tok_true]  = "true",
-	[tok_false] = "false"
+	[tok_false] = "false",
+	[tok_cat] = "cat",
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -358,6 +392,20 @@ static struct token next_tok(struct parser* parser) {
 			}
 
 			parser->cur--;
+
+			return t;
+		} break;
+
+		case '"': {
+			parser->cur++;
+			u32 len = 0;
+			for (const char* c = parser->cur; *c && *c != '"'; c++) {
+				len++;
+			}
+
+			struct token t = make_token(parser, tok_str, len);
+
+			parser->cur += len;
 
 			return t;
 		} break;
@@ -494,6 +542,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_mul, parser->line);
+		 } else if (tok.type == tok_cat) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_cat, parser->line);
 		} else if (tok.type == tok_print) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_print, parser->line);
@@ -562,6 +614,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 	} else if (tok.type == tok_number) {
 		double n = strtod(tok.start, null);
 		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_num(n));
+		lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
+		lsp_chunk_add_op(ctx, chunk, a, parser->line);
+	} else if (tok.type == tok_str) {
+		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_str(tok.start, tok.len));
 		lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 		lsp_chunk_add_op(ctx, chunk, a, parser->line);
 	} else if (tok.type == tok_nil) {
