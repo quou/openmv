@@ -25,7 +25,9 @@ enum {
 	op_cat,
 	op_print,
 	op_set,
-	op_get
+	op_get,
+	op_jump_if_false,
+	op_jump
 };
 
 struct lsp_chunk {
@@ -220,6 +222,18 @@ static void print_val(FILE* out, struct lsp_val val) {
 	}
 }
 
+static bool is_falsey(struct lsp_val val) {
+	switch (val.type) {
+		case lsp_val_nil: return true;
+		case lsp_val_bool: return !val.as.boolean;
+		case lsp_val_num: return val.as.num == 0.0 ? true : false;
+		case lsp_val_obj: return false;
+		default: break;
+	}
+
+	return true;
+}
+
 static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 	if (ctx->exception) {
 		return lsp_make_nil();
@@ -302,6 +316,21 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip++;
 				lsp_push(ctx, ctx->stack[*ctx->ip]);
 				break;
+			case op_jump_if_false: {
+				ctx->ip++;
+				u16 offset = *((u16*)ctx->ip);
+				ctx->ip += 2;
+
+				if (is_falsey(lsp_peek(ctx))) { ctx->ip += offset; continue; } 
+			} break;
+			case op_jump: {
+				ctx->ip++;
+				u16 offset = *((u16*)ctx->ip);
+				ctx->ip += 2;
+
+				ctx->ip += offset;
+				continue;
+			} break;
 			default: break;
 		}
 
@@ -328,6 +357,7 @@ enum {
 	tok_true,
 	tok_false,
 	tok_cat,
+	tok_if,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -373,7 +403,8 @@ static const char* keywords[] = {
 	[tok_nil]   = "nil",
 	[tok_true]  = "true",
 	[tok_false] = "false",
-	[tok_cat] = "cat",
+	[tok_cat]   = "cat",
+	[tok_if]    = "if"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -620,6 +651,19 @@ static void parser_end_scope(struct lsp_state* ctx, struct parser* parser) {
 	}
 }
 
+static u16 emit_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk, u8 op) {
+	lsp_chunk_add_op(ctx, chunk, op, parser->line);
+	lsp_chunk_add_op(ctx, chunk, 0, parser->line);
+	lsp_chunk_add_op(ctx, chunk, 0, parser->line);
+	return chunk->count - 2;
+}
+
+static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk, u16 offset) {
+	u16 jump = (u16)chunk->count - offset - 2;
+
+	*((u16*)(chunk->code + offset)) = jump;
+}
+
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
 
@@ -691,6 +735,21 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			if (declare) {
 				parser->locals[parser->local_count++] = l;
 			}
+		} else if (tok.type == tok_if) {
+			parser_recurse(); /* Condition */
+
+			i16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+
+			parser_recurse(); /* Then clause */
+
+			i16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
+
+			patch_jump(ctx, parser, chunk, then_jump);
+
+			parser_recurse(); /* Else clause */
+
+			patch_jump(ctx, parser, chunk, else_jump);
 		} else {
 			parse_error(ctx, parser, "Unexpected token.");
 		}

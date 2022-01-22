@@ -1,21 +1,2 @@
-(print 0)
-
-(set some_var 30)
-(set thing 60)
-
-(set some_var (+ some_var 0.55))
-
-(print some_var)
-(print thing)
-
-(print (* (+ some_var thing) 10))
-
-(print some_var)
-(print thing)
-
-(set str_a "Hello, ")
-(set str_b "I'm a string!")
-
-(set str_c (cat str_a str_b))
-
-(print str_c)
+(print (if true 1 0))
+(print (if nil "Yes" "No"))

@@ -44,7 +44,7 @@ bool lsp_add_test() {
 	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
 
 	free_lsp_state(ctx);
-	return v.as.num == 82.0f;
+	return v.as.num == 1.0f;
 }
 
 i32 main() {
