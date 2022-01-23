@@ -1177,3 +1177,7 @@ void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ct
 void dialogue_message(const char* text, void* ctx) {
 	message_prompt_ex(text, on_dialogue_message_finish, ctx);
 }
+
+struct player* get_player() {
+	return get_component(logic_store->world, logic_store->player, struct player);
+}

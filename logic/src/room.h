@@ -34,6 +34,8 @@ typedef void (*dialogue_ask_submit_func)(bool, void*);
 API void dialogue_message(const char* text, void* ctx);
 API void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ctx);
 
+API struct player* get_player();
+
 char* get_room_path(struct room* room);
 
 v2i get_spawn(struct room* room);
