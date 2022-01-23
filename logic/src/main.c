@@ -75,6 +75,11 @@ static void on_quit(struct menu* menu) {
 	logic_store->paused = false;
 }
 
+static void on_tutorial(struct menu* menu) {
+	message_prompt(" - Move: Arrow keys\n - Jump: Z\n - Shoot: X\n - Interact: Down Arrow\n - Look Up: Up Arrow");
+	logic_store->paused = false;
+}
+
 void init_debug_ui() {
 	struct shader sprite_shader = load_shader("res/shaders/sprite.glsl");
 	logic_store->ui = new_ui_context(sprite_shader, main_window, load_font("res/DejaVuSans.ttf", 14.0f));
@@ -133,6 +138,7 @@ API void CDECL on_init() {
 	menu_add_label(logic_store->pause_menu, "= Paused =");
 	menu_add_selectable(logic_store->pause_menu, "Resume", on_resume);
 	menu_add_selectable(logic_store->pause_menu, "Load Save", on_load);
+	menu_add_selectable(logic_store->pause_menu, "Tutorial", on_tutorial);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
 	prompts_init(load_font("res/CourierPrime.ttf", 25.0f));

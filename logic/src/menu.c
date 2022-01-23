@@ -323,8 +323,8 @@ void prompts_update(double ts) {
 	if (ctx->message) {
 		struct textured_quad back = {
 			.texture = null,
-			.position = { 10, win_h - 150 },
-			.dimentions = { win_w - 20, 140 },
+			.position = { 10, win_h - 160 },
+			.dimentions = { win_w - 20, 150 },
 			.rect = { 0 },
 			.color = make_color(0x6d5e64, 255)
 		};
@@ -349,8 +349,34 @@ void prompts_update(double ts) {
 			.color = { 255, 255, 255, 255 }
 		};
 
-		render_text_fancy(ctx->renderer, ctx->font, ctx->message,
-			ctx->current_character, 20, win_h - h - (back.dimentions.y / 2), make_color(0xffffff, 255), &coin_quad);
+		const char* line = ctx->message;
+		u32 line_len = 0;
+
+		u32 lines = 0;
+		for (const char* c = ctx->message; (u32)(c - ctx->message) < ctx->current_character; c++) {
+			if (*c == '\n') {
+				lines++;
+			}
+		}
+
+		i32 y = win_h - h - (back.dimentions.y / 2) - ((lines * text_height(ctx->font)) / 2);
+
+		for (const char* c = ctx->message; (u32)(c - ctx->message) < ctx->current_character; c++) {
+			line_len++;
+
+			if (*c == '\n') {
+				render_text_fancy(ctx->renderer, ctx->font, line,
+					line_len, 20, y, make_color(0xffffff, 255), &coin_quad);
+
+				y += text_height(ctx->font);
+
+				line_len = 0;
+				line = c + 1;
+			}
+		}
+
+		render_text_fancy(ctx->renderer, ctx->font, line,
+			line_len, 20, y, make_color(0xffffff, 255), &coin_quad);
 
 		if (ctx->on_submit && ctx->current_character >= ctx->message_len) {
 			const char* text = "Yes / No";
