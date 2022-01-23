@@ -1,4 +1,9 @@
-(print (if (not true) 1 0))
-(print (if (not nil) "Yes" "No"))
+(set some_fun (fun (
+	(print "Hello, world!")
+)))
 
-(print (neg -10))
+(print (neg 10))
+
+(some_fun)
+
+(print (if true 1 0))

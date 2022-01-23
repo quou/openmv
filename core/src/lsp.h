@@ -3,6 +3,7 @@
 #include "common.h"
 
 struct lsp_state;
+struct lsp_chunk;
 
 enum {
 	lsp_val_nil = 0,
@@ -12,7 +13,8 @@ enum {
 };
 
 enum {
-	lsp_obj_str = 0
+	lsp_obj_str = 0,
+	lsp_obj_fun
 };
 
 struct lsp_obj {
@@ -22,6 +24,7 @@ struct lsp_obj {
 
 	union {
 		struct { char* chars; u32 len; } str;
+		struct { struct lsp_chunk* chunk; } fun;
 	} as;
 };
 
@@ -39,6 +42,7 @@ struct lsp_val {
 #define lsp_make_bool(b_)        ((struct lsp_val) { .type = lsp_val_bool, .as.boolean = b_ })
 
 struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
+struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk);
 
 API struct lsp_state* new_lsp_state(void* error, void* info);
 API void free_lsp_state(struct lsp_state* state);
