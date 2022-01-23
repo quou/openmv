@@ -43,9 +43,23 @@ struct sprite sprites[] = {
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	},
-	[sprid_projectile] = {
+	[sprid_projectile_lvl1] = {
 		.texture = (struct texture*)texid_arms,
 		.rect = { 0, 0, 5, 2 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[sprid_projectile_lvl2] = {
+		.texture = (struct texture*)texid_arms,
+		.rect = { 0, 2, 5, 2 },
+		.origin = { 0.5f, 0.5f },
+		.color = { 255, 255, 255, 255 },
+		.unlit = true
+	},
+	[sprid_projectile_lvl3] = {
+		.texture = (struct texture*)texid_arms,
+		.rect = { 0, 4, 5, 3 },
 		.origin = { 0.5f, 0.5f },
 		.color = { 255, 255, 255, 255 },
 		.unlit = true

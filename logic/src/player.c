@@ -504,7 +504,15 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			}
 
 			/* Spawn the projectile */
-			struct sprite sprite = get_sprite(sprid_projectile);
+			struct sprite sprite;
+			if (player->level == 1) {
+				sprite = get_sprite(sprid_projectile_lvl1);
+			} else if (player->level == 2) {
+				sprite = get_sprite(sprid_projectile_lvl2);
+			} else {
+				sprite = get_sprite(sprid_projectile_lvl3);
+			}
+
 			float rotation;
 			struct rect p_rect;
 
@@ -538,7 +546,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.up = face_up,
 				.distance = player->projectile_distance,
 				.speed = player->projectile_speed,
-				.damage = 4,
+				.damage = player->level == 1 ? 4 : player->level == 2 ? 5 : player->level == 3 ? 8 : 4,
 				.from = logic_store->player);
 			add_componentv(world, projectile, struct collider,
 				.rect = p_rect);

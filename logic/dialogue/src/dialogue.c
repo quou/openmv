@@ -100,7 +100,7 @@ static coroutine_decl(gunsmith_play)
 		dialogue_ask("Would you like me to upgrade your gun for 7 %c?", on_gun_ask, co->udata);
 		coroutine_yield();
 	} else if (player->level == 2) {
-		upgrade_price = 15;
+		upgrade_price = 50;
 		dialogue_ask("Would you like me to upgrade your again gun for 50 %c?", on_gun_ask, co->udata);
 		coroutine_yield();
 	} else {	

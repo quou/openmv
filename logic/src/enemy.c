@@ -329,7 +329,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 				scav->shoot_cooldown = 1.0;
 
 				/* Spawn the projectile */
-				struct sprite sprite = get_sprite(sprid_projectile);
+				struct sprite sprite = get_sprite(sprid_projectile_lvl1);
 				float rotation = 0.0;
 				struct rect col;
 
