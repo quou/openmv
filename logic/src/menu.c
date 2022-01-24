@@ -388,7 +388,7 @@ void prompts_update(double ts) {
 
 			struct textured_quad back2 = {
 				.texture = null,
-				.position = { win_w - w + 5 * 2 - 40, win_h - 160 },
+				.position = { win_w - w + 5 * 2 - 40, win_h - 170 },
 				.dimentions = { w + 5 * 2, h + 5 * 2 },
 				.rect = { 0 },
 				.color = make_color(0x6b5151, 255)

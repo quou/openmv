@@ -225,6 +225,8 @@ static void print_obj(FILE* out, struct lsp_obj* obj) {
 		case lsp_obj_str:
 			fprintf(out, "%.*s", obj->as.str.len, obj->as.str.chars);
 			break;
+		case lsp_obj_fun:
+			fprintf(out, "<function %p>", obj->as.fun.chunk);
 		default: break;
 	}
 }
@@ -376,6 +378,7 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				struct lsp_val v = lsp_pop(ctx);
 
 				u8* old_ip = ctx->ip;
+				struct lsp_val* old_stack_top = ctx->stack_top;
 				struct lsp_chunk* old_chunk = ctx->chunk;
 
 				if (!(v.type == lsp_val_obj && v.as.obj->type == lsp_obj_fun)) {
@@ -383,7 +386,11 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 					return lsp_make_nil();
 				}
 
-				lsp_eval(ctx, v.as.obj->as.fun.chunk);
+				struct lsp_val ret = lsp_eval(ctx, v.as.obj->as.fun.chunk);
+
+				ctx->stack_top = old_stack_top;
+
+				lsp_push(ctx, ret);
 
 				ctx->chunk = old_chunk;
 				ctx->ip = old_ip;
@@ -418,6 +425,7 @@ enum {
 	tok_not,
 	tok_neg,
 	tok_fun,
+	tok_ret,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -467,7 +475,8 @@ static const char* keywords[] = {
 	[tok_if]    = "if",
 	[tok_not]   = "not",
 	[tok_neg]   = "neg",
-	[tok_fun]   = "fun"
+	[tok_fun]   = "fun",
+	[tok_ret]   = "ret"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -877,6 +886,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				}
 			}
 
+			/* Default return value is nil. */
+			lsp_chunk_add_op(ctx, chunk, op_push_nil, parser->line);
 			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);
 
 			parser_end_scope(ctx, parser);
@@ -889,6 +900,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_fun(ctx, new_chunk));
 			lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
+		} else if (tok.type == tok_ret) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);
 		} else if (tok.type == tok_iden) {
 			bool resolved = false;
 

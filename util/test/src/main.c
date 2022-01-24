@@ -36,7 +36,6 @@ bool coroutine_test() {
 
 	return true;
 }
-#include <stdio.h>
 
 bool lsp_add_test() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
