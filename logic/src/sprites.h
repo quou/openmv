@@ -40,6 +40,7 @@ enum {
 	animsprid_blood,
 	animsprid_bat,
 	animsprid_coin,
+	animsprid_heart,
 	animsprid_poof,
 	animsprid_drill_left,
 	animsprid_drill_right,

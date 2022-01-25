@@ -365,6 +365,12 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				u_collider->rect.w, u_collider->rect.h
 			};
 
+			if (!upgrade->booster) {
+				upgrade->velocity.y += ts * g_gravity;
+				u_transform->position = v2f_add(u_transform->position, v2f_mul(upgrade->velocity, make_v2f(ts, ts)));
+				handle_body_collisions(*room, u_collider->rect, &u_transform->position, &upgrade->velocity);
+			}
+
 			if (rect_overlap(player_rect, up_rect, null)) {
 				if (upgrade->booster) {
 					if (player->on_ground && key_just_pressed(main_window, mapped_key("interact"))) {
@@ -942,17 +948,19 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 }
 
 entity new_heart(struct world* world, struct room* room, v2f position, i32 value) {
-	struct sprite sprite = get_sprite(sprid_upgrade_health_pack);
+	struct animated_sprite sprite = get_animated_sprite(animsprid_heart);
+
+	struct rect rect = sprite.frames[0];
 
 	entity pickup = new_entity(world);
 	add_componentv(world, pickup, struct room_child, .parent = room);
 	add_componentv(world, pickup, struct transform, .position = position,
-		.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
-	add_component(world, pickup, struct sprite, sprite);
+		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
+	add_component(world, pickup, struct animated_sprite, sprite);
 	add_componentv(world, pickup, struct health_upgrade, .id = 0,
 		.booster = false, .value = value == 0 ? player_constants.health_pack_value : value);
 	add_componentv(world, pickup, struct collider,
-		.rect = { 0, 0, sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
+		.rect = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 
 	return pickup;
 }

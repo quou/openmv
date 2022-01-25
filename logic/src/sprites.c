@@ -331,6 +331,18 @@ struct animated_sprite anim_sprites[] = {
 		.origin = { 0.0f, 0.0f },
 		.color = { 255, 255, 255, 255 }
 	},
+	[animsprid_heart] = {
+		.id = animsprid_heart,
+		.texture = (struct texture*)texid_upgrades,
+		.frames = {
+			{ 0, 32, 16, 16 }, { 16, 32, 16, 16 }, { 32, 32, 16, 16 },
+			{ 48, 32, 16, 16 }, { 32, 32, 16, 16 }
+		},
+		.speed = 15,
+		.frame_count = 5,
+		.origin = { 0.0f, 0.0f },
+		.color = { 255, 255, 255, 255 }
+	},
 	[animsprid_blood] = {
 		.id = animsprid_coin,
 		.texture = (struct texture*)texid_fx,

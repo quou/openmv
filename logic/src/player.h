@@ -83,6 +83,8 @@ struct health_upgrade {
 	bool booster;
 	u32 id;
 	i32 value;
+
+	v2f velocity;
 };
 
 struct coin_pickup {
