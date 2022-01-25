@@ -349,12 +349,11 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_jump_if_false: {
 				ctx->ip++;
 				u16 offset = *((u16*)ctx->ip);
-				ctx->ip += 2;
+				ctx->ip += 1;
 
 				print_val(ctx->info, lsp_peek(ctx));
-				printf("\n");
 
-				if (is_falsey(lsp_peek(ctx))) { ctx->ip += offset; continue; } 
+				if (is_falsey(lsp_peek(ctx))) { ctx->ip += offset; } 
 			} break;
 			case op_jump: {
 				ctx->ip++;

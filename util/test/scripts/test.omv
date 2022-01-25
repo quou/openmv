@@ -1,9 +1,9 @@
-(set some_fun (fun (
-	(print "Hello, world!")
-	(ret 30)
-)))
+;(set some_fun (fun (
+;	(print "Hello, world!")
+;	(ret 30)
+;)))
 
-(print (some_fun))
+;(print (some_fun))
 
 ; (print (neg 10))
 
@@ -15,4 +15,4 @@
 
 ; (print "HH")
 
-; (if true (print "Yes") (print "No"))
+(print (if false "Yes" "No"))
