@@ -15,4 +15,6 @@
 
 ; (print "HH")
 
-(print (if false "Yes" "No"))
+(print "")
+
+(print (if true "Yes" "No"))

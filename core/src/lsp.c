@@ -290,12 +290,6 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_pop: {
 				ctx->ip++;
 				for (u8 i = 0; i < *ctx->ip; i++) {
-					struct lsp_val v = lsp_peek(ctx);
-
-					if (v.type == lsp_val_obj) {
-						v.as.obj->ref--;
-					}
-
 					lsp_pop(ctx);
 				}
 			} break;
@@ -350,8 +344,6 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip++;
 				u16 offset = *((u16*)ctx->ip);
 				ctx->ip += 1;
-
-				print_val(ctx->info, lsp_peek(ctx));
 
 				if (is_falsey(lsp_peek(ctx))) { ctx->ip += offset; } 
 			} break;
