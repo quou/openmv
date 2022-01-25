@@ -53,10 +53,17 @@ reason why it wouldn't work under a 32-bit system with GCC, though (The Premake
 scripts will need to be modified to build under 32-bit). Windows *should* work,
 but I rarely test it, so some minor modifications might be needed here and there.
 
-## Creating New Projects
-OpenMV's core can be used for new projects, including all the code for things
-that games commonly need, such as loading resources and drawing graphics. A
-utility in `util/mksdk` exists so that manually copying files isn't required
+## Using the Engine
+You may use this project as a fairly solid foundation for other game projects. The
+renderer, entity component system, map loader, resource manager and audio systems are
+all fairly stable and bug-free to my knowledge. The scripting language barely works
+(I have only been working on it for a week) and the IMGUI probably has bugs.
+
+### Using mksdk
+Use mksdk if you want to use the bootstrapper with code hot reloading. This offers
+less control, but allows rapid prototyping.
+
+A utility in `util/mksdk` exists so that manually copying files isn't required
 in order to create a new project. Simply build this project and run it from
 the project root to create a file named `sdk.tar`. Extract this file and
 start creating. Note that this utility won't work on Windows, at least
@@ -69,6 +76,14 @@ it and have the code update in real time without needing to restart the program.
 The default project also creates a loading screen while the `on_init` function
 in the logic project is running. Comment out lines 32-65 in
 `bootstrapper/src/main.c` to remove this if you don't want it.
+
+### Using the Core Library
+Alternatively, you can simply use the `core` project by itself to manage things
+for a game. Doing this, you have manual control over things like the game loop.
+
+By default, the core is built as a dynamic library. It can also be built as a
+static library, by editing the premake script. Note that this has some technical
+implications.
 
 ## Levels
 Levels are created using the Tiled level editor and exported using a custom binary
