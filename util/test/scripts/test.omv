@@ -1,12 +1,18 @@
 (set some_fun (fun (
 	(print "Hello, world!")
-	(ret 32)
+	(ret 30)
 )))
-
-;(print (neg 10))
-
-;(some_fun)
 
 (print (some_fun))
 
+; (print (neg 10))
+
+; (some_fun)
+
+; (print (some_fun))
+
 ; (print (if true 1 0))
+
+; (print "HH")
+
+; (if true (print "Yes") (print "No"))

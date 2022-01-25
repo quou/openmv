@@ -351,6 +351,9 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				u16 offset = *((u16*)ctx->ip);
 				ctx->ip += 2;
 
+				print_val(ctx->info, lsp_peek(ctx));
+				printf("\n");
+
 				if (is_falsey(lsp_peek(ctx))) { ctx->ip += offset; continue; } 
 			} break;
 			case op_jump: {
@@ -820,30 +823,32 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				}
 			}
 
-			parser_recurse();
-
 			if (declare) {
 				l.pos = parser->local_count;
 				l.depth = parser->scope_depth;
 			}
 
-			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
-			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
-
 			if (declare) {
 				parser->locals[parser->local_count++] = l;
 			}
+
+			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
+			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
+
+			parser_recurse();
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
 			i16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
-			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
 			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 			
 			/* Then clause */
 			parser_recurse();
 
 			i16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			patch_jump(ctx, parser, chunk, then_jump);
 
