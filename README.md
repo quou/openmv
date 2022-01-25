@@ -90,6 +90,11 @@ Levels are created using the Tiled level editor and exported using a custom bina
 format. An extension for Tiled to add this format can be found in
 `tiledext/mapformat.js`.
 
+## Vim
+`c.vim` contains a Vim syntax file to highlight common types used in OpenMV's
+code, such as `entity`, `null` and `v2f`. It should be placed in your
+`after/syntax` folder, as `c.vim`.
+
 ## Stuff by Other People
 Below is a list of pieces of code that I didn't write:
  - [glad](https://github.com/Dav1dde/glad).
