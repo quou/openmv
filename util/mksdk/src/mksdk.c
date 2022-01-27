@@ -28,6 +28,7 @@ static const char* dirs[] = {
 	"util/mksdk/src/",
 	"util/mksdk/template/",
 	"util/test/src/",
+	"util/test/scripts/",
 	null
 };
 
