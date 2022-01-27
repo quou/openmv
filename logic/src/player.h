@@ -48,12 +48,15 @@ struct player {
 	double shoot_cooldown;
 	i32 level;
 
+	bool played_step;
+
 	struct audio_clip* land_sound;
 	struct audio_clip* shoot_sound;
 	struct audio_clip* hurt_sound;
 	struct audio_clip* fly_sound;
 	struct audio_clip* upgrade_sound;
 	struct audio_clip* heart_sound;
+	struct audio_clip* step_sound;
 };
 
 entity new_player_entity(struct world* world);

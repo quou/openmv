@@ -164,7 +164,8 @@ entity new_player_entity(struct world* world) {
 		.hurt_sound = load_audio_clip("res/aud/hurt.wav"),
 		.fly_sound = load_audio_clip("res/aud/fly.wav"),
 		.upgrade_sound = load_audio_clip("res/aud/upgrade.wav"),
-		.heart_sound = load_audio_clip("res/aud/heart.wav"));
+		.heart_sound = load_audio_clip("res/aud/heart.wav"),
+		.step_sound = load_audio_clip("res/aud/step.wav"));
 	add_component(world, e, struct animated_sprite, get_animated_sprite(animsprid_player_run_right));
 	add_componentv(world, e, struct collider, .rect = player_constants.left_collider);
 	
@@ -200,6 +201,13 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 		struct player* player = view_get(&view, struct player);
 		struct animated_sprite* sprite = view_get(&view, struct animated_sprite);
 		struct collider* collider = view_get(&view, struct collider);
+
+		if (sprite->current_frame == 2 && !player->played_step) {
+			play_audio_clip(player->step_sound);
+			player->played_step = true;
+		} else if (sprite->current_frame != 2) {
+			player->played_step = false;
+		}
 
 		switch (player->level) {
 			case 1:
