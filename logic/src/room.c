@@ -1098,22 +1098,30 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal) {
 		}
 	}
 
- 	v2i check_point = make_v2i(rect.x + (rect.w / 2), rect.y + rect.h);
+ 	v2i check_points[] = {
+ 		{ rect.x + (rect.w / 2), rect.y + rect.h },
+ 		{ rect.x,rect.y + rect.h },
+ 		{ rect.x + rect.w, rect.y + rect.h },
+ 	};
 
-	for (u32 i = 0; i < room->slope_collider_count; i++) {
-		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
-		v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
+	for (u32 j = 0; j < sizeof(check_points) / sizeof(*check_points); j++) {
+		v2i check_point = check_points[j];
 
-		if (start.y == end.y) { /* Straight lines. */
-			if (check_point.x > start.x && check_point.x < end.x &&
-				check_point.y > start.y && check_point.y < start.y + 32) {
-				if (normal) { *normal = make_v2i(0, 1); }
-				return true;
-			}
-		} else {
-			if (point_vs_rtri(check_point, start, end)) {
-				if (normal) { *normal = make_v2i(0, 1); }
-				return true;
+		for (u32 i = 0; i < room->slope_collider_count; i++) {
+			v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);
+			v2i end   = make_v2i(room->slope_colliders[i].z, room->slope_colliders[i].w);
+
+			if (start.y == end.y) { /* Straight lines. */
+				if (check_point.x > start.x && check_point.x < end.x &&
+					check_point.y > start.y && check_point.y < start.y + 32) {
+					if (normal) { *normal = make_v2i(0, 1); }
+					return true;
+				}
+			} else {
+				if (point_vs_rtri(check_point, start, end)) {
+					if (normal) { *normal = make_v2i(0, 1); }
+					return true;
+				}
 			}
 		}
 	}
