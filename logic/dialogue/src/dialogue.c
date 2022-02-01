@@ -96,12 +96,12 @@ static coroutine_decl(gunsmith_play)
 
 	struct player* player = get_player();
 	if (player->level == 1) {
-		upgrade_price = 7;
-		dialogue_ask("Would you like me to upgrade your gun for 7 %c?", on_gun_ask, co->udata);
+		upgrade_price = 40;
+		dialogue_ask("Would you like me to upgrade your gun for 40 %c?", on_gun_ask, co->udata);
 		coroutine_yield();
 	} else if (player->level == 2) {
-		upgrade_price = 50;
-		dialogue_ask("Would you like me to upgrade your again gun for 50 %c?", on_gun_ask, co->udata);
+		upgrade_price = 250;
+		dialogue_ask("Would you like me to upgrade your again gun for 250 %c?", on_gun_ask, co->udata);
 		coroutine_yield();
 	} else {	
 		dialogue_message("I have nothing left to offer you.", co->udata);

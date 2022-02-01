@@ -725,7 +725,7 @@ static void parser_begin_scope(struct lsp_state* ctx, struct parser* parser) {
 static void parser_end_scope(struct lsp_state* ctx, struct parser* parser) {
 	parser->scope_depth--;
 
-	u8 pop_count;
+	u8 pop_count = 0;
 
 	while (parser->local_count > 0 &&
 		parser->locals[parser->local_count - 1].depth > parser->scope_depth) {
@@ -817,9 +817,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			if (declare) {
 				l.pos = parser->local_count;
 				l.depth = parser->scope_depth;
-			}
 
-			if (declare) {
 				parser->locals[parser->local_count++] = l;
 			}
 

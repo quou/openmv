@@ -18,3 +18,15 @@
 (print "")
 
 (print (if true "Yes" "No"))
+
+(set a 290)
+(set b 30)
+;(set c (+ a b))
+
+;(print a)
+;(print b)
+; (print c)
+
+(set a 10)
+(set b 4)
+(print (+ a b))

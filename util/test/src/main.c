@@ -156,6 +156,18 @@ bool lsp_if_false() {
 	return good;
 }
 
+bool lsp_var() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(set a 11)\n(set b 10)\n(+ a b)");
+
+	bool good = v.as.num == 14.0;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
 i32 main() {
 	struct test_func funcs[] = {
 		make_test_func(coroutine),
@@ -168,6 +180,7 @@ i32 main() {
 		make_test_func(lsp_cat),
 		make_test_func(lsp_if_true),
 		make_test_func(lsp_if_false),
+		make_test_func(lsp_var),
 		make_test_func(lsp),
 	};
 
