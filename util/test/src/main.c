@@ -159,7 +159,7 @@ bool lsp_if_false() {
 bool lsp_var() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(set a 11)\n(set b 10)\n(+ a b)");
+	struct lsp_val v = lsp_do_string(ctx, "(set a 14)\na");
 
 	bool good = v.as.num == 14.0;
 

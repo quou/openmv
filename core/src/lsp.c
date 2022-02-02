@@ -821,10 +821,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				parser->locals[parser->local_count++] = l;
 			}
 
+			parser_recurse();
+
 			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
 			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
-
-			parser_recurse();
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
@@ -898,6 +898,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);
 		} else if (tok.type == tok_iden) {
+			/* Resolve function call */
+
 			bool resolved = false;
 
 			for (u32 i = 0; i < parser->local_count; i++) {
@@ -926,6 +928,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		advance();
 		expect_tok(tok_right_paren, "Expected `)'.");
 	} else if (tok.type == tok_iden) {
+		/* Resolve variable */
+
 		bool resolved = false;
 
 		for (u32 i = 0; i < parser->local_count; i++) {
