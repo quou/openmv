@@ -9,11 +9,7 @@ struct render_queue {
 	struct render_queue_item* items;
 	u32 count;
 	u32 capacity;
-};
-
-static void init_render_queue(struct render_queue* queue) {
-	*queue = (struct render_queue) { 0 };
-}
+} render_queue = { 0 };
 
 static void render_queue_push(struct render_queue* queue, struct render_queue_item item) {
 	if (queue->count >= queue->capacity) {
@@ -35,9 +31,7 @@ static void render_queue_flush(struct render_queue* queue, struct renderer* rend
 		renderer_push(renderer, &queue->items[i].quad);
 	}
 
-	if (queue->items) {
-		core_free(queue->items);
-	}
+	queue->count = 0;
 }
 
 void apply_lights(struct world* world, struct renderer* renderer) {
@@ -52,7 +46,7 @@ void apply_lights(struct world* world, struct renderer* renderer) {
 }
 
 void render_system(struct world* world, struct renderer* renderer, double ts) {
-	struct render_queue queue = { 0 };
+	render_queue.count = 0;
 
 	for (view(world, view, type_info(struct transform), type_info(struct sprite))) {
 		struct transform* t = view_get(&view, struct transform);
@@ -72,7 +66,7 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.rotation = t->rotation
 		};
 
-		render_queue_push(&queue, (struct render_queue_item) {
+		render_queue_push(&render_queue, (struct render_queue_item) {
 			.quad = quad,
 			.z = t->z
 		});
@@ -105,12 +99,12 @@ void render_system(struct world* world, struct renderer* renderer, double ts) {
 			.rotation = t->rotation
 		};
 
-		render_queue_push(&queue, (struct render_queue_item) {
+		render_queue_push(&render_queue, (struct render_queue_item) {
 			.quad = quad,
 			.z = t->z
 		});
 	}
 
-	render_queue_flush(&queue, renderer);
+	render_queue_flush(&render_queue, renderer);
 }
 
