@@ -10,6 +10,7 @@
 #define chunk_max_constants UINT8_MAX
 #define stack_size 1024
 #define max_objs 1024
+#define max_natives 128
 
 enum {
 	op_halt = 0,
@@ -32,7 +33,8 @@ enum {
 	op_jump,
 	op_not,
 	op_neg,
-	op_call
+	op_call,
+	op_call_nat
 };
 
 struct lsp_chunk {
@@ -45,11 +47,20 @@ struct lsp_chunk {
 	u32 const_count;
 };
 
+struct lsp_nat {
+	char* name;
+	u32 argc;
+	lsp_nat_fun_t fun;
+};
+
 struct lsp_state {
 	struct lsp_val stack[stack_size];
 	struct lsp_val* stack_top;
 
 	struct lsp_val* frame_start;
+
+	struct lsp_nat natives[max_natives];
+	u32 nat_count;
 
 	bool simple_errors;
 
@@ -174,6 +185,10 @@ void free_lsp_state(struct lsp_state* state) {
 		if (!state->objs[i].recyclable) {
 			lsp_free_obj(state, state->objs + i);
 		}
+	}
+
+	for (u32 i = 0; i < state->nat_count; i++) {
+		core_free(state->natives[i].name);
 	}
 
 	core_free(state->objs);
@@ -406,6 +421,14 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip = old_ip;
 
 				ctx->frame_start = null;
+			} break;
+			case op_call_nat: {
+				ctx->ip++;
+				u8 idx = *ctx->ip;
+
+				struct lsp_nat* nat = ctx->natives + idx;
+
+				lsp_push(ctx, nat->fun(ctx, nat->argc, (ctx->stack_top - nat->argc) + 1));
 			} break;
 			default: break;
 		}
@@ -990,6 +1013,50 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			bool resolved = false;
 
+			for (u32 i = 0; i < ctx->nat_count; i++) {
+				struct lsp_nat* nat = ctx->natives + i;
+
+				if (memcmp(nat->name, tok.start, tok.len) == 0) {
+					u32 argc = 0;
+
+					/* Count the arguments */
+					while (1) {
+						if (!parse(ctx, parser, chunk)) {
+							return false;
+						}
+						struct token tok = parser->token;
+						const char* cur = parser->cur;
+						parser->token = next_tok(parser);
+
+						bool end = false;
+
+						if (parser->token.type == tok_right_paren) {
+							end = true;
+						}
+
+						parser->cur = cur;
+						parser->token = tok;
+
+						argc++;
+
+						if (end) {
+							break;
+						}
+					}
+
+					if (argc != nat->argc) {
+						parse_error(ctx, parser, "Incorrect number of arguments to native function. Expected %d; found %d.", nat->argc, argc);
+						return false;
+					}
+
+					lsp_chunk_add_op(ctx, chunk, op_call_nat, parser->line);
+					lsp_chunk_add_op(ctx, chunk, (u8)i, parser->line);
+
+					resolved = true;
+					goto resolved_l;
+				}
+			}
+
 			for (u32 i = 0; i < parser->local_count; i++) {
 				struct local* l = parser->locals + i;
 
@@ -1033,6 +1100,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				}
 			}
 
+resolved_l:
 			if (!resolved) {
 				parse_error(ctx, parser, "Failed to resolve function: `%.*s'.", tok.len, tok.start);
 				return false;
@@ -1109,4 +1177,16 @@ struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path) {
 	}
 
 	return lsp_make_nil();
+}
+
+void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun) {
+	if (ctx->nat_count >= max_natives) {
+		fprintf(ctx->error, "Failed to register native function `%s': Too many natives. Max: %d\n", name, max_natives);
+		return;
+	}
+
+	struct lsp_nat* nat = ctx->natives + ctx->nat_count++;
+	nat->name = copy_string(name);
+	nat->fun = fun;
+	nat->argc = argc;
 }

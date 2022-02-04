@@ -14,8 +14,11 @@ enum {
 
 enum {
 	lsp_obj_str = 0,
-	lsp_obj_fun
+	lsp_obj_fun,
+	lsp_obj_nat
 };
+
+typedef struct lsp_val (*lsp_nat_fun_t)(struct lsp_state*, u32, struct lsp_val*);
 
 struct lsp_obj {
 	u32 ref;
@@ -23,8 +26,8 @@ struct lsp_obj {
 	bool recyclable;
 
 	union {
-		struct { char* chars; u32 len; } str;
-		struct { struct lsp_chunk* chunk; u32 args; u32 argc; } fun;
+		struct { char* chars; u32 len; }              str;
+		struct { struct lsp_chunk* chunk; u32 argc; } fun;
 	} as;
 };
 
@@ -55,3 +58,5 @@ API struct lsp_val lsp_peek(struct lsp_state* ctx);
 
 API struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
 API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);
+
+API void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun);

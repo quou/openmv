@@ -168,6 +168,36 @@ bool lsp_var() {
 	return good;
 }
 
+bool lsp_fun() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(set add_nums (fun (x y) ( (ret (+ x y)))))(set a (add_nums 10 20)) a a");
+
+	bool good = v.as.num == 30.0;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
+static struct lsp_val native_add_nums(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
+	return lsp_make_num(argv[0].as.num + argv[1].as.num);
+}
+
+bool lsp_nat_fun() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	lsp_register(ctx, "add_nums", 2, native_add_nums);
+
+	struct lsp_val v = lsp_do_string(ctx, "(add_nums 10 20)");
+
+	bool good = v.as.num == 30.0;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
 i32 main() {
 	struct test_func funcs[] = {
 		make_test_func(coroutine),
@@ -181,6 +211,8 @@ i32 main() {
 		make_test_func(lsp_if_true),
 		make_test_func(lsp_if_false),
 		make_test_func(lsp_var),
+		make_test_func(lsp_fun),
+		make_test_func(lsp_nat_fun),
 		make_test_func(lsp),
 	};
 
