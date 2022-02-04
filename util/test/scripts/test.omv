@@ -9,8 +9,6 @@
 
 (print "")
 
-(print (if true "Yes" "No"))
-
 (print a)
 (print b)
 
@@ -26,3 +24,18 @@
 (print (>= 1 0))
 
 (print (= 3 3))
+
+(if (< 2 3) (
+	(print "Hello, from an if block.")
+	(print "Second line")
+)(
+	(print "Hello, from an else block.")
+	(print "Second line")
+))
+
+(set i 0)
+(while (< i 100000) (
+	(print i)
+
+	(set i (+ i 1))
+))

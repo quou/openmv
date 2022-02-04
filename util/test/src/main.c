@@ -145,7 +145,7 @@ bool lsp_cat() {
 bool lsp_if_true() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(if true 1 0)");
+	struct lsp_val v = lsp_do_string(ctx, "(if true (1) (0))");
 
 	bool good = v.as.num == 1.0;
 
@@ -157,7 +157,7 @@ bool lsp_if_true() {
 bool lsp_if_false() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(if false 0 1)");
+	struct lsp_val v = lsp_do_string(ctx, "(if false (0) (1))");
 
 	bool good = v.as.num == 1.0;
 
@@ -270,6 +270,18 @@ bool lsp_eq() {
 	return good;
 }
 
+bool lsp_while() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(set i 0)(while (< i 10)((set i (+ i 1)))) i i");
+
+	bool good = v.as.num == 10.0;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
 i32 main() {
 	struct test_func funcs[] = {
 		make_test_func(coroutine),
@@ -290,6 +302,7 @@ i32 main() {
 		make_test_func(lsp_gt),
 		make_test_func(lsp_gte),
 		make_test_func(lsp_eq),
+		make_test_func(lsp_while),
 		make_test_func(lsp),
 	};
 

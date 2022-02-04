@@ -35,6 +35,7 @@ enum {
 	op_get_arg,
 	op_jump_if_false,
 	op_jump,
+	op_back_jump,
 	op_not,
 	op_neg,
 	op_eq,
@@ -426,6 +427,13 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip += offset;
 				continue;
 			} break;
+			case op_back_jump: {
+				ctx->ip++;
+				u16 offset = *((u16*)ctx->ip);
+
+				ctx->ip -= offset;
+				continue;
+			} break;
 			case op_not:
 				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx))));
 				break;
@@ -515,6 +523,7 @@ enum {
 	tok_neg,
 	tok_fun,
 	tok_ret,
+	tok_while,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -568,6 +577,7 @@ static const char* keywords[] = {
 	[tok_neg]   = "neg",
 	[tok_fun]   = "fun",
 	[tok_ret]   = "ret",
+	[tok_while] = "while"
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -889,7 +899,26 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 		} \
 	} while (0)
 
-#define declare_variable() \
+#define parse_block() \
+	do { \
+		while (1) { \
+			if (!parse(ctx, parser, chunk)) { \
+				return false; \
+			} \
+			struct token tok = parser->token; \
+			const char* cur = parser->cur; \
+			parser->token = next_tok(parser); \
+			bool found = false; \
+			if (parser->token.type == tok_right_paren) { \
+				found = true; \
+			} \
+			parser->cur = cur; \
+			parser->token = tok; \
+			if (found) { \
+				break; \
+			} \
+		} \
+	} while (0)
 
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
@@ -993,25 +1022,60 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
-			i16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
+			u16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
 			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 			
 			/* Then clause */
-			parser_recurse();
+			advance();
+			expect_tok(tok_left_paren, "Expected a block after condition.");
+			parse_block();
+			advance();
+			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			i16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
+			u16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
 			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			patch_jump(ctx, parser, chunk, then_jump);
 
 			/* Else clause */
-			parser_recurse();
+			advance();
+			expect_tok(tok_left_paren, "Expected an else clause.");
+			parse_block();
+			advance();
+			expect_tok(tok_right_paren, "Expected `)' after block.");
 
 			tok = parser->token;
 
 			patch_jump(ctx, parser, chunk, else_jump);
+		} else if (tok.type == tok_while) {
+			u16 start = chunk->count;
+
+			parser_recurse(); /* Condition */
+
+			u16 cond_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
+
+			/* Clause */
+			advance();
+			expect_tok(tok_left_paren, "Expected a block after condition.");
+			parse_block();
+			advance();
+			expect_tok(tok_right_paren, "Expected `)' after block.");
+
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
+
+			tok = parser->token;
+
+			lsp_chunk_add_op(ctx, chunk, op_back_jump, parser->line);
+			u16 offset = chunk->count - start;
+			*((u16*)(chunk->code + chunk->count)) = offset;
+			chunk->count += 2;
+
+			patch_jump(ctx, parser, chunk, cond_jump);
 		} else if (tok.type == tok_fun) {
 			advance();
 			expect_tok(tok_left_paren, "Expected `(' after `fun'.");
@@ -1062,27 +1126,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			chunk = new_chunk;
 
-			while (1) {
-				if (!parse(ctx, parser, chunk)) {
-					return false;
-				}
-				struct token tok = parser->token;
-				const char* cur = parser->cur;
-				parser->token = next_tok(parser);
-
-				bool found = false;
-
-				if (parser->token.type == tok_right_paren) {
-					found = true;
-				}
-
-				parser->cur = cur;
-				parser->token = tok;
-
-				if (found) {
-					break;
-				}
-			}
+			parse_block();
 
 			/* Default return value is nil. */
 			lsp_chunk_add_op(ctx, chunk, op_push_nil, parser->line);
