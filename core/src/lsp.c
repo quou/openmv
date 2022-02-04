@@ -211,6 +211,33 @@ struct lsp_val lsp_peek(struct lsp_state* ctx) {
 	return *ctx->stack_top;
 }
 
+bool objs_eq(struct lsp_state* ctx, struct lsp_obj* a, struct lsp_obj* b) {
+	if (a->type != b->type) { return false; }
+
+	switch (a->type) {
+		case lsp_obj_str:
+			if (a->as.str.len != b->as.str.len) { return false; }
+			return memcmp(a->as.str.chars, b->as.str.chars, b->as.str.len) == 0;
+		default: return a == b;
+	}
+}
+
+bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b) {
+	if (a.type != b.type) { return false; }
+
+	switch (a.type) {
+		case lsp_val_nil:
+			return true;
+		case lsp_val_num:
+			return a.as.num == b.as.num;
+		case lsp_val_bool:
+			return a.as.boolean == b.as.boolean;
+		case lsp_val_obj:
+			return objs_eq(ctx, a.as.obj, b.as.obj);
+		default: return false;
+	}
+}
+
 static u32 lsp_get_stack_count(struct lsp_state* ctx) {
 	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
 }
@@ -1189,4 +1216,14 @@ void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun
 	nat->name = copy_string(name);
 	nat->fun = fun;
 	nat->argc = argc;
+}
+
+/* Standard library */
+
+static struct lsp_val std_eq(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
+	return lsp_make_bool(lsp_vals_eq(ctx, argv[0], argv[1]));
+}
+
+void lsp_register_std(struct lsp_state* ctx) {
+	lsp_register(ctx, "eq", 2, std_eq);
 }

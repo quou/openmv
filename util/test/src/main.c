@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 
 #include "common.h"
 #include "core.h"
@@ -39,8 +40,17 @@ bool coroutine() {
 	return true;
 }
 
+static struct lsp_val native(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
+	printf("From native function: %s\n", argv[0].as.obj->as.str.chars);
+
+	return lsp_make_nil();
+}
+
 bool lsp() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
+	lsp_register_std(ctx);
+
+	lsp_register(ctx, "native_fun", 1, native);
 
 	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
 

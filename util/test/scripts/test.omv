@@ -17,3 +17,7 @@
 (print (+ a b))
 
 (some_fun 10 2)
+
+(native_fun "Hello, world!")
+
+(print (eq nil 10))

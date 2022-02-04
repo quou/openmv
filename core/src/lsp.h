@@ -47,6 +47,8 @@ struct lsp_val {
 struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
 struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc);
 
+API bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b);
+
 API struct lsp_state* new_lsp_state(void* error, void* info);
 API void free_lsp_state(struct lsp_state* state);
 
@@ -60,3 +62,4 @@ API struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
 API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);
 
 API void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun);
+API void lsp_register_std(struct lsp_state* ctx);
