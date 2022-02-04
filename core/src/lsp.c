@@ -26,6 +26,8 @@ enum {
 	op_print,
 	op_set,
 	op_get,
+	op_set_arg,
+	op_get_arg,
 	op_jump_if_false,
 	op_jump,
 	op_not,
@@ -46,6 +48,8 @@ struct lsp_chunk {
 struct lsp_state {
 	struct lsp_val stack[stack_size];
 	struct lsp_val* stack_top;
+
+	struct lsp_val* frame_start;
 
 	bool simple_errors;
 
@@ -136,7 +140,7 @@ struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len) {
 	return v;
 }
 
-struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk) {
+struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc) {
 	struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_fun);
 
 	struct lsp_val v = {
@@ -145,6 +149,7 @@ struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 	};
 
 	obj->as.fun.chunk = chunk;
+	obj->as.fun.argc = argc;
 
 	return v;
 }
@@ -227,7 +232,10 @@ static void print_obj(FILE* out, struct lsp_obj* obj) {
 			break;
 		case lsp_obj_fun:
 			fprintf(out, "<function %p>", obj->as.fun.chunk);
-		default: break;
+			break;
+		default:
+			fprintf(out, "<object %p>", obj);
+			break;
 	}
 }
 
@@ -245,7 +253,9 @@ static void print_val(FILE* out, struct lsp_val val) {
 		case lsp_val_obj:
 			print_obj(out, val.as.obj);
 			break;
-		default: break;
+		default:
+			fprintf(out, "<unkown value type>");
+			break;
 	}
 }
 
@@ -272,13 +282,13 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 	while (1) {
 		switch (*ctx->ip) {
 			case op_halt:
-				for (u32 i = 0; i < ctx->obj_count; i++) { /* Collect garbage */
+				/*for (u32 i = 0; i < ctx->obj_count; i++) { Collect garbage
 					struct lsp_obj* obj = ctx->objs + i;
 
 					if (obj->ref == 0) {
 						lsp_free_obj(ctx, obj);
 					}
-				}
+				}*/
 				goto eval_halt;
 			case op_push:
 				ctx->ip++;
@@ -321,24 +331,21 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				print_val(ctx->info, lsp_pop(ctx));
 				fprintf(ctx->info, "\n");
 				break;
-			case op_set: {
+			case op_set:
 				ctx->ip++;
-
-				struct lsp_val old = ctx->stack[*ctx->ip];
-				if (old.type == lsp_val_obj) {
-					old.as.obj->ref--;
-				}
-
-				struct lsp_val new = lsp_peek(ctx);
-				if (new.type == lsp_val_obj) {
-					new.as.obj->ref++;
-				}
-
-				ctx->stack[*ctx->ip] = new;
-			} break;
+				ctx->stack[*ctx->ip] = lsp_peek(ctx);
+				break;
 			case op_get:
 				ctx->ip++;
 				lsp_push(ctx, ctx->stack[*ctx->ip]);
+				break;
+			case op_set_arg:
+				ctx->ip++;
+				ctx->frame_start[*ctx->ip] = lsp_peek(ctx);
+				break;
+			case op_get_arg:
+				ctx->ip++;
+				lsp_push(ctx, ctx->frame_start[*ctx->ip]);
 				break;
 			case op_jump_if_false: {
 				ctx->ip++;
@@ -369,7 +376,12 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				lsp_push(ctx, lsp_make_num(-v.as.num));
 			} break;
 			case op_call: {
+				ctx->ip++;
+				u8 argc = *ctx->ip;
+
 				struct lsp_val v = lsp_pop(ctx);
+
+				ctx->frame_start = (ctx->stack_top - argc) + 1;
 
 				u8* old_ip = ctx->ip;
 				struct lsp_val* old_stack_top = ctx->stack_top;
@@ -380,6 +392,10 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 					return lsp_make_nil();
 				}
 
+				if (v.as.obj->as.fun.argc != argc) {
+					lsp_exception(ctx, "Incorrect number of arguments to function.");
+				}
+
 				struct lsp_val ret = lsp_eval(ctx, v.as.obj->as.fun.chunk);
 
 				ctx->stack_top = old_stack_top;
@@ -388,6 +404,8 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				ctx->chunk = old_chunk;
 				ctx->ip = old_ip;
+
+				ctx->frame_start = null;
 			} break;
 			default: break;
 		}
@@ -443,6 +461,8 @@ struct local {
 	u32 depth;
 
 	u32 pos;
+
+	bool is_arg;
 };
 
 struct parser {
@@ -750,6 +770,31 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 	*((u16*)(chunk->code + offset)) = jump;
 }
 
+#define resolve_variable() \
+	do { \
+		bool resolved = false; \
+		for (u32 i = 0; i < parser->local_count; i++) { \
+			struct local* l = parser->locals + i; \
+			if (l->len == tok.len && \
+				memcmp(l->start, tok.start, tok.len) == 0) { \
+				if (l->is_arg) { \
+					lsp_chunk_add_op(ctx, chunk, op_get_arg, parser->line); \
+				} else { \
+					lsp_chunk_add_op(ctx, chunk, op_get, parser->line); \
+				} \
+				lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line); \
+				resolved = true; \
+				break; \
+			} \
+		} \
+		if (!resolved) { \
+			parse_error(ctx, parser, "Failed to resolve identifier: `%.*s'.", tok.len, tok.start); \
+			return false; \
+		} \
+	} while (0)
+
+#define declare_variable() \
+
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
 
@@ -823,7 +868,11 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			parser_recurse();
 
-			lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
+			if (l.is_arg) {
+				lsp_chunk_add_op(ctx, chunk, op_set_arg, parser->line);
+			} else {
+				lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
+			}
 			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
@@ -852,6 +901,45 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			expect_tok(tok_left_paren, "Expected `(' after `fun'.");
 
 			parser_begin_scope(ctx, parser);
+
+			u32 argc = 0;
+
+			while (1) {
+				advance();
+
+				if (tok.type == tok_right_paren) {
+					break;
+				}
+
+				expect_tok(tok_iden, "Expected an identifier.");
+
+				struct local l = {
+					.start = tok.start,
+					.len = tok.len,
+					.hash = elf_hash((const u8*)tok.start, tok.len),
+					.is_arg = true
+				};
+
+				for (u32 i = 0; i < parser->local_count; i++) {
+					struct local* lo = parser->locals + i;
+
+					if (lo->len == tok.len &&
+						memcmp(lo->start, tok.start, tok.len) == 0) {
+						parse_error(ctx, parser, "A variable with the name `%.*s' already exists.", tok.len, tok.start);
+						return false;
+					}
+				}
+
+				l.pos = argc;
+				l.depth = parser->scope_depth;
+
+				parser->locals[parser->local_count++] = l;
+
+				argc++;
+			}
+
+			advance();
+			expect_tok(tok_left_paren, "Expected a block after argument list.");
 
 			struct lsp_chunk* old_chunk = chunk;
 			struct lsp_chunk* new_chunk = core_calloc(1, sizeof(struct lsp_chunk));
@@ -889,9 +977,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			chunk = old_chunk;
 
 			advance();
-			expect_tok(tok_right_paren, "Expected `)'.");
+			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_fun(ctx, new_chunk));
+			u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_fun(ctx, new_chunk, argc));
 			lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 		} else if (tok.type == tok_ret) {
@@ -908,9 +996,37 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				if (l->len == tok.len &&
 					memcmp(l->start, tok.start, tok.len) == 0) {
 
+					u32 argc = 0;
+
+					/* Count the arguments */
+					while (1) {
+						if (!parse(ctx, parser, chunk)) {
+							return false;
+						}
+						struct token tok = parser->token;
+						const char* cur = parser->cur;
+						parser->token = next_tok(parser);
+
+						bool end = false;
+
+						if (parser->token.type == tok_right_paren) {
+							end = true;
+						}
+
+						parser->cur = cur;
+						parser->token = tok;
+
+						argc++;
+
+						if (end) {
+							break;
+						}
+					}
+
 					lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
 					lsp_chunk_add_op(ctx, chunk, op_call, parser->line);
+					lsp_chunk_add_op(ctx, chunk, (u8)argc, parser->line);
 
 					resolved = true;
 					break;
@@ -918,7 +1034,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			}
 
 			if (!resolved) {
-				parse_error(ctx, parser, "Failed to resolve identifier: `%.*s'.", tok.len, tok.start);
+				parse_error(ctx, parser, "Failed to resolve function: `%.*s'.", tok.len, tok.start);
 				return false;
 			}
 		} else {
@@ -929,27 +1045,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		expect_tok(tok_right_paren, "Expected `)'.");
 	} else if (tok.type == tok_iden) {
 		/* Resolve variable */
-
-		bool resolved = false;
-
-		for (u32 i = 0; i < parser->local_count; i++) {
-			struct local* l = parser->locals + i;
-
-			if (l->len == tok.len &&
-				memcmp(l->start, tok.start, tok.len) == 0) {
-
-				lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
-				lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
-
-				resolved = true;
-				break;
-			}
-		}
-
-		if (!resolved) {
-			parse_error(ctx, parser, "Failed to resolve identifier: `%.*s'.", tok.len, tok.start);
-			return false;
-		}
+		resolve_variable();
 	} else if (tok.type == tok_number) {
 		double n = strtod(tok.start, null);
 		u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_num(n));

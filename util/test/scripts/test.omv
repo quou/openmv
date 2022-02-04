@@ -1,25 +1,19 @@
-;(set some_fun (fun (
-;	(print "Hello, world!")
-;	(ret 30)
-;)))
+(set some_fun (fun (x y) (
+	(print "Hello, I'm a function! X and Y are:")
+	(print x)
+	(print y)
+)))
 
-;(print (some_fun))
-
-; (print (neg 10))
-
-; (some_fun)
-
-; (print (some_fun))
-
-; (print (if true 1 0))
-
-; (print "HH")
+(set a 290)
+(set b 30)
 
 (print "")
 
 (print (if true "Yes" "No"))
 
-(set a 290)
-(set b 30)
+(print a)
+(print b)
 
 (print (+ a b))
+
+(some_fun 10 2)
