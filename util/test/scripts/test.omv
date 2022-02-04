@@ -39,3 +39,5 @@
 
 	(set i (+ i 1))
 ))
+
+(print (memory_usage))

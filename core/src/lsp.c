@@ -920,6 +920,38 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 		} \
 	} while (0)
 
+#define count_args() \
+	do { \
+		while (1) { \
+			struct token tok = parser->token; \
+			const char* cur = parser->cur; \
+			parser->token = next_tok(parser); \
+			if (parser->token.type == tok_right_paren) { \
+				parser->cur = cur; \
+				parser->token = tok; \
+				break; \
+			} \
+			parser->cur = cur; \
+			parser->token = tok; \
+			if (!parse(ctx, parser, chunk)) { \
+				return false; \
+			} \
+			tok = parser->token; \
+			cur = parser->cur; \
+			parser->token = next_tok(parser); \
+			bool end = false; \
+			if (parser->token.type == tok_right_paren) { \
+				end = true; \
+			} \
+			parser->cur = cur; \
+			parser->token = tok; \
+			argc++; \
+			if (end) { \
+				break; \
+			} \
+		} \
+	} while (0) 
+
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
 
@@ -1156,30 +1188,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				if (memcmp(nat->name, tok.start, tok.len) == 0) {
 					u32 argc = 0;
 
-					/* Count the arguments */
-					while (1) {
-						if (!parse(ctx, parser, chunk)) {
-							return false;
-						}
-						struct token tok = parser->token;
-						const char* cur = parser->cur;
-						parser->token = next_tok(parser);
-
-						bool end = false;
-
-						if (parser->token.type == tok_right_paren) {
-							end = true;
-						}
-
-						parser->cur = cur;
-						parser->token = tok;
-
-						argc++;
-
-						if (end) {
-							break;
-						}
-					}
+					count_args();
 
 					if (argc != nat->argc) {
 						parse_error(ctx, parser, "Incorrect number of arguments to native function. Expected %d; found %d.", nat->argc, argc);
@@ -1202,30 +1211,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 					u32 argc = 0;
 
-					/* Count the arguments */
-					while (1) {
-						if (!parse(ctx, parser, chunk)) {
-							return false;
-						}
-						struct token tok = parser->token;
-						const char* cur = parser->cur;
-						parser->token = next_tok(parser);
-
-						bool end = false;
-
-						if (parser->token.type == tok_right_paren) {
-							end = true;
-						}
-
-						parser->cur = cur;
-						parser->token = tok;
-
-						argc++;
-
-						if (end) {
-							break;
-						}
-					}
+					count_args();
 
 					lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
@@ -1329,8 +1315,12 @@ void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun
 }
 
 /* Standard library */
+struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
+	return lsp_make_num(core_get_memory_usage());
+}
 
 /* TODO */
 
 void lsp_register_std(struct lsp_state* ctx) {
+	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 }
