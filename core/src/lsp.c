@@ -10,7 +10,7 @@
 #define chunk_max_constants UINT8_MAX
 #define stack_size 1024
 #define max_objs 1024
-#define max_natives 128
+#define max_natives 256
 
 enum {
 	op_halt = 0,
@@ -23,6 +23,10 @@ enum {
 	op_sub,
 	op_mul,
 	op_div,
+	op_lt,
+	op_lte,
+	op_gt,
+	op_gte,
 	op_cat,
 	op_print,
 	op_set,
@@ -33,6 +37,7 @@ enum {
 	op_jump,
 	op_not,
 	op_neg,
+	op_eq,
 	op_call,
 	op_call_nat
 };
@@ -267,6 +272,16 @@ static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 		lsp_push(ctx, lsp_make_num(a.as.num op_ b.as.num)); \
 	} while (0)
 
+#define bool_op(op_) do { \
+		struct lsp_val b = lsp_pop(ctx); \
+		struct lsp_val a = lsp_pop(ctx); \
+		if (a.type != lsp_val_num || b.type != lsp_val_num) { \
+			lsp_exception(ctx, "Operands to `%s' must be numbers.", #op_); \
+			return lsp_make_nil(); \
+		} \
+		lsp_push(ctx, lsp_make_bool(a.as.num op_ b.as.num)); \
+	} while (0)
+
 static void print_obj(FILE* out, struct lsp_obj* obj) {
 	switch (obj->type) {
 		case lsp_obj_str:
@@ -349,6 +364,13 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_sub: arith_op(-); break;
 			case op_div: arith_op(/); break;
 			case op_mul: arith_op(*); break;
+			case op_lt:  bool_op(<);  break;
+			case op_lte: bool_op(<=); break;
+			case op_gt:  bool_op(>);  break;
+			case op_gte: bool_op(>=); break;
+			case op_eq:
+				lsp_push(ctx, lsp_make_bool(lsp_vals_eq(ctx, lsp_pop(ctx), lsp_pop(ctx))));
+				break;
 			case op_cat: {
 				struct lsp_val b = lsp_pop(ctx);
 				struct lsp_val a = lsp_pop(ctx);
@@ -474,6 +496,11 @@ enum {
 	tok_mul,
 	tok_div,
 	tok_sub,
+	tok_lt,
+	tok_lte,
+	tok_gt,
+	tok_gte,
+	tok_eq,
 	tok_number,
 	tok_str,
 	tok_iden,
@@ -540,7 +567,7 @@ static const char* keywords[] = {
 	[tok_not]   = "not",
 	[tok_neg]   = "neg",
 	[tok_fun]   = "fun",
-	[tok_ret]   = "ret"
+	[tok_ret]   = "ret",
 };
 
 static struct token make_token(struct parser* parser, u32 type, u32 len) {
@@ -659,6 +686,25 @@ static struct token next_tok(struct parser* parser) {
 
 			return t;
 		} break;
+
+		case '=':
+			return make_token(parser, tok_eq, 1);
+
+		case '<':
+			if (*(parser->cur + 1) == '=') {
+				parser->cur++;
+				return make_token(parser, tok_lte, 2);
+			}
+
+			return make_token(parser, tok_lt, 1);
+
+		case '>':
+			if (*(parser->cur + 1) == '=') {
+				parser->cur++;
+				return make_token(parser, tok_gte, 2);
+			}
+
+			return make_token(parser, tok_gt, 1);
 
 		case '"': {
 			parser->cur++;
@@ -873,6 +919,26 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_mul, parser->line);
+		} else if (tok.type == tok_lt) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_lt, parser->line);
+		} else if (tok.type == tok_lte) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_lte, parser->line);
+		} else if (tok.type == tok_gt) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_gt, parser->line);
+		} else if (tok.type == tok_gte) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_gte, parser->line);
+		} else if (tok.type == tok_eq) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_eq, parser->line);
 		 } else if (tok.type == tok_cat) {
 			parser_recurse();
 			parser_recurse();
@@ -1220,10 +1286,7 @@ void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun
 
 /* Standard library */
 
-static struct lsp_val std_eq(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
-	return lsp_make_bool(lsp_vals_eq(ctx, argv[0], argv[1]));
-}
+/* TODO */
 
 void lsp_register_std(struct lsp_state* ctx) {
-	lsp_register(ctx, "eq", 2, std_eq);
 }

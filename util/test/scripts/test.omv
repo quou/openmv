@@ -20,4 +20,9 @@
 
 (native_fun "Hello, world!")
 
-(print (eq nil 10))
+(print (< 1 0))
+(print (<= 1 5))
+(print (> 1 0))
+(print (>= 1 0))
+
+(print (= 3 3))

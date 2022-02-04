@@ -208,6 +208,68 @@ bool lsp_nat_fun() {
 	return good;
 }
 
+bool lsp_lt() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(< 1 2)");
+
+	bool good = v.as.boolean;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
+bool lsp_lte() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v1 = lsp_do_string(ctx, "(<= 1 1)");
+	struct lsp_val v2 = lsp_do_string(ctx, "(<= 1 2)");
+
+	bool good = v1.as.boolean && v2.as.boolean;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
+bool lsp_gt() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(> 2 1)");
+
+	bool good = v.as.boolean;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
+bool lsp_gte() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v1 = lsp_do_string(ctx, "(>= 2 2)");
+	struct lsp_val v2 = lsp_do_string(ctx, "(>= 2 1)");
+
+	bool good = v1.as.boolean && v2.as.boolean;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
+bool lsp_eq() {
+	struct lsp_state* ctx = new_lsp_state(null, null);
+
+	struct lsp_val v = lsp_do_string(ctx, "(= 2 2)");
+
+	bool good = v.as.boolean;
+
+	free_lsp_state(ctx);
+
+	return good;
+}
+
 i32 main() {
 	struct test_func funcs[] = {
 		make_test_func(coroutine),
@@ -223,6 +285,11 @@ i32 main() {
 		make_test_func(lsp_var),
 		make_test_func(lsp_fun),
 		make_test_func(lsp_nat_fun),
+		make_test_func(lsp_lt),
+		make_test_func(lsp_lte),
+		make_test_func(lsp_gt),
+		make_test_func(lsp_gte),
+		make_test_func(lsp_eq),
 		make_test_func(lsp),
 	};
 
