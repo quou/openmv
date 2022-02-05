@@ -198,7 +198,6 @@ void free_lsp_state(struct lsp_state* state) {
 		core_free(state->natives[i].name);
 	}
 
-//	core_free(state->objs);
 	core_free(state);
 }
 
