@@ -52,7 +52,7 @@ bool lsp() {
 
 	lsp_register(ctx, "native_fun", 1, native);
 
-	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
+	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/fractal.omv");
 
 	free_lsp_state(ctx);
 	return true;
@@ -135,7 +135,7 @@ bool lsp_cat() {
 
 	struct lsp_val v = lsp_do_string(ctx, "(cat \"Hello, \" \"World!\")");
 
-	bool good = strcmp(v.as.obj->as.str.chars, "Hello, World!") == 0;
+	bool good = memcmp(v.as.obj->as.str.chars, "Hello, World!", v.as.obj->as.str.len) == 0;
 
 	free_lsp_state(ctx);
 

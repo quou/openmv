@@ -29,6 +29,7 @@ enum {
 	op_gte,
 	op_cat,
 	op_print,
+	op_put,
 	op_set,
 	op_get,
 	op_set_arg,
@@ -37,6 +38,8 @@ enum {
 	op_jump,
 	op_back_jump,
 	op_not,
+	op_and,
+	op_or,
 	op_neg,
 	op_eq,
 	op_call,
@@ -225,7 +228,7 @@ static u32 lsp_get_stack_count(struct lsp_state* ctx) {
 }
 
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {
-	if (lsp_get_stack_count(ctx) >= stack_size) {
+	if (ctx->stack_top >= ctx->stack + stack_size) {
 		lsp_exception(ctx, "Stack overflow.");
 		return;
 	}
@@ -406,6 +409,9 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				print_val(ctx->info, lsp_pop(ctx));
 				fprintf(ctx->info, "\n");
 				break;
+			case op_put:
+				print_val(ctx->info, lsp_pop(ctx));
+				break;
 			case op_set:
 				ctx->ip++;
 				ctx->stack[*ctx->ip] = lsp_peek(ctx);
@@ -446,6 +452,12 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			} break;
 			case op_not:
 				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx))));
+				break;
+			case op_and:
+				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx)) && is_falsey(lsp_pop(ctx))));
+				break;
+			case op_or:
+				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx)) || is_falsey(lsp_pop(ctx))));
 				break;
 			case op_neg: {
 				struct lsp_val v = lsp_pop(ctx);
@@ -519,10 +531,13 @@ enum {
 	tok_gt,
 	tok_gte,
 	tok_eq,
+	tok_and,
+	tok_or,
 	tok_number,
 	tok_str,
 	tok_iden,
 	tok_print,
+	tok_put,
 	tok_set,
 	tok_nil,
 	tok_true,
@@ -577,6 +592,7 @@ struct parser {
 
 static const char* keywords[] = {
 	[tok_print] = "print",
+	[tok_put]   = "put",
 	[tok_set]   = "set",
 	[tok_nil]   = "nil",
 	[tok_true]  = "true",
@@ -614,6 +630,8 @@ static void skip_whitespace(struct parser* parser) {
 		switch (*parser->cur) {
 			case '\n':
 				parser->line++;
+				parser->cur++;
+				break;
 			case ' ':
 			case '\r':
 			case '\t':
@@ -706,6 +724,9 @@ static struct token next_tok(struct parser* parser) {
 
 			return t;
 		} break;
+
+		case '&': return make_token(parser, tok_and, 1);
+		case '|': return make_token(parser, tok_or, 1);
 
 		case '=':
 			return make_token(parser, tok_eq, 1);
@@ -1010,6 +1031,14 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_recurse();
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_eq, parser->line);
+		} else if (tok.type == tok_and) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_and, parser->line);
+		} else if (tok.type == tok_or) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_or, parser->line);
 		 } else if (tok.type == tok_cat) {
 			parser_recurse();
 			parser_recurse();
@@ -1017,6 +1046,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_print) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_print, parser->line);
+		} else if (tok.type == tok_put) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_put, parser->line);
 		} else if (tok.type == tok_not) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_not, parser->line);
@@ -1332,12 +1364,25 @@ void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun
 }
 
 /* Standard library */
-struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
+struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	return lsp_make_num(core_get_memory_usage());
 }
 
-/* TODO */
+struct lsp_val std_bit_and(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num((u64)args[0].as.num & (u64)args[1].as.num);
+}
+
+struct lsp_val std_bit_or(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num((u64)args[0].as.num | (u64)args[1].as.num);
+}
+
+struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num((u64)args[0].as.num % (u64)args[1].as.num);
+}
 
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
+	lsp_register(ctx, "bit_and", 2, std_bit_and);
+	lsp_register(ctx, "bit_or", 2, std_bit_or);
+	lsp_register(ctx, "mod", 2, std_mod);
 }
