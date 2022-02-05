@@ -1064,6 +1064,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
+			parser_begin_scope(ctx, parser);
+
 			u16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
 			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
@@ -1091,10 +1093,14 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			tok = parser->token;
 
 			patch_jump(ctx, parser, chunk, else_jump);
+
+			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_while) {
 			u16 start = chunk->count;
 
 			parser_recurse(); /* Condition */
+
+			parser_begin_scope(ctx, parser);
 
 			u16 cond_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
@@ -1115,6 +1121,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			chunk->count += 2;
 
 			patch_jump(ctx, parser, chunk, cond_jump);
+
+			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_fun) {
 			advance();
 			expect_tok(tok_left_paren, "Expected `(' after `fun'.");
