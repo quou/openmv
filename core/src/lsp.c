@@ -205,11 +205,40 @@ void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
 	state->simple_errors = simple;
 }
 
+static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
+	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
+
+	fprintf(ctx->error, "Exception [line %d]: ", ctx->chunk->lines[instruction]);
+	
+	va_list l;
+	va_start(l, message);
+	vfprintf(ctx->error, message, l);
+	va_end(l);
+
+	fprintf(ctx->error, "\n");
+
+	ctx->exception = true;
+}
+
+static u32 lsp_get_stack_count(struct lsp_state* ctx) {
+	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
+}
+
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {
+	if (lsp_get_stack_count(ctx) >= stack_size) {
+		lsp_exception(ctx, "Stack overflow.");
+		return;
+	}
+
 	*(++ctx->stack_top) = val;
 }
 
 struct lsp_val lsp_pop(struct lsp_state* ctx) {
+	if (ctx->stack_top - 1 < ctx->stack) {	
+		lsp_exception(ctx, "Stack underflow.");
+		return lsp_make_nil();
+	}
+
 	return *(ctx->stack_top--);
 }
 
@@ -242,25 +271,6 @@ bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b) {
 			return objs_eq(ctx, a.as.obj, b.as.obj);
 		default: return false;
 	}
-}
-
-static u32 lsp_get_stack_count(struct lsp_state* ctx) {
-	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
-}
-
-static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
-	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
-
-	fprintf(ctx->error, "Exception [line %d]: ", ctx->chunk->lines[instruction]);
-	
-	va_list l;
-	va_start(l, message);
-	vfprintf(ctx->error, message, l);
-	va_end(l);
-
-	fprintf(ctx->error, "\n");
-
-	ctx->exception = true;
 }
 
 #define arith_op(op_) do { \
@@ -1097,9 +1107,6 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
-
 			tok = parser->token;
 
 			lsp_chunk_add_op(ctx, chunk, op_back_jump, parser->line);
@@ -1177,6 +1184,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_ret) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);
+		} else if (tok.type == tok_nil) {
+			/* Empty statement. */
 		} else if (tok.type == tok_iden) {
 			/* Resolve function call */
 

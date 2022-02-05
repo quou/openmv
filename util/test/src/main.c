@@ -41,7 +41,7 @@ bool coroutine() {
 }
 
 static struct lsp_val native(struct lsp_state* ctx, u32 argc, struct lsp_val* argv) {
-	printf("From native function: %s\n", argv[0].as.obj->as.str.chars);
+	printf("From native function: %.*s\n", argv[0].as.obj->as.str.len, argv[0].as.obj->as.str.chars);
 
 	return lsp_make_nil();
 }

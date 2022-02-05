@@ -34,10 +34,31 @@
 ))
 
 (set i 0)
-(while (< i 100000) (
+(while (< i 100) (
 	(print i)
 
 	(set i (+ i 1))
 ))
 
 (print (memory_usage))
+
+; Print Fibonacci numbers
+
+(set a 0)
+(set b 1)
+(set c 0)
+
+(set n 100)
+
+(while (< c n) (
+	(set c (+ a b))
+
+	(set a b)
+	(set b c)
+
+	(print c)
+))
+
+(while false (
+	(nil)
+))
