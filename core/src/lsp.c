@@ -10,7 +10,7 @@
 #define chunk_max_constants UINT8_MAX
 #define stack_size 1024
 #define max_objs 1024
-#define max_natives 256
+#define max_natives UINT8_MAX
 
 enum {
 	op_halt = 0,
@@ -82,7 +82,7 @@ struct lsp_state {
 	FILE* error;
 	FILE* info;
 
-	struct lsp_obj* objs;
+	struct lsp_obj objs[max_objs];
 	u32 obj_count;
 };
 
@@ -178,9 +178,7 @@ struct lsp_state* new_lsp_state(void* error, void* info) {
 	if (!error) { error = stderr; }
 	if (!info)  { info = stdout; }
 
-	struct lsp_state* state = core_calloc(1, sizeof(struct lsp_chunk));
-
-	state->objs = core_calloc(max_objs, sizeof(struct lsp_obj));
+	struct lsp_state* state = core_calloc(1, sizeof(struct lsp_state));
 
 	state->error = error;
 	state->info = info;
@@ -200,7 +198,7 @@ void free_lsp_state(struct lsp_state* state) {
 		core_free(state->natives[i].name);
 	}
 
-	core_free(state->objs);
+//	core_free(state->objs);
 	core_free(state);
 }
 
