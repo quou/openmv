@@ -19,6 +19,7 @@ enum {
 	op_push_true,
 	op_push_false,
 	op_pop,
+	op_pop_n,
 	op_add,
 	op_sub,
 	op_mul,
@@ -340,14 +341,14 @@ static bool is_falsey(struct lsp_val val) {
 }
 
 static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
-	if (ctx->exception) {
-		return lsp_make_nil();
-	}
-
 	ctx->chunk = chunk;
 	ctx->ip = chunk->code;
 
 	while (1) {
+		if (ctx->exception) {
+			return lsp_make_nil();
+		}
+
 		switch (*ctx->ip) {
 			case op_halt:
 				/*for (u32 i = 0; i < ctx->obj_count; i++) { Collect garbage
@@ -365,12 +366,15 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_push_nil:   lsp_push(ctx, lsp_make_nil()); break;
 			case op_push_true:  lsp_push(ctx, lsp_make_bool(true)); break;
 			case op_push_false: lsp_push(ctx, lsp_make_bool(false)); break;
-			case op_pop: {
+			case op_pop_n: {
 				ctx->ip++;
 				for (u8 i = 0; i < *ctx->ip; i++) {
 					lsp_pop(ctx);
 				}
 			} break;
+			case op_pop:
+				lsp_pop(ctx);
+				break;
 			case op_add: arith_op(+); break;
 			case op_sub: arith_op(-); break;
 			case op_div: arith_op(/); break;
@@ -660,21 +664,20 @@ static struct token next_tok(struct parser* parser) {
 
 	if (!*parser->cur) { return (struct token) { .type = tok_end }; }
 
-	for (u32 i = tok_print; i < tok_keyword_count; i++) {
-		u32 len = (u32)strlen(keywords[i]);
-		if (memcmp(parser->cur, keywords[i], len) == 0) {
-			struct token tok = make_token(parser, i, len);
-			parser->cur += len - 1;
-			return tok;
-		}
-	}
-
 	if (is_alpha(*parser->cur)) {
 		u32 len = 0;
 		const char* c = parser->cur;
 		while (is_alpha(*c)) {
 			c++;
 			len++;
+		}
+
+		for (u32 i = tok_print; i < tok_keyword_count; i++) { /* Check for keywords. */
+			if (strlen(keywords[i]) == len && memcmp(parser->cur, keywords[i], len) == 0) {
+				struct token tok = make_token(parser, i, len);
+				parser->cur += len - 1;
+				return tok;
+			}
 		}
 
 		struct token tok = make_token(parser, tok_iden, len);
@@ -887,7 +890,7 @@ static void parser_end_scope(struct lsp_state* ctx, struct parser* parser) {
 		parser->local_count--;
 	}
 
-	lsp_chunk_add_op(ctx, parser->chunk, op_pop, parser->line);
+	lsp_chunk_add_op(ctx, parser->chunk, op_pop_n, parser->line);
 	lsp_chunk_add_op(ctx, parser->chunk, pop_count, parser->line);
 }
 
@@ -1090,6 +1093,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
 			}
 			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
+
+			if (!declare) {
+				lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			}
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
@@ -1097,7 +1104,6 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			u16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 			
 			/* Then clause */
 			advance();
@@ -1111,7 +1117,6 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			patch_jump(ctx, parser, chunk, then_jump);
 
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			/* Else clause */
 			advance();
@@ -1125,7 +1130,6 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			patch_jump(ctx, parser, chunk, else_jump);
 
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_while) {
@@ -1133,11 +1137,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			parser_recurse(); /* Condition */
 
-			parser_begin_scope(ctx, parser);
-
 			u16 cond_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
+
+			parser_begin_scope(ctx, parser);
 
 			/* Clause */
 			advance();
@@ -1145,6 +1148,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parse_block();
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
+
+			parser_end_scope(ctx, parser);
 
 			tok = parser->token;
 
@@ -1156,9 +1161,6 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			patch_jump(ctx, parser, chunk, cond_jump);
 
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
-
-			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_fun) {
 			advance();
 			expect_tok(tok_left_paren, "Expected `(' after `fun'.");
@@ -1380,6 +1382,14 @@ struct lsp_val std_bit_or(struct lsp_state* ctx, u32 argc, struct lsp_val* args)
 	return lsp_make_num((u64)args[0].as.num | (u64)args[1].as.num);
 }
 
+struct lsp_val std_shift_left(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num((u64)args[0].as.num << (u64)args[1].as.num);
+}
+
+struct lsp_val std_shift_right(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num((u64)args[0].as.num >> (u64)args[1].as.num);
+}
+
 struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	return lsp_make_num((u64)args[0].as.num % (u64)args[1].as.num);
 }
@@ -1388,5 +1398,7 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "bit_and", 2, std_bit_and);
 	lsp_register(ctx, "bit_or", 2, std_bit_or);
+	lsp_register(ctx, "shift_left", 2, std_shift_left);
+	lsp_register(ctx, "shift_right", 2, std_shift_right);
 	lsp_register(ctx, "mod", 2, std_mod);
 }

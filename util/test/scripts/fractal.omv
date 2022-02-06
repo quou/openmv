@@ -1,4 +1,4 @@
-(set n 16)
+(set n 32)
 
 (set y (- n 1))
 
