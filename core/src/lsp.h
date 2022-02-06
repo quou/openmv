@@ -57,6 +57,7 @@ API void lsp_set_simple_errors(struct lsp_state* state, bool simple);
 API void           lsp_push(struct lsp_state* ctx, struct lsp_val val);
 API struct lsp_val lsp_pop(struct lsp_state* ctx);
 API struct lsp_val lsp_peek(struct lsp_state* ctx);
+API u32 lsp_get_stack_count(struct lsp_state* ctx);
 
 API struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
 API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);

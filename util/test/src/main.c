@@ -54,6 +54,8 @@ bool lsp() {
 
 	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/fractal.omv");
 
+	printf("Stack size: %d\n", lsp_get_stack_count(ctx));
+
 	free_lsp_state(ctx);
 	return true;
 }
@@ -136,30 +138,6 @@ bool lsp_cat() {
 	struct lsp_val v = lsp_do_string(ctx, "(cat \"Hello, \" \"World!\")");
 
 	bool good = memcmp(v.as.obj->as.str.chars, "Hello, World!", v.as.obj->as.str.len) == 0;
-
-	free_lsp_state(ctx);
-
-	return good;
-}
-
-bool lsp_if_true() {
-	struct lsp_state* ctx = new_lsp_state(null, null);
-
-	struct lsp_val v = lsp_do_string(ctx, "(if true (1) (0))");
-
-	bool good = v.as.num == 1.0;
-
-	free_lsp_state(ctx);
-
-	return good;
-}
-
-bool lsp_if_false() {
-	struct lsp_state* ctx = new_lsp_state(null, null);
-
-	struct lsp_val v = lsp_do_string(ctx, "(if false (0) (1))");
-
-	bool good = v.as.num == 1.0;
 
 	free_lsp_state(ctx);
 
@@ -292,8 +270,6 @@ i32 main() {
 		make_test_func(lsp_not),
 		make_test_func(lsp_neg),
 		make_test_func(lsp_cat),
-		make_test_func(lsp_if_true),
-		make_test_func(lsp_if_false),
 		make_test_func(lsp_var),
 		make_test_func(lsp_fun),
 		make_test_func(lsp_nat_fun),

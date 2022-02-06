@@ -220,7 +220,7 @@ static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	ctx->exception = true;
 }
 
-static u32 lsp_get_stack_count(struct lsp_state* ctx) {
+u32 lsp_get_stack_count(struct lsp_state* ctx) {
 	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
 }
 
@@ -1107,10 +1107,11 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
 			u16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
-			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
-			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			patch_jump(ctx, parser, chunk, then_jump);
+
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			/* Else clause */
 			advance();
@@ -1122,6 +1123,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			tok = parser->token;
 
 			patch_jump(ctx, parser, chunk, else_jump);
+
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_while) {
@@ -1150,6 +1154,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			chunk->count += 2;
 
 			patch_jump(ctx, parser, chunk, cond_jump);
+
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			lsp_chunk_add_op(ctx, chunk, 1, parser->line);
 
 			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_fun) {
