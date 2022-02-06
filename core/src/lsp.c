@@ -493,7 +493,7 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				struct lsp_val ret = lsp_eval(ctx, v.as.obj->as.fun.chunk);
 
-				ctx->stack_top = old_stack_top;
+				ctx->stack_top = old_stack_top - argc;
 
 				lsp_push(ctx, ret);
 
@@ -508,7 +508,13 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				struct lsp_nat* nat = ctx->natives + idx;
 
-				lsp_push(ctx, nat->fun(ctx, nat->argc, (ctx->stack_top - nat->argc) + 1));
+				struct lsp_val* old_stack_top = ctx->stack_top;
+
+				struct lsp_val ret = nat->fun(ctx, nat->argc, (ctx->stack_top - nat->argc) + 1);
+
+				ctx->stack_top = old_stack_top - nat->argc;
+
+				lsp_push(ctx, ret);
 			} break;
 			default: break;
 		}
@@ -1100,10 +1106,10 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_if) {
 			parser_recurse(); /* Condition */
 
-			parser_begin_scope(ctx, parser);
-
 			u16 then_jump = emit_jump(ctx, parser, chunk, op_jump_if_false);
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line); /* Pop the condition */
+
+			parser_begin_scope(ctx, parser);
 			
 			/* Then clause */
 			advance();
@@ -1112,11 +1118,13 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
+			parser_end_scope(ctx, parser);
+
 			u16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
 
 			patch_jump(ctx, parser, chunk, then_jump);
 
-			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
+			parser_begin_scope(ctx, parser);
 
 			/* Else clause */
 			advance();
@@ -1125,13 +1133,11 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
+			parser_end_scope(ctx, parser);
+
 			tok = parser->token;
 
 			patch_jump(ctx, parser, chunk, else_jump);
-
-			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
-
-			parser_end_scope(ctx, parser);
 		} else if (tok.type == tok_while) {
 			u16 start = chunk->count;
 
@@ -1374,6 +1380,10 @@ struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* args
 	return lsp_make_num(core_get_memory_usage());
 }
 
+struct lsp_val std_get_stack_count(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_num(lsp_get_stack_count(ctx));
+}
+
 struct lsp_val std_bit_and(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	return lsp_make_num((u64)args[0].as.num & (u64)args[1].as.num);
 }
@@ -1396,6 +1406,7 @@ struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
+	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
 	lsp_register(ctx, "bit_and", 2, std_bit_and);
 	lsp_register(ctx, "bit_or", 2, std_bit_or);
 	lsp_register(ctx, "shift_left", 2, std_shift_left);
