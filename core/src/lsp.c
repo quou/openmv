@@ -1123,6 +1123,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			u16 else_jump = emit_jump(ctx, parser, chunk, op_jump);
 
 			patch_jump(ctx, parser, chunk, then_jump);
+			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
 
 			parser_begin_scope(ctx, parser);
 
