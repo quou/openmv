@@ -111,7 +111,7 @@ bool lsp_div() {
 bool lsp_not() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(not true)");
+	struct lsp_val v = lsp_do_string(ctx, "(! true)");
 
 	bool good = v.as.boolean == false;
 

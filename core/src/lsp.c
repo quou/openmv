@@ -540,6 +540,7 @@ enum {
 	tok_eq,
 	tok_and,
 	tok_or,
+	tok_not,
 	tok_number,
 	tok_str,
 	tok_iden,
@@ -551,7 +552,6 @@ enum {
 	tok_false,
 	tok_cat,
 	tok_if,
-	tok_not,
 	tok_neg,
 	tok_fun,
 	tok_ret,
@@ -606,7 +606,6 @@ static const char* keywords[] = {
 	[tok_false] = "false",
 	[tok_cat]   = "cat",
 	[tok_if]    = "if",
-	[tok_not]   = "not",
 	[tok_neg]   = "neg",
 	[tok_fun]   = "fun",
 	[tok_ret]   = "ret",
@@ -733,6 +732,7 @@ static struct token next_tok(struct parser* parser) {
 
 		case '&': return make_token(parser, tok_and, 1);
 		case '|': return make_token(parser, tok_or, 1);
+		case '!': return make_token(parser, tok_not, 1);
 
 		case '=':
 			return make_token(parser, tok_eq, 1);
