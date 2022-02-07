@@ -52,7 +52,7 @@ bool lsp() {
 
 	lsp_register(ctx, "native_fun", 1, native);
 
-	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/fractal.omv");
+	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
 
 	printf("Stack size: %d\n", lsp_get_stack_count(ctx));
 

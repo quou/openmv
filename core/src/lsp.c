@@ -612,12 +612,12 @@ static const char* keywords[] = {
 	[tok_while] = "while"
 };
 
-static struct token make_token(struct parser* parser, u32 type, u32 len) {
+static struct token make_token(struct parser* parser, u32 type) {
 	return (struct token) {
 		.type = type,
 		.line = parser->line,
-		.start = parser->cur,
-		.len = len
+		.start = parser->start,
+		.len = (u32)(parser->cur - parser->start)
 	};
 }
 
@@ -630,21 +630,48 @@ static struct token error_token(struct parser* parser, const char* message) {
 	};
 }
 
+static char parser_advance(struct parser* parser) {
+	parser->cur++;
+	return parser->cur[-1];
+}
+
+static char parser_peek(struct parser* parser) {
+	return *parser->cur;
+}
+
+static char parser_peek_next(struct parser* parser) {
+	if (!*parser->cur) { return '\0'; }
+	return parser->cur[1];
+}
+
+static bool parser_at_end(struct parser* parser) {
+	return *parser->cur == '\0';
+}
+
+static bool parser_match(struct parser* parser, char expected) {
+	if (parser_at_end(parser)) return false;
+	if (*parser->cur != expected) return false;
+	parser->cur++;
+	return true;
+}
+
 static void skip_whitespace(struct parser* parser) {
 	/* Skip over whitespace and comments */
 	while (1) {
 		switch (*parser->cur) {
-			case '\n':
-				parser->line++;
-				parser->cur++;
-				break;
 			case ' ':
 			case '\r':
 			case '\t':
-				parser->cur++;
+				parser_advance(parser);
+				break;
+			case '\n':
+				parser_advance(parser);
+				parser->line++;
 				break;
 			case ';':
-				while (*parser->cur && *parser->cur != '\n') parser->cur++;
+				while (parser_peek(parser) != '\n' && !parser_at_end(parser)) {
+					parser_advance(parser);
+				}
 				break;
 			default: return;
 		}
@@ -663,108 +690,80 @@ static bool is_alpha(char c) {
 }
 
 static struct token next_tok(struct parser* parser) {
-	parser->cur++;
-
 	skip_whitespace(parser);
 
-	if (!*parser->cur) { return (struct token) { .type = tok_end }; }
+	parser->start = parser->cur;
 
-	if (is_alpha(*parser->cur)) {
-		u32 len = 0;
-		const char* c = parser->cur;
-		while (is_alpha(*c)) {
-			c++;
-			len++;
+	if (parser_at_end(parser)) { return (struct token) { .type = tok_end }; }
+
+	char c = parser_advance(parser);
+
+	if (is_alpha(c)) {
+		while (is_alpha(parser_peek(parser)) || is_digit(parser_peek(parser))) {
+			parser_advance(parser);
 		}
 
+		struct token tok = make_token(parser, tok_iden);
+
 		for (u32 i = tok_print; i < tok_keyword_count; i++) { /* Check for keywords. */
-			if (strlen(keywords[i]) == len && memcmp(parser->cur, keywords[i], len) == 0) {
-				struct token tok = make_token(parser, i, len);
-				parser->cur += len - 1;
+			if (strlen(keywords[i]) == tok.len && memcmp(parser->start, keywords[i], tok.len) == 0) {
+				tok.type = i;
 				return tok;
 			}
 		}
 
-		struct token tok = make_token(parser, tok_iden, len);
-
-		parser->cur += len - 1;
-
 		return tok;
 	}
 
-	switch (*parser->cur) {
-		case '(': return make_token(parser, tok_left_paren, 1);
-		case ')': return make_token(parser, tok_right_paren, 1);
-		case '+': return make_token(parser, tok_add, 1);
-		case '*': return make_token(parser, tok_mul, 1);
-		case '/': return make_token(parser, tok_div, 1);
+	switch (c) {
+		case '(': return make_token(parser, tok_left_paren);
+		case ')': return make_token(parser, tok_right_paren);
+		case '+': return make_token(parser, tok_add);
+		case '*': return make_token(parser, tok_mul);
+		case '/': return make_token(parser, tok_div);
+		case '-': return make_token(parser, tok_sub);
 
-		case '-': case '0': case '1': case '2':
-		case '3': case '4': case '5': case '6':
-		case '7': case '8': case '9': {
-			if (*parser->cur == '-' && !is_digit(*(parser->cur + 1))) {
-				return make_token(parser, tok_sub, 1);
+		case '0': case '1': case '2':
+		case '3': case '4': case '5':
+		case '6': case '7': case '8':
+		case '9': {
+			while (is_digit(parser_peek(parser))) {
+				parser_advance(parser);
 			}
 
-			/* Length is not required, number is parsed later
-			 * using strtod. */
-			struct token t = make_token(parser, tok_number, 0);
+			if (parser_peek(parser) == '.' && is_digit(parser_peek_next(parser))) {
+				parser_advance(parser);
 
-			if (*parser->cur == '-') {
-				parser->cur++;
-			}
-
-			while (is_digit(*parser->cur)) {
-				parser->cur++;
-			}
-
-			if (*parser->cur == '.') {
-				parser->cur++;
-				while (is_digit(*parser->cur)) {
-					parser->cur++;
+				while (is_digit(parser_peek(parser))) {
+					parser_advance(parser);
 				}
 			}
 
-			parser->cur--;
-
-			return t;
+			return make_token(parser, tok_number);
 		} break;
 
-		case '&': return make_token(parser, tok_and, 1);
-		case '|': return make_token(parser, tok_or, 1);
-		case '!': return make_token(parser, tok_not, 1);
+		case '&': return make_token(parser, tok_and);
+		case '|': return make_token(parser, tok_or);
+		case '!': return make_token(parser, tok_not);
+		case '=': return make_token(parser, tok_eq);
 
-		case '=':
-			return make_token(parser, tok_eq, 1);
-
-		case '<':
-			if (*(parser->cur + 1) == '=') {
-				parser->cur++;
-				return make_token(parser, tok_lte, 2);
-			}
-
-			return make_token(parser, tok_lt, 1);
-
-		case '>':
-			if (*(parser->cur + 1) == '=') {
-				parser->cur++;
-				return make_token(parser, tok_gte, 2);
-			}
-
-			return make_token(parser, tok_gt, 1);
+		case '<': return make_token(parser, parser_match(parser, '=') ? tok_lte : tok_lt);
+		case '>': return make_token(parser, parser_match(parser, '=') ? tok_gte : tok_gt);
 
 		case '"': {
-			parser->cur++;
-			u32 len = 0;
-			for (const char* c = parser->cur; *c && *c != '"'; c++) {
-				len++;
+			parser->start++;
+			while (parser_peek(parser) != '"' && !parser_at_end(parser)) {
+				if (parser_peek(parser) == '\n') { parser->line++; }
+				parser_advance(parser);
 			}
 
-			struct token t = make_token(parser, tok_str, len);
+			if (parser_at_end(parser)) {
+				return error_token(parser, "Unterminated string.");
+			}
 
-			parser->cur += len;
-
-			return t;
+			struct token tok = make_token(parser, tok_str);
+			parser_advance(parser);
+			return tok;
 		} break;
 	}
 
@@ -792,7 +791,7 @@ static struct token next_tok(struct parser* parser) {
 static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
 	u32 col = 0;
 
-	for (const char* c = parser->cur; *c != '\n' && c != parser->start; c--) {
+/*	for (const char* c = parser->cur; *c != '\n' && c != parser->start; c--) {
 		col++;
 	}
 
@@ -869,7 +868,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 			}
 		}
 		fprintf(ctx->error, "^\n");
-	} else {
+	} else {*/
 		fprintf(ctx->error, "error [line %d:%d]: ", parser->line, col);
 
 		va_list l;
@@ -878,7 +877,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		va_end(l);
 
 		fprintf(ctx->error, "\n");
-	}
+/*	}*/
 }
 
 static void parser_begin_scope(struct lsp_state* ctx, struct parser* parser) {
@@ -1333,7 +1332,7 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	struct parser parser = { 0 };
 	parser.line = 1;
 	parser.start = str;
-	parser.cur = str - 1;
+	parser.cur = str;
 
 	parser_begin_scope(ctx, &parser);
 
