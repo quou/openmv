@@ -771,19 +771,6 @@ static struct token next_tok(struct parser* parser) {
 	return error_token(parser, "Unexpected character.");
 }
 
-#define advance() \
-	tok = next_tok(parser)
-
-#define expect_tok(t_, err_) \
-	do { \
-		if ((tok).type != t_) { \
-			parse_error(ctx, parser, err_); \
-			return false; \
-		} \
-	} while (0)
-
-#define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
-
 /* Over-engineered function to print an error message. It does GCC-style error printing if
  * ctx->simple_errors is disabled, where it points to the position of the error on the line,
  * like this:
@@ -910,6 +897,18 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 
 	*((u16*)(chunk->code + offset)) = jump;
 }
+#define advance() \
+	tok = next_tok(parser)
+
+#define expect_tok(t_, err_) \
+	do { \
+		if ((tok).type != t_) { \
+			parse_error(ctx, parser, err_); \
+			return false; \
+		} \
+	} while (0)
+
+#define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
 
 #define resolve_variable() \
 	do { \
