@@ -168,7 +168,9 @@ static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {
 			core_free(obj->as.fun.chunk);
 			break;
 		case lsp_obj_ptr:
-			ctx->ptrs[obj->as.ptr.type].on_destroy(ctx, &obj->as.ptr.ptr);
+			if (ctx->ptrs[obj->as.ptr.type].on_destroy) {
+				ctx->ptrs[obj->as.ptr.type].on_destroy(ctx, &obj->as.ptr.ptr);
+			}
 			break;
 		default: break;
 	}
@@ -215,7 +217,9 @@ struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx) {
 	};
 
 	v.as.obj->as.ptr.type = idx;
-	ctx->ptrs[idx].on_create(ctx, &v.as.obj->as.ptr.ptr);
+	if (ctx->ptrs[idx].on_create) {
+		ctx->ptrs[idx].on_create(ctx, &v.as.obj->as.ptr.ptr);
+	}
 
 	return v;
 }
@@ -1482,6 +1486,17 @@ void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fu
 	ptr->on_destroy = on_destroy;
 }
 
+u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name) {
+	for (u32 i = 0; i < ctx->ptr_count; i++) {
+		if (strcmp(name, ctx->ptrs[i].name) == 0) {
+			return (u8)i;
+		}
+	}
+
+	fprintf(ctx->error, "Pointer type `%s' not registered.", name);
+	abort();
+}
+
 /* Standard library */
 struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	return lsp_make_num(core_get_memory_usage());
@@ -1511,6 +1526,41 @@ struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	return lsp_make_num((u64)args[0].as.num % (u64)args[1].as.num);
 }
 
+struct lsp_val std_fopen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	struct lsp_val v = lsp_make_ptr(ctx, lsp_get_ptr_type(ctx, "File"));
+
+	char name_buf[256];
+	char mode_buf[256];
+
+	sprintf(name_buf, "%.*s", args[0].as.obj->as.str.len, args[0].as.obj->as.str.chars);
+	sprintf(mode_buf, "%.*s", args[1].as.obj->as.str.len, args[1].as.obj->as.str.chars);
+
+	v.as.obj->as.ptr.ptr = fopen(name_buf, mode_buf);
+
+	return v;
+}
+
+struct lsp_val std_fclose(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	fclose(args[0].as.obj->as.ptr.ptr);
+
+	return lsp_make_nil();
+}
+
+struct lsp_val std_fgood(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	return lsp_make_bool(args[0].as.obj->as.ptr.ptr != null);
+}
+
+struct lsp_val std_fgets(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	char buf[256];
+	char* r = fgets(buf, sizeof(buf), args[0].as.obj->as.ptr.ptr);
+	
+	if (r) {
+		return lsp_make_str(ctx, buf, (u32)strlen(buf));
+	}
+
+	return lsp_make_nil();
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -1519,4 +1569,10 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "shift_left", 2, std_shift_left);
 	lsp_register(ctx, "shift_right", 2, std_shift_right);
 	lsp_register(ctx, "mod", 2, std_mod);
+
+	lsp_register_ptr(ctx, "File", null, null);
+	lsp_register(ctx, "fgood", 1, std_fgood);
+	lsp_register(ctx, "fopen", 2, std_fopen);
+	lsp_register(ctx, "fclose", 1, std_fclose);
+	lsp_register(ctx, "fgets", 1, std_fgets);
 }

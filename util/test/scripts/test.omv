@@ -67,3 +67,14 @@
 (set test (new TestPointer))
 (print test)
 (print_test_ptr test)
+
+(set test_file (fopen "util/test/scripts/test.omv" "r"))
+
+(set data (fgets test_file))
+(while data (
+	(put data)
+
+	(set data (fgets test_file))
+))
+
+(fclose test_file)

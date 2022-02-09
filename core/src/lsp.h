@@ -70,4 +70,5 @@ API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);
 
 API void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun);
 API void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fun on_create, lsp_ptr_destroy_fun on_destroy);
+API u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name);
 API void lsp_register_std(struct lsp_state* ctx);
