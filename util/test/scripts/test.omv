@@ -63,3 +63,7 @@
 (while false (
 	(nil)
 ))
+
+(set test (new TestPointer))
+(print test)
+(print_test_ptr test)

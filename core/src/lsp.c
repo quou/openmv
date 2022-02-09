@@ -11,6 +11,7 @@
 #define stack_size 1024
 #define max_objs 1024
 #define max_funs 256
+#define max_ptrs UINT8_MAX
 #define max_natives UINT8_MAX
 
 enum {
@@ -46,7 +47,8 @@ enum {
 	op_neg,
 	op_eq,
 	op_call,
-	op_call_nat
+	op_call_nat,
+	op_new
 };
 
 struct lsp_chunk {
@@ -63,6 +65,13 @@ struct lsp_nat {
 	char* name;
 	u32 argc;
 	lsp_nat_fun_t fun;
+};
+
+struct lsp_ptr {
+	char* name;
+	void* ptr;
+	lsp_ptr_create_fun on_create;
+	lsp_ptr_destroy_fun on_destroy;
 };
 
 struct lsp_state {
@@ -90,6 +99,9 @@ struct lsp_state {
 
 	struct lsp_val funs[max_funs];
 	u32 fun_count;
+
+	struct lsp_ptr ptrs[max_ptrs];
+	u32 ptr_count;
 };
 
 static u8 lsp_add_fun(struct lsp_state* ctx, struct lsp_val val) {
@@ -155,6 +167,9 @@ static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {
 		case lsp_obj_fun:
 			core_free(obj->as.fun.chunk);
 			break;
+		case lsp_obj_ptr:
+			ctx->ptrs[obj->as.ptr.type].on_destroy(ctx, &obj->as.ptr.ptr);
+			break;
 		default: break;
 	}
 
@@ -191,6 +206,20 @@ struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 
 	return v;
 }
 
+struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx) {
+	struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_ptr);
+
+	struct lsp_val v = {
+		.type = lsp_val_obj,
+		.as.obj = obj
+	};
+
+	v.as.obj->as.ptr.type = idx;
+	ctx->ptrs[idx].on_create(ctx, &v.as.obj->as.ptr.ptr);
+
+	return v;
+}
+
 struct lsp_state* new_lsp_state(void* error, void* info) {
 	if (!error) { error = stderr; }
 	if (!info)  { info = stdout; }
@@ -213,6 +242,10 @@ void free_lsp_state(struct lsp_state* state) {
 
 	for (u32 i = 0; i < state->nat_count; i++) {
 		core_free(state->natives[i].name);
+	}
+
+	for (u32 i = 0; i < state->ptr_count; i++) {
+		core_free(state->ptrs[i].name);
 	}
 
 	core_free(state);
@@ -317,6 +350,9 @@ static void print_obj(FILE* out, struct lsp_obj* obj) {
 			break;
 		case lsp_obj_fun:
 			fprintf(out, "<function %p>", obj->as.fun.chunk);
+			break;
+		case lsp_obj_ptr:
+			fprintf(out, "<pointer %p>", obj->as.ptr.ptr);
 			break;
 		default:
 			fprintf(out, "<object %p>", obj);
@@ -536,6 +572,10 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				lsp_push(ctx, ret);
 			} break;
+			case op_new:
+				ctx->ip++;
+				lsp_push(ctx, lsp_make_ptr(ctx, *ctx->ip));
+				break;
 			default: break;
 		}
 
@@ -565,6 +605,7 @@ enum {
 	tok_str,
 	tok_iden,
 	tok_print,
+	tok_new,
 	tok_put,
 	tok_set,
 	tok_nil,
@@ -621,6 +662,7 @@ struct parser {
 
 static const char* keywords[] = {
 	[tok_print] = "print",
+	[tok_new]   = "new",
 	[tok_put]   = "put",
 	[tok_set]   = "set",
 	[tok_nil]   = "nil",
@@ -1082,6 +1124,26 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_neg) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_neg, parser->line);
+		} else if (tok.type == tok_new) {
+			advance();
+			expect_tok(tok_iden, "Expected an identifier.");
+
+			struct lsp_ptr* ptr = null;
+			for (u32 i = 0; i < ctx->ptr_count; i++) {
+				ptr = ctx->ptrs + i;
+				u32 name_len = (u32)strlen(ptr->name);
+				if (name_len == tok.len &&
+					memcmp(ptr->name, tok.start, tok.len) == 0) {
+					lsp_chunk_add_op(ctx, chunk, op_new, parser->line);
+					lsp_chunk_add_op(ctx, chunk, (u8)i, parser->line);
+					break;
+				}
+			}
+
+			if (!ptr) {
+				parse_error(ctx, parser, "Pointer type `%.*s' not registered.", tok.len, tok.start);
+				return false;
+			}
 		} else if (tok.type == tok_set) {
 			advance();
 			expect_tok(tok_iden, "Expected an identifier.");
@@ -1405,6 +1467,19 @@ void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun
 	nat->name = copy_string(name);
 	nat->fun = fun;
 	nat->argc = argc;
+}
+
+void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fun on_create, lsp_ptr_destroy_fun on_destroy) {
+	if (ctx->ptr_count >= max_ptrs) {
+		fprintf(ctx->error, "Failed to register user pointer `%s': Too many user pointers. Max: %d\n", name, max_ptrs);
+		return;
+	}
+
+	struct lsp_ptr* ptr = ctx->ptrs + ctx->ptr_count++;
+	ptr->name = copy_string(name);
+	ptr->ptr = null;
+	ptr->on_create = on_create;
+	ptr->on_destroy = on_destroy;
 }
 
 /* Standard library */

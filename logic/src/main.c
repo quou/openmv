@@ -117,7 +117,12 @@ API void CDECL on_init() {
 	logic_store->lsp = new_lsp_state(logic_store->lsp_out, logic_store->lsp_out);
 	lsp_register_std(logic_store->lsp);
 	lsp_register(logic_store->lsp, "window_size", 2, command_window_size);
-	lsp_do_file(logic_store->lsp, "autoexec.lsp");
+
+	FILE* autoexec_file = fopen("autoexec.lsp", "rb");
+	if (autoexec_file) {
+		fclose(autoexec_file);
+		lsp_do_file(logic_store->lsp, "autoexec.lsp");
+	}
 
 #ifndef PLATFORM_WINDOWS
 	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");

@@ -15,10 +15,14 @@ enum {
 enum {
 	lsp_obj_str = 0,
 	lsp_obj_fun,
-	lsp_obj_nat
+	lsp_obj_nat,
+	lsp_obj_ptr
 };
 
 typedef struct lsp_val (*lsp_nat_fun_t)(struct lsp_state*, u32, struct lsp_val*);
+
+typedef void (*lsp_ptr_create_fun)(struct lsp_state*, void** ptr);
+typedef void (*lsp_ptr_destroy_fun)(struct lsp_state*, void** ptr);
 
 struct lsp_obj {
 	u32 ref;
@@ -28,6 +32,7 @@ struct lsp_obj {
 	union {
 		struct { char* chars; u32 len; }              str;
 		struct { struct lsp_chunk* chunk; u32 argc; } fun;
+		struct { u8 type; void* ptr; }                ptr;
 	} as;
 };
 
@@ -46,6 +51,7 @@ struct lsp_val {
 
 API struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
 API struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc);
+API struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx);
 
 API bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b);
 
@@ -63,4 +69,5 @@ API struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
 API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);
 
 API void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun);
+API void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fun on_create, lsp_ptr_destroy_fun on_destroy);
 API void lsp_register_std(struct lsp_state* ctx);

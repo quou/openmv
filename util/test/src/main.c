@@ -46,11 +46,29 @@ static struct lsp_val native(struct lsp_state* ctx, u32 argc, struct lsp_val* ar
 	return lsp_make_nil();
 }
 
+static struct lsp_val print_test_ptr(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	printf("%d\n", *(int*)args[0].as.obj->as.ptr.ptr);
+
+	return lsp_make_nil();
+}
+
+static void test_ptr_create(struct lsp_state* ctx, void** ptr) {
+	*ptr = core_alloc(sizeof(int));
+	**(int**)ptr = 10;
+}
+
+static void test_ptr_destroy(struct lsp_state* ctx, void** ptr) {
+	core_free(*ptr);
+}
+
 bool lsp() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 	lsp_register_std(ctx);
 
+	lsp_register_ptr(ctx, "TestPointer", test_ptr_create, test_ptr_destroy);
+
 	lsp_register(ctx, "native_fun", 1, native);
+	lsp_register(ctx, "print_test_ptr", 1, print_test_ptr);
 
 	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/test.omv");
 
