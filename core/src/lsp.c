@@ -242,7 +242,7 @@ u32 lsp_get_stack_count(struct lsp_state* ctx) {
 }
 
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {
-	if (ctx->stack_top >= ctx->stack + stack_size) {
+	if (lsp_get_stack_count(ctx) >= stack_size) {
 		lsp_exception(ctx, "Stack overflow.");
 		return;
 	}
@@ -613,6 +613,7 @@ struct parser {
 	struct lsp_chunk* chunk;
 
 	u32 scope_depth;
+	bool in_fun;
 
 	struct local locals[max_locals];
 	u32 local_count;
@@ -812,7 +813,9 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		line_start--;
 	}
 
-	line_start++;
+	if (*line_start == '\n') {
+		line_start++;
+	}
 
 	u32 line_len = 0;
 	for (const char* c = line_start; *c && *c != '\n'; c++) {
@@ -850,7 +853,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\033[0m\n");
 	} else if (!ctx->simple_errors) {
-		fprintf(ctx->error, "\033[1;31merror \033[0m");
+		fprintf(ctx->error, "error ");
 		fprintf(ctx->error, "[line %d:%d]: ", parser->line, col);
 
 		va_list l;
@@ -865,7 +868,6 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 
 		fprintf(ctx->error, "%10d | %.*s\n", parser->line, line_len, to_print);
 		fprintf(ctx->error, "             ");
-		fprintf(ctx->error, "\033[1;35m");
 		for (u32 i = 0; i < col - 1; i++) {
 			if (to_print[i] == '\t') {
 				fprintf(ctx->error, "\t");
@@ -873,7 +875,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 				fprintf(ctx->error, " ");
 			}
 		}
-		fprintf(ctx->error, "^\033[0m\n");
+		fprintf(ctx->error, "^\n");
 	} else { 
 		fprintf(ctx->error, "error [line %d]: ", parser->line);
 
@@ -1188,12 +1190,19 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
 		} else if (tok.type == tok_fun) {
+			if (parser->in_fun) {
+				parse_error(ctx, parser, "Nested functions are not supported.");
+				return false;
+			}
+
 			advance();
 			expect_tok(tok_left_paren, "Expected `(' after `fun'.");
 
 			parser_begin_scope(ctx, parser);
 
 			u32 argc = 0;
+
+			parser->in_fun = true;
 
 			while (1) {
 				advance();
@@ -1253,6 +1262,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, new_chunk, argc));
 			lsp_chunk_add_op(ctx, chunk, op_push_fun, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
+
+			parser->in_fun = false;
 		} else if (tok.type == tok_ret) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);

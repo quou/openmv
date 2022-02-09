@@ -103,7 +103,22 @@ void load_default_room() {
 		make_v2f(spawn.x - (pcol->rect.w / 2), spawn.y - pcol->rect.h);
 }
 
+static struct lsp_val command_window_size(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	set_window_size(main_window, make_v2i((i32)args[0].as.num, (i32)args[1].as.num));
+	return lsp_make_nil();
+}
+
 API void CDECL on_init() {
+	logic_store->lsp_out = fopen("command.log", "w");
+	if (!logic_store->lsp_out) {
+		fprintf(stderr, "Failed to open `command.log'\n");
+	}
+
+	logic_store->lsp = new_lsp_state(logic_store->lsp_out, logic_store->lsp_out);
+	lsp_register_std(logic_store->lsp);
+	lsp_register(logic_store->lsp, "window_size", 2, command_window_size);
+	lsp_do_file(logic_store->lsp, "autoexec.lsp");
+
 #ifndef PLATFORM_WINDOWS
 	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
 
@@ -361,6 +376,17 @@ API void CDECL on_update(double ts) {
 			ui_end_window(ui);
 		}
 
+		if (ui_begin_window(ui, "Commands", make_v2i(0, 300))) {
+			ui_text_input(ui, "Command", logic_store->lsp_buf, 256);
+			
+			if (ui_button(ui, "Submit")) {
+				lsp_do_string(logic_store->lsp, logic_store->lsp_buf);
+				logic_store->lsp_buf[0] = 0;
+			}
+
+			ui_end_window(ui);
+		}
+
 		ui_end_frame(ui);
 	}
 }
@@ -387,4 +413,7 @@ API void CDECL on_deinit() {
 	savegame_deinit();
 
 	keymap_deinit();
+
+	free_lsp_state(logic_store->lsp);
+	fclose(logic_store->lsp_out);
 }

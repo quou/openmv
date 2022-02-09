@@ -1,6 +1,9 @@
 #pragma once
 
+#include <stdio.h>
+
 #include "entity.h"
+#include "lsp.h"
 #include "menu.h"
 #include "room.h"
 #include "ui.h"
@@ -38,6 +41,11 @@ struct logic_store {
 	struct table* savegame_persist;
 
 	void* dialogue_lib;
+
+	struct lsp_state* lsp;
+	char lsp_buf[256];
+
+	FILE* lsp_out;
 };
 
 extern struct logic_store* logic_store;
