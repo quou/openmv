@@ -10,11 +10,13 @@
 #define chunk_max_constants UINT8_MAX
 #define stack_size 1024
 #define max_objs 1024
+#define max_funs 256
 #define max_natives UINT8_MAX
 
 enum {
 	op_halt = 0,
 	op_push,
+	op_push_fun,
 	op_push_nil,
 	op_push_true,
 	op_push_false,
@@ -85,7 +87,21 @@ struct lsp_state {
 
 	struct lsp_obj objs[max_objs];
 	u32 obj_count;
+
+	struct lsp_val funs[max_funs];
+	u32 fun_count;
 };
+
+static u8 lsp_add_fun(struct lsp_state* ctx, struct lsp_val val) {
+	if (ctx->fun_count >= max_funs) {
+		fprintf(ctx->error, "Too many functions. Maximum %d.\n", max_funs);
+		return 0;
+	}
+
+	ctx->funs[ctx->fun_count] = val;
+
+	return ctx->fun_count++;
+}
 
 static void lsp_chunk_add_op(struct lsp_state* ctx, struct lsp_chunk* chunk, u8 op, u32 line) {
 	if (chunk->count >= chunk_size) {
@@ -362,6 +378,10 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_push:
 				ctx->ip++;
 				lsp_push(ctx, chunk->consts[*ctx->ip]);
+				break;
+			case op_push_fun:
+				ctx->ip++;
+				lsp_push(ctx, ctx->funs[*ctx->ip]);
 				break;
 			case op_push_nil:   lsp_push(ctx, lsp_make_nil()); break;
 			case op_push_true:  lsp_push(ctx, lsp_make_bool(true)); break;
@@ -1230,8 +1250,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			u8 a = lsp_chunk_add_const(ctx, chunk, lsp_make_fun(ctx, new_chunk, argc));
-			lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
+			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, new_chunk, argc));
+			lsp_chunk_add_op(ctx, chunk, op_push_fun, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 		} else if (tok.type == tok_ret) {
 			parser_recurse();
@@ -1274,7 +1294,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 					count_args();
 
-					lsp_chunk_add_op(ctx, chunk, op_push, parser->line);
+					lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
 					lsp_chunk_add_op(ctx, chunk, op_call, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)argc, parser->line);

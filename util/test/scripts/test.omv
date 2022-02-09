@@ -1,7 +1,17 @@
+(set some_fun2 (fun () (
+	(ret "hi")
+)))
+
 (set some_fun (fun (x y) (
-	(print "Hello, I'm a function! X and Y are:")
-	(print x)
+	(put "Hello, I'm a function! X: ")
+	(put x)
+	(put " Y: ")
 	(print y)
+
+	(put "Calling `some_fun2': ")
+	(print (some_fun2))
+
+	(some_fun 1 1)
 )))
 
 (set a 290)
