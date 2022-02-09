@@ -587,6 +587,7 @@ struct parser {
 	u32 line;
 	const char* cur;
 	const char* start;
+	const char* source;
 	struct token token;
 
 	struct lsp_chunk* chunk;
@@ -658,7 +659,7 @@ static bool parser_match(struct parser* parser, char expected) {
 static void skip_whitespace(struct parser* parser) {
 	/* Skip over whitespace and comments */
 	while (1) {
-		switch (*parser->cur) {
+		switch (parser_peek(parser)) {
 			case ' ':
 			case '\r':
 			case '\t':
@@ -784,20 +785,36 @@ static struct token next_tok(struct parser* parser) {
 #define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
 
 /* Over-engineered function to print an error message. It does GCC-style error printing if
- * ctx->simple_errors is disabled, where it points to the position of the error on the line.
+ * ctx->simple_errors is disabled, where it points to the position of the error on the line,
+ * like this:
+ *
+ * error: Unexpected token.
+ *    1 | (+ + 10)
+ *           ^
  *
  * Simple error printing is for when only a single line is allowed for the error message,
- * such as for a status bar. */
+ * such as for a status bar.
+ *
+ * ASCII escape codes are used to give coloured output if printing to stdout or stderr. Otherwise,
+ * colours are not printed, to avoid garbled text if dumping errors to a file instead of standard
+ * output. TODO: Use the Win32 API to give colored output on the Windows console, which doesn't
+ * support ASCII escape codes. */
 static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
-	u32 col = 0;
-
-/*	for (const char* c = parser->cur; *c != '\n' && c != parser->start; c--) {
-		col++;
+	const char* line_start = parser->cur - 1;
+	while (line_start != parser->source && *line_start != '\n') {
+		line_start--;
 	}
 
-	u32 line_len = col;
-	for (const char* c = parser->cur; *c && *c != '\n'; c++) {
+	line_start++;
+
+	u32 line_len = 0;
+	for (const char* c = line_start; *c && *c != '\n'; c++) {
 		line_len++;
+	}
+
+	u32 col = 0;
+	for (const char* c = line_start; *c && c != parser->cur; c++) {
+		col++;
 	}
 
 	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
@@ -810,25 +827,15 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		va_end(l);
 
 		fprintf(ctx->error, "\n");
-		
+
 		char to_print[256];
-		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
+		memcpy(to_print, line_start, 256 > line_len ? line_len : 256);
 
-		u32 offset = 0;
-
-		if (to_print[0] == '\n') {
-			offset++;
-		}
-
-		if (to_print[line_len - 1] == '\n') {
-			line_len--;
-		}
-
-		fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len - 1, to_print + offset);
-		fprintf(ctx->error, "            ");
+		fprintf(ctx->error, "\033[0;33m%10d\033[0m %.*s\n", parser->line, line_len, to_print);
+		fprintf(ctx->error, "           ");
 		fprintf(ctx->error, "\033[1;35m");
 		for (u32 i = 0; i < col - 1; i++) {
-			if ((to_print + offset)[i] == '\t') {
+			if (to_print[i] == '\t') {
 				fprintf(ctx->error, "\t");
 			} else {
 				fprintf(ctx->error, " ");
@@ -836,7 +843,8 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\033[0m\n");
 	} else if (!ctx->simple_errors) {
-		fprintf(ctx->error, "error [line %d:%d]: ", parser->line, col);
+		fprintf(ctx->error, "\033[1;31merror \033[0m");
+		fprintf(ctx->error, "[line %d:%d]: ", parser->line, col);
 
 		va_list l;
 		va_start(l, message);
@@ -844,32 +852,23 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		va_end(l);
 
 		fprintf(ctx->error, "\n");
-		
+
 		char to_print[256];
-		memcpy(to_print, parser->cur - col, 256 > line_len ? line_len : 256);
+		memcpy(to_print, line_start, 256 > line_len ? line_len : 256);
 
-		u32 offset = 0;
-
-		if (to_print[0] == '\n') {
-			offset++;
-		}
-
-		if (to_print[line_len - 1] == '\n') {
-			line_len--;
-		}
-
-		fprintf(ctx->error, "%10d| %.*s\n", parser->line, line_len - 1, to_print + offset);
-		fprintf(ctx->error, "            ");
+		fprintf(ctx->error, "%10d | %.*s\n", parser->line, line_len, to_print);
+		fprintf(ctx->error, "             ");
+		fprintf(ctx->error, "\033[1;35m");
 		for (u32 i = 0; i < col - 1; i++) {
-			if ((to_print + offset)[i] == '\t') {
+			if (to_print[i] == '\t') {
 				fprintf(ctx->error, "\t");
 			} else {
 				fprintf(ctx->error, " ");
 			}
 		}
-		fprintf(ctx->error, "^\n");
-	} else {*/
-		fprintf(ctx->error, "error [line %d:%d]: ", parser->line, col);
+		fprintf(ctx->error, "^\033[0m\n");
+	} else { 
+		fprintf(ctx->error, "error [line %d]: ", parser->line);
 
 		va_list l;
 		va_start(l, message);
@@ -877,7 +876,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		va_end(l);
 
 		fprintf(ctx->error, "\n");
-/*	}*/
+	}
 }
 
 static void parser_begin_scope(struct lsp_state* ctx, struct parser* parser) {
@@ -943,6 +942,7 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 			} \
 			struct token tok = parser->token; \
 			const char* cur = parser->cur; \
+			u32 p_line = parser->line; \
 			parser->token = next_tok(parser); \
 			bool found = false; \
 			if (parser->token.type == tok_right_paren) { \
@@ -950,6 +950,7 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 			} \
 			parser->cur = cur; \
 			parser->token = tok; \
+			parser->line = p_line; \
 			if (found) { \
 				break; \
 			} \
@@ -1333,6 +1334,7 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	parser.line = 1;
 	parser.start = str;
 	parser.cur = str;
+	parser.source = str;
 
 	parser_begin_scope(ctx, &parser);
 
