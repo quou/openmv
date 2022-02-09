@@ -56,8 +56,8 @@ but I rarely test it, so some minor modifications might be needed here and there
 ## Using the Engine
 You may use this project as a fairly solid foundation for other game projects. The
 renderer, entity component system, map loader, resource manager and audio systems are
-all fairly stable and bug-free to my knowledge. The scripting language barely works
-(I have only been working on it for a week) and the IMGUI probably has bugs.
+all fairly stable and bug-free to my knowledge. The scripting language and the IMGUI
+probably have bugs.
 
 ### Using mksdk
 Use mksdk if you want to use the bootstrapper with code hot reloading. This offers
