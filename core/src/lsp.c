@@ -1509,18 +1509,30 @@ struct lsp_val std_get_stack_count(struct lsp_state* ctx, u32 argc, struct lsp_v
 }
 
 struct lsp_val std_bit_and(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `bit_and' must be a number.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `bit_and' must be a number.");
+
 	return lsp_make_num((u64)args[0].as.num & (u64)args[1].as.num);
 }
 
 struct lsp_val std_bit_or(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `bit_or' must be a number.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `bit_or' must be a number.");
+
 	return lsp_make_num((u64)args[0].as.num | (u64)args[1].as.num);
 }
 
 struct lsp_val std_shift_left(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `shift_left' must be a number.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `shift_left' must be a number.");
+
 	return lsp_make_num((u64)args[0].as.num << (u64)args[1].as.num);
 }
 
 struct lsp_val std_shift_right(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `shift_right' must be a number.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `shift_right' must be a number.");
+
 	return lsp_make_num((u64)args[0].as.num >> (u64)args[1].as.num);
 }
 
@@ -1529,6 +1541,9 @@ struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 }
 
 struct lsp_val std_fopen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_obj_assert(ctx, args[0], lsp_obj_str, "Argument 0 to `fopen' must be a string.");
+	lsp_arg_obj_assert(ctx, args[1], lsp_obj_str, "Argument 1 to `fopen' must be a string.");
+
 	struct lsp_val v = lsp_make_ptr(ctx, lsp_get_ptr_type(ctx, "File"));
 
 	char name_buf[256];
@@ -1543,16 +1558,22 @@ struct lsp_val std_fopen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) 
 }
 
 struct lsp_val std_fclose(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "File", "Argument 0 to `fclose' must be a pointer of type `File'.");
+
 	fclose(args[0].as.obj->as.ptr.ptr);
 
 	return lsp_make_nil();
 }
 
 struct lsp_val std_fgood(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "File", "Argument 0 to `fgood' must be a pointer of type `File'.");
+
 	return lsp_make_bool(lsp_as_ptr(args[0]).ptr != null);
 }
 
 struct lsp_val std_fgets(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "File", "Argument 0 to `fgets' must be a pointer of type `File'.");
+
 	char buf[256];
 	char* r = fgets(buf, sizeof(buf), lsp_as_ptr(args[0]).ptr);
 	
