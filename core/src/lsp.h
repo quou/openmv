@@ -15,7 +15,6 @@ enum {
 enum {
 	lsp_obj_str = 0,
 	lsp_obj_fun,
-	lsp_obj_nat,
 	lsp_obj_ptr
 };
 
@@ -48,6 +47,19 @@ struct lsp_val {
 #define lsp_make_nil()           ((struct lsp_val) { .type = lsp_val_nil })
 #define lsp_make_num(n_)         ((struct lsp_val) { .type = lsp_val_num,  .as.num = n_ })
 #define lsp_make_bool(b_)        ((struct lsp_val) { .type = lsp_val_bool, .as.boolean = b_ })
+
+#define lsp_is_nil(v_)  ((v_).type == lsp_val_nil)
+#define lsp_is_num(v_)  ((v_).type == lsp_val_num)
+#define lsp_is_bool(v_) ((v_).type == lsp_val_bool)
+#define lsp_is_str(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_str)
+#define lsp_is_ptr(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_ptr)
+#define lsp_is_fun(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_fun)
+
+#define lsp_as_num(v_)  ((v_).as.num)
+#define lsp_as_bool(v_) ((v_).as.boolean)
+#define lsp_as_str(v_)  ((v_).as.obj->as.str)
+#define lsp_as_fun(v_)  ((v_).as.obj->as.fun)
+#define lsp_as_ptr(v_)  ((v_).as.obj->as.ptr)
 
 API struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
 API struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc);

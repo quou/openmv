@@ -68,13 +68,18 @@
 (print test)
 (print_test_ptr test)
 
-(set test_file (fopen "util/test/scripts/test.omv" "r"))
+(set file_path "util/test/scripts/test.omv")
+(set test_file (fopen file_path "r"))
 
-(set data (fgets test_file))
-(while data (
-	(put data)
-
+(if (fgood test_file) (
 	(set data (fgets test_file))
-))
+	(while data (
+		(put data)
 
-(fclose test_file)
+		(set data (fgets test_file))
+	))
+	(fclose test_file)
+) (
+	(put "Failed to read file: ")
+	(print file_path)
+))

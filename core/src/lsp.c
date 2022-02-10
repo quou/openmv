@@ -1532,8 +1532,8 @@ struct lsp_val std_fopen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) 
 	char name_buf[256];
 	char mode_buf[256];
 
-	sprintf(name_buf, "%.*s", args[0].as.obj->as.str.len, args[0].as.obj->as.str.chars);
-	sprintf(mode_buf, "%.*s", args[1].as.obj->as.str.len, args[1].as.obj->as.str.chars);
+	sprintf(name_buf, "%.*s", lsp_as_str(args[0]).len, lsp_as_str(args[0]).chars);
+	sprintf(mode_buf, "%.*s", lsp_as_str(args[1]).len, lsp_as_str(args[1]).chars);
 
 	v.as.obj->as.ptr.ptr = fopen(name_buf, mode_buf);
 
@@ -1547,12 +1547,12 @@ struct lsp_val std_fclose(struct lsp_state* ctx, u32 argc, struct lsp_val* args)
 }
 
 struct lsp_val std_fgood(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	return lsp_make_bool(args[0].as.obj->as.ptr.ptr != null);
+	return lsp_make_bool(lsp_as_ptr(args[0]).ptr != null);
 }
 
 struct lsp_val std_fgets(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	char buf[256];
-	char* r = fgets(buf, sizeof(buf), args[0].as.obj->as.ptr.ptr);
+	char* r = fgets(buf, sizeof(buf), lsp_as_ptr(args[0]).ptr);
 	
 	if (r) {
 		return lsp_make_str(ctx, buf, (u32)strlen(buf));
