@@ -83,3 +83,18 @@
 	(put "Failed to read file: ")
 	(print file_path)
 ))
+
+(set test_vec (new Vector))
+(vector_push test_vec 200)
+(vector_push test_vec 2)
+(vector_push test_vec "Hello, world!")
+(vector_push test_vec "Hello, world!")
+
+(vector_remove test_vec 2)
+
+(set i 0)
+(while (< i (vector_count test_vec)) (
+	(print (vector_at test_vec i))
+
+	(set i (+ i 1))
+))

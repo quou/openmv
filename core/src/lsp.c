@@ -259,7 +259,7 @@ void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
 	state->simple_errors = simple;
 }
 
-static void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
+void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
 
 	fprintf(ctx->error, "Exception [line %d]: ", ctx->chunk->lines[instruction]);
@@ -1486,6 +1486,7 @@ void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fu
 	ptr->on_destroy = on_destroy;
 }
 
+/* This is a shit implementation of this. */
 u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name) {
 	for (u32 i = 0; i < ctx->ptr_count; i++) {
 		if (strcmp(name, ctx->ptrs[i].name) == 0) {
@@ -1561,6 +1562,89 @@ struct lsp_val std_fgets(struct lsp_state* ctx, u32 argc, struct lsp_val* args) 
 	return lsp_make_nil();
 }
 
+struct lsp_std_vector {
+	struct lsp_val* values;
+	u32 capacity;
+	u32 count;
+};
+
+void std_vector_create(struct lsp_state* ctx, void** ptr) {
+	*ptr = core_calloc(1, sizeof(struct lsp_std_vector));
+}
+
+void std_vector_destroy(struct lsp_state* ctx, void** ptr) {
+	struct lsp_std_vector* vec = *ptr;
+
+	if (vec->values) {
+		core_free(vec->values);
+	}
+
+	core_free(vec);
+}
+
+struct lsp_val std_vector_push(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_push' must be a pointer of type `Vector'.");
+
+	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
+
+	if (vec->count >= vec->capacity) {
+		vec->capacity = vec->capacity < 8 ? 8 : vec->capacity * 2;
+		vec->values = core_realloc(vec->values, vec->capacity * sizeof(struct lsp_val));
+	}
+
+	vec->values[vec->count++] = args[1];
+
+	return lsp_make_nil();
+}
+
+struct lsp_val std_vector_at(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_at' must be a pointer of type `Vector'.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `vector_at' must be a number.");
+
+	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
+	u32 idx = (u32)lsp_as_num(args[1]);
+	
+	return vec->values[idx];
+}
+
+struct lsp_val std_vector_count(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_count' must be a pointer of type `Vector'.");
+
+	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
+	return lsp_make_num(vec->count);
+}
+
+struct lsp_val std_vector_remove(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_remove' must be a pointer of type `Vector'.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `vector_remove' must be a number.");
+
+	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
+	u32 idx = lsp_as_num(args[1]);
+
+	if (vec->count > 1) {	
+		vec->values[idx] = vec->values[vec->count - 1];
+	}
+
+	vec->count--;
+
+	return lsp_make_nil();
+}
+
+struct lsp_val std_vector_find(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_find' must be a pointer of type `Vector'.");
+
+	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
+	struct lsp_val val = args[1];
+
+	for (u32 i = 0; i < vec->count; i++) {
+		if (lsp_vals_eq(ctx, val, vec->values[i])) {
+			return lsp_make_num(i);
+		}
+	}
+
+	return lsp_make_nil();
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -1575,4 +1659,11 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "fopen", 2, std_fopen);
 	lsp_register(ctx, "fclose", 1, std_fclose);
 	lsp_register(ctx, "fgets", 1, std_fgets);
+
+	lsp_register_ptr(ctx, "Vector", std_vector_create, std_vector_destroy);
+	lsp_register(ctx, "vector_push", 2, std_vector_push);
+	lsp_register(ctx, "vector_at", 2, std_vector_at);
+	lsp_register(ctx, "vector_count", 1, std_vector_count);
+	lsp_register(ctx, "vector_remove", 2, std_vector_remove);
+	lsp_register(ctx, "vector_find", 2, std_vector_find);
 }

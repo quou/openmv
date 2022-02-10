@@ -61,6 +61,30 @@ struct lsp_val {
 #define lsp_as_fun(v_)  ((v_).as.obj->as.fun)
 #define lsp_as_ptr(v_)  ((v_).as.obj->as.ptr)
 
+#define lsp_arg_assert(ctx_, v_, t_, m_, ...) \
+	do { \
+		if ((v_).type != t_) { \
+			lsp_exception(ctx_, m_, ##__VA_ARGS__); \
+			return lsp_make_nil(); \
+		} \
+	} while (0)
+
+#define lsp_arg_obj_assert(ctx_, v_, t_, m_, ...) \
+	do { \
+		if ((v_).type != lsp_val_obj || (v_).as.obj->type != t_) { \
+			lsp_exception(ctx_, m_, ##__VA_ARGS__); \
+			return lsp_make_nil(); \
+		} \
+	} while (0)
+
+#define lsp_arg_ptr_assert(ctx_, v_, t_, m_, ...) \
+	do { \
+		if ((v_).type != lsp_val_obj || (v_).as.obj->type != lsp_obj_ptr || (v_).as.obj->as.ptr.type != lsp_get_ptr_type(ctx_, t_)) { \
+			lsp_exception(ctx_, m_, ##__VA_ARGS__); \
+			return lsp_make_nil(); \
+		} \
+	} while (0)
+
 API struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
 API struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc);
 API struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx);
@@ -84,3 +108,5 @@ API void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat
 API void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_create_fun on_create, lsp_ptr_destroy_fun on_destroy);
 API u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name);
 API void lsp_register_std(struct lsp_state* ctx);
+
+void lsp_exception(struct lsp_state* ctx, const char* message, ...);
