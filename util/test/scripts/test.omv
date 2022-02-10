@@ -98,3 +98,7 @@
 
 	(set i (+ i 1))
 ))
+
+(set test_tab (new Table))
+(table_set test_tab "test_key" 20)
+(print (table_get test_tab "test_key"))

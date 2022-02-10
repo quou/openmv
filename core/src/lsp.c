@@ -5,6 +5,7 @@
 #include "core.h"
 #include "lsp.h"
 #include "res.h"
+#include "table.h"
 
 #define chunk_size 1024
 #define chunk_max_constants UINT8_MAX
@@ -1645,6 +1646,53 @@ struct lsp_val std_vector_find(struct lsp_state* ctx, u32 argc, struct lsp_val* 
 	return lsp_make_nil();
 }
 
+void std_table_create(struct lsp_state* ctx, void** ptr) {
+	*ptr = new_table(sizeof(struct lsp_val));
+}
+
+void std_table_destroy(struct lsp_state* ctx, void** ptr) {
+	free_table(*ptr);
+}
+
+struct lsp_val std_table_set(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {	
+	lsp_arg_ptr_assert(ctx, args[0], "Table", "Argument 0 to `table_set' must be a pointer of type `Table'.");
+	lsp_arg_obj_assert(ctx, args[1], lsp_obj_str, "Argument 1 to `table_set' must be a string.");
+
+	u32 len = lsp_as_str(args[1]).len;
+	char* key = core_alloc(len + 1);
+	key[len] = '\0';
+	memcpy(key, lsp_as_str(args[1]).chars, len);
+
+	struct table* table = lsp_as_ptr(args[0]).ptr;
+	table_set(table, key, &args[2]);
+
+	core_free(key);
+
+	return lsp_make_nil();
+}
+
+struct lsp_val std_table_get(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {	
+	lsp_arg_ptr_assert(ctx, args[0], "Table", "Argument 0 to `table_get' must be a pointer of type `Table'.");
+	lsp_arg_obj_assert(ctx, args[1], lsp_obj_str, "Argument 1 to `table_get' must be a string.");
+
+	u32 len = lsp_as_str(args[1]).len;
+	char* key = core_alloc(len + 1);
+	key[len] = '\0';
+	memcpy(key, lsp_as_str(args[1]).chars, len);
+
+	struct table* table = lsp_as_ptr(args[0]).ptr;
+	void* val = table_get(table, key);
+
+	if (!val) {
+		core_free(key);
+		lsp_make_nil();
+	}
+
+	core_free(key);
+
+	return *(struct lsp_val*)val;
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -1666,4 +1714,8 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "vector_count", 1, std_vector_count);
 	lsp_register(ctx, "vector_remove", 2, std_vector_remove);
 	lsp_register(ctx, "vector_find", 2, std_vector_find);
+
+	lsp_register_ptr(ctx, "Table", std_table_create, std_table_destroy);
+	lsp_register(ctx, "table_set", 3, std_table_set);
+	lsp_register(ctx, "table_get", 2, std_table_get);
 }
