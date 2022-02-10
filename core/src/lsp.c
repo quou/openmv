@@ -7,7 +7,6 @@
 #include "res.h"
 #include "table.h"
 
-#define chunk_size 1024
 #define chunk_max_constants UINT8_MAX
 #define stack_size 1024
 #define max_objs 1024
@@ -53,10 +52,11 @@ enum {
 };
 
 struct lsp_chunk {
-	u8 code[chunk_size];
-	u32 lines[chunk_size];
+	u8* code;
+	u32* lines;
 
 	u32 count;
+	u32 capacity;
 
 	struct lsp_val consts[chunk_max_constants];
 	u32 const_count;
@@ -117,10 +117,10 @@ static u8 lsp_add_fun(struct lsp_state* ctx, struct lsp_val val) {
 }
 
 static void lsp_chunk_add_op(struct lsp_state* ctx, struct lsp_chunk* chunk, u8 op, u32 line) {
-	if (chunk->count >= chunk_size) {
-		fprintf(ctx->error, "Too many instructions in one chunk. Maximum %d.\n", chunk_size);
-		chunk->code[chunk_size - 1] = op_halt;
-		return;
+	if (chunk->count >= chunk->capacity) {
+		chunk->capacity = chunk->capacity < 32 ? 32 : chunk->capacity * 2;
+		chunk->code  = core_realloc(chunk->code, chunk->capacity);
+		chunk->lines = core_realloc(chunk->lines, chunk->capacity * sizeof(u32));
 	}
 
 	chunk->code[chunk->count] = op;
@@ -137,6 +137,11 @@ static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, st
 	chunk->consts[chunk->const_count] = val;
 
 	return chunk->const_count++;
+}
+
+static void deinit_chunk(struct lsp_chunk* chunk) {
+	if (chunk->code) { core_free(chunk->code); }
+	if (chunk->lines) { core_free(chunk->lines); }
 }
 
 static struct lsp_obj* lsp_new_obj(struct lsp_state* ctx, u8 type) {
@@ -166,6 +171,7 @@ static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {
 			core_free(obj->as.str.chars);
 			break;
 		case lsp_obj_fun:
+			deinit_chunk(obj->as.fun.chunk);
 			core_free(obj->as.fun.chunk);
 			break;
 		case lsp_obj_ptr:
@@ -1444,7 +1450,9 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	parser_end_scope(ctx, &parser);
 
 	lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
-	return lsp_eval(ctx, &chunk);
+	struct lsp_val v = lsp_eval(ctx, &chunk);
+	deinit_chunk(&chunk);
+	return v;
 }
 
 struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path) {
