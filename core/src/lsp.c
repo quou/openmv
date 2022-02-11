@@ -8,7 +8,8 @@
 #include "table.h"
 
 #define chunk_max_constants UINT8_MAX
-#define stack_size 1024
+#define max_frames 64
+#define stack_size max_frames * UINT8_MAX
 #define max_objs 1024
 #define max_funs 256
 #define max_ptrs UINT8_MAX
@@ -48,7 +49,7 @@ enum {
 	op_eq,
 	op_call,
 	op_call_nat,
-	op_new
+	op_new,
 };
 
 struct lsp_chunk {
@@ -75,11 +76,18 @@ struct lsp_ptr {
 	lsp_ptr_destroy_fun on_destroy;
 };
 
+struct lsp_frame {
+	struct lsp_obj* fun;
+};
+
 struct lsp_state {
 	struct lsp_val stack[stack_size];
 	struct lsp_val* stack_top;
 
 	struct lsp_val* frame_start;
+
+	struct lsp_frame frames[max_frames];
+	u32 frame_count;
 
 	struct lsp_nat natives[max_natives];
 	u32 nat_count;
@@ -128,6 +136,14 @@ static void lsp_chunk_add_op(struct lsp_state* ctx, struct lsp_chunk* chunk, u8 
 	chunk->count++;
 }
 
+static void lsp_chunk_reserve(struct lsp_chunk* chunk, u32 count) {
+	if (chunk->count + count >= chunk->capacity) {
+		chunk->capacity = chunk->capacity < 32 ? 32 : chunk->capacity * 2;
+		chunk->code  = core_realloc(chunk->code, chunk->capacity);
+		chunk->lines = core_realloc(chunk->lines, chunk->capacity * sizeof(u32));
+	}
+}
+
 static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, struct lsp_val val) {
 	if (chunk->const_count >= chunk_max_constants) {
 		fprintf(ctx->error, "Too many constants in one chunk. Maximum %d.\n", chunk_max_constants);
@@ -149,7 +165,6 @@ static struct lsp_obj* lsp_new_obj(struct lsp_state* ctx, u8 type) {
 		if (ctx->objs[i].recyclable) {
 			ctx->objs[i].recyclable = false;
 			ctx->objs[i].type = type;
-			ctx->objs[i].ref = 1;
 			return ctx->objs + i;
 		}
 	}
@@ -160,12 +175,11 @@ static struct lsp_obj* lsp_new_obj(struct lsp_state* ctx, u8 type) {
 	}
 
 	ctx->objs[ctx->obj_count].type = type;
-	ctx->objs[ctx->obj_count].ref = 1;
 
 	return ctx->objs + ctx->obj_count++;
 }
 
-static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {	
+void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {	
 	switch (obj->type) {
 		case lsp_obj_str:
 			core_free(obj->as.str.chars);
@@ -173,6 +187,7 @@ static void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {
 		case lsp_obj_fun:
 			deinit_chunk(obj->as.fun.chunk);
 			core_free(obj->as.fun.chunk);
+			core_free(obj->as.fun.name);
 			break;
 		case lsp_obj_ptr:
 			if (ctx->ptrs[obj->as.ptr.type].on_destroy) {
@@ -201,7 +216,7 @@ struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len) {
 	return v;
 }
 
-struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc) {
+struct lsp_val lsp_make_fun(struct lsp_state* ctx, const char* name_start, u32 name_len, struct lsp_chunk* chunk, u32 argc) {
 	struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_fun);
 
 	struct lsp_val v = {
@@ -211,6 +226,10 @@ struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 
 
 	obj->as.fun.chunk = chunk;
 	obj->as.fun.argc = argc;
+
+	obj->as.fun.name = core_alloc(name_len + 1);
+	obj->as.fun.name[name_len] = '\0';
+	memcpy(obj->as.fun.name, name_start, name_len);
 
 	return v;
 }
@@ -236,6 +255,8 @@ struct lsp_state* new_lsp_state(void* error, void* info) {
 	if (!info)  { info = stdout; }
 
 	struct lsp_state* state = core_calloc(1, sizeof(struct lsp_state));
+
+	state->frame_count = 1;
 
 	state->error = error;
 	state->info = info;
@@ -277,6 +298,14 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	va_end(l);
 
 	fprintf(ctx->error, "\n");
+
+	fprintf(ctx->error, "\tTraceback (most recent call first):\n");
+
+	for (i32 i = ctx->frame_count - 1; i >= 0; i--) {
+		struct lsp_frame* frame = ctx->frames + i;
+
+		fprintf(ctx->error, "\t\tfrom %s\n", frame->fun ? frame->fun->as.fun.name : "<main>");
+	}
 
 	ctx->exception = true;
 }
@@ -414,13 +443,6 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 		switch (*ctx->ip) {
 			case op_halt:
-				/*for (u32 i = 0; i < ctx->obj_count; i++) { Collect garbage
-					struct lsp_obj* obj = ctx->objs + i;
-
-					if (obj->ref == 0) {
-						lsp_free_obj(ctx, obj);
-					}
-				}*/
 				goto eval_halt;
 			case op_push:
 				ctx->ip++;
@@ -556,7 +578,11 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				if (v.as.obj->as.fun.argc != argc) {
 					lsp_exception(ctx, "Incorrect number of arguments to function.");
+					return lsp_make_nil();
 				}
+
+				struct lsp_frame* frame = &ctx->frames[ctx->frame_count++];
+				frame->fun = v.as.obj;
 
 				struct lsp_val ret = lsp_eval(ctx, v.as.obj->as.fun.chunk);
 
@@ -568,6 +594,8 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip = old_ip;
 
 				ctx->frame_start = null;
+
+				ctx->frame_count--;
 			} break;
 			case op_call_nat: {
 				ctx->ip++;
@@ -661,6 +689,9 @@ struct parser {
 	const char* start;
 	const char* source;
 	struct token token;
+
+	const char* ass_name_start;
+	u32 ass_name_len;
 
 	struct lsp_chunk* chunk;
 
@@ -1167,6 +1198,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				.hash = elf_hash((const u8*)tok.start, tok.len)
 			};
 
+			parser->ass_name_start = tok.start;
+			parser->ass_name_len = tok.len;
+
 			for (u32 i = 0; i < parser->local_count; i++) {
 				struct local* lo = parser->locals + i;
 
@@ -1256,6 +1290,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			lsp_chunk_add_op(ctx, chunk, op_back_jump, parser->line);
 			u16 offset = chunk->count - start;
+			lsp_chunk_reserve(chunk, 2);
 			*((u16*)(chunk->code + chunk->count)) = offset;
 			chunk->count += 2;
 
@@ -1332,7 +1367,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, new_chunk, argc));
+			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, parser->ass_name_start, parser->ass_name_len, new_chunk, argc));
 			lsp_chunk_add_op(ctx, chunk, op_push_fun, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 

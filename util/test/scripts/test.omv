@@ -1,8 +1,14 @@
+(set other_fun (fun () (
+	(+ nil nil)
+)))
+
 (set some_fun (fun (x y) (
 	(put "Hello, I'm a function! X: ")
 	(put x)
 	(put " Y: ")
 	(print y)
+
+	(other_fun)
 )))
 
 (set a 290)

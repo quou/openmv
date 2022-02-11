@@ -24,14 +24,13 @@ typedef void (*lsp_ptr_create_fun)(struct lsp_state*, void** ptr);
 typedef void (*lsp_ptr_destroy_fun)(struct lsp_state*, void** ptr);
 
 struct lsp_obj {
-	u32 ref;
 	u8 type;
 	bool recyclable;
 
 	union {
-		struct { char* chars; u32 len; }              str;
-		struct { struct lsp_chunk* chunk; u32 argc; } fun;
-		struct { u8 type; void* ptr; }                ptr;
+		struct { char* chars; u32 len; }                          str;
+		struct { char* name; struct lsp_chunk* chunk; u32 argc; } fun;
+		struct { u8 type; void* ptr; }                            ptr;
 	} as;
 };
 
@@ -86,7 +85,7 @@ struct lsp_val {
 	} while (0)
 
 API struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
-API struct lsp_val lsp_make_fun(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 argc);
+API struct lsp_val lsp_make_fun(struct lsp_state* ctx, const char* name_start, u32 name_len, struct lsp_chunk* chunk, u32 argc);
 API struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx);
 
 API bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b);
@@ -101,6 +100,8 @@ API struct lsp_val lsp_pop(struct lsp_state* ctx);
 API struct lsp_val lsp_peek(struct lsp_state* ctx);
 API u32 lsp_get_stack_count(struct lsp_state* ctx);
 
+API void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj);
+
 API struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str);
 API struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path);
 
@@ -109,4 +110,4 @@ API void lsp_register_ptr(struct lsp_state* ctx, const char* name, lsp_ptr_creat
 API u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name);
 API void lsp_register_std(struct lsp_state* ctx);
 
-void lsp_exception(struct lsp_state* ctx, const char* message, ...);
+API void lsp_exception(struct lsp_state* ctx, const char* message, ...);
