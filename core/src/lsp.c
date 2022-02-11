@@ -297,11 +297,13 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 		fprintf(ctx->error, "\033[1;31m");
 	}
 
-	fprintf(ctx->error, "exception: ");
+	fprintf(ctx->error, "exception ");
 
 	if (colors) {
 		fprintf(ctx->error, "\033[0m");
 	}
+
+	fprintf(ctx->error, "[line %d]: ", ctx->chunk->lines[instruction]);
 	
 	va_list l;
 	va_start(l, message);
