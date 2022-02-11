@@ -97,6 +97,7 @@ API struct lsp_state* new_lsp_state(void* error, void* info);
 API void free_lsp_state(struct lsp_state* state);
 
 API void lsp_set_simple_errors(struct lsp_state* state, bool simple);
+API void lsp_set_warnings(struct lsp_state* state, bool warnings);
 
 API void           lsp_push(struct lsp_state* ctx, struct lsp_val val);
 API struct lsp_val lsp_pop(struct lsp_state* ctx);

@@ -94,6 +94,7 @@ struct lsp_state {
 	u32 nat_count;
 
 	bool simple_errors;
+	bool no_warnings;
 
 	u8* ip;
 
@@ -312,6 +313,10 @@ void free_lsp_state(struct lsp_state* state) {
 
 void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
 	state->simple_errors = simple;
+}
+
+void lsp_set_warnings(struct lsp_state* state, bool warnings) {
+	state->no_warnings = !warnings;
 }
 
 /* Prints a traceback in pretty colours!
@@ -796,6 +801,8 @@ struct parser {
 	const char* ass_name_start;
 	u32 ass_name_len;
 
+	u32 depth; 
+
 	const char* name;
 
 	struct lsp_chunk* chunk;
@@ -981,7 +988,7 @@ static struct token next_tok(struct parser* parser) {
 	return error_token(parser, "Unexpected character.");
 }
 
-/* Over-engineered function to print an error message. It does GCC-style error printing if
+/* Over-engineered function to print a compile message. It does GCC-style error printing if
  * ctx->simple_errors is disabled, where it points to the position of the error on the line,
  * like this:
  *
@@ -996,7 +1003,9 @@ static struct token next_tok(struct parser* parser) {
  * colours are not printed, to avoid garbled text if dumping errors to a file instead of standard
  * output. TODO: Use the Win32 API to give colored output on the Windows console, which doesn't
  * support ASCII escape codes. */
-static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
+static void parse_message(struct lsp_state* ctx, struct parser* parser, bool warning, const char* message, va_list args) {
+	if (warning && ctx->no_warnings) { return; }
+
 	const char* line_start = parser->cur - 1;
 	while (line_start != parser->source && *line_start != '\n') {
 		line_start--;
@@ -1016,13 +1025,19 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		col++;
 	}
 
-	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
-		fprintf(ctx->error, "%s [line %d:%d]: \033[1;31merror: \033[0m", parser->name, parser->line, col);
+	const char* text = "error";
+	if (warning) {
+		text = "warning";
+	}
 
-		va_list l;
-		va_start(l, message);
-		vfprintf(ctx->error, message, l);
-		va_end(l);
+	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
+		if (warning) {
+			fprintf(ctx->error, "%s [line %d:%d]: \033[1;35mwarning: \033[0m", parser->name, parser->line, col);
+		} else {
+			fprintf(ctx->error, "%s [line %d:%d]: \033[1;31merror: \033[0m", parser->name, parser->line, col);
+		}
+
+		vfprintf(ctx->error, message, args);
 
 		fprintf(ctx->error, "\n");
 
@@ -1041,12 +1056,9 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\033[0m\n");
 	} else if (!ctx->simple_errors) {
-		fprintf(ctx->error, "%s [line %d:%d]: error: ", parser->name, parser->line, col);
+		fprintf(ctx->error, "%s [line %d:%d]: %s: ", parser->name, parser->line, col, text);
 
-		va_list l;
-		va_start(l, message);
-		vfprintf(ctx->error, message, l);
-		va_end(l);
+		vfprintf(ctx->error, message, args);
 
 		fprintf(ctx->error, "\n");
 
@@ -1064,15 +1076,26 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\n");
 	} else { 
-		fprintf(ctx->error, "%s [line %d:%d]: error: ", parser->name, parser->line, col);
+		fprintf(ctx->error, "%s [line %d:%d]: %s: ", parser->name, parser->line, col, text);
 
-		va_list l;
-		va_start(l, message);
-		vfprintf(ctx->error, message, l);
-		va_end(l);
+		vfprintf(ctx->error, message, args);
 
 		fprintf(ctx->error, "\n");
 	}
+}
+
+static void parse_error(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
+	va_list l;
+	va_start(l, message);
+	parse_message(ctx, parser, false, message, l);
+	va_end(l);
+}
+
+static void parse_warn(struct lsp_state* ctx, struct parser* parser, const char* message, ...) {
+	va_list l;
+	va_start(l, message);
+	parse_message(ctx, parser, true, message, l);
+	va_end(l);
 }
 
 static void parser_begin_scope(struct lsp_state* ctx, struct parser* parser) {
@@ -1117,7 +1140,11 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 		} \
 	} while (0)
 
-#define parser_recurse() do { if (!parse(ctx, parser, chunk)) { return false; } } while (0)
+#define parser_recurse() do { \
+	parser->depth++; \
+	if (!parse(ctx, parser, chunk)) { return false; } \
+	parser->depth--; \
+	} while (0)
 
 #define resolve_variable() \
 	do { \
@@ -1145,9 +1172,11 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 #define parse_block() \
 	do { \
 		while (1) { \
+			parser->depth++; \
 			if (!parse(ctx, parser, chunk)) { \
 				return false; \
 			} \
+			parser->depth--; \
 			struct token tok = parser->token; \
 			const char* cur = parser->cur; \
 			u32 p_line = parser->line; \
@@ -1196,6 +1225,13 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 			} \
 		} \
 	} while (0) 
+
+#define unused_result_warn() \
+	do { \
+		if (parser->depth == 0) { \
+			parse_warn(ctx, parser, "Expression result unused; Potential stack overflow."); \
+		} \
+	} while (0)
 
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
