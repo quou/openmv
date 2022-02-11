@@ -385,7 +385,7 @@ API void CDECL on_update(double ts) {
 			ui_text_input(ui, "Command", logic_store->lsp_buf, 256);
 			
 			if (ui_button(ui, "Submit")) {
-				lsp_do_string(logic_store->lsp, logic_store->lsp_buf);
+				lsp_do_string(logic_store->lsp, "command", logic_store->lsp_buf);
 				logic_store->lsp_buf[0] = 0;
 			}
 

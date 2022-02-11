@@ -78,6 +78,7 @@ struct lsp_ptr {
 
 struct lsp_frame {
 	struct lsp_obj* fun;
+	u32 line;
 };
 
 struct lsp_state {
@@ -290,7 +291,17 @@ void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
 void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
 
-	fprintf(ctx->error, "Exception [line %d]: ", ctx->chunk->lines[instruction]);
+	bool colors = !ctx->simple_errors && !(ctx->error == stderr && ctx->error == stdout);
+
+	if (colors) {
+		fprintf(ctx->error, "\033[1;31m");
+	}
+
+	fprintf(ctx->error, "exception: ");
+
+	if (colors) {
+		fprintf(ctx->error, "\033[0m");
+	}
 	
 	va_list l;
 	va_start(l, message);
@@ -299,13 +310,31 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 
 	fprintf(ctx->error, "\n");
 
+	if (colors) {
+		fprintf(ctx->error, "\033[0;31m");
+	}
+
 	fprintf(ctx->error, "\tTraceback (most recent call first):\n");
 
 	for (i32 i = ctx->frame_count - 1; i >= 0; i--) {
 		struct lsp_frame* frame = ctx->frames + i;
 
-		fprintf(ctx->error, "\t\tfrom %s\n", frame->fun ? frame->fun->as.fun.name : "<main>");
-	}
+		if (colors) {
+			fprintf(ctx->error, "\033[0;32m");
+		}
+
+		fprintf(ctx->error, "\t\t=> ");
+
+		if (colors) {
+			fprintf(ctx->error, "\033[0m");
+		}
+
+		fprintf(ctx->error, "%-20s", frame->fun ? frame->fun->as.fun.name : "<main>");
+		if (frame->fun) {
+			fprintf(ctx->error, "[line %d]", frame->line);
+		}
+		fprintf(ctx->error, "\n");
+	}	
 
 	ctx->exception = true;
 }
@@ -581,8 +610,12 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 					return lsp_make_nil();
 				}
 
+				u32 instruction = (u32)(ctx->ip - chunk->code - 1);
+				u32 line = chunk->lines[instruction];
+
 				struct lsp_frame* frame = &ctx->frames[ctx->frame_count++];
 				frame->fun = v.as.obj;
+				frame->line = line;
 
 				struct lsp_val ret = lsp_eval(ctx, v.as.obj->as.fun.chunk);
 
@@ -692,6 +725,8 @@ struct parser {
 
 	const char* ass_name_start;
 	u32 ass_name_len;
+
+	const char* name;
 
 	struct lsp_chunk* chunk;
 
@@ -912,8 +947,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 	}
 
 	if (!ctx->simple_errors && (ctx->error == stdout || ctx->error == stderr)) {
-		fprintf(ctx->error, "\033[1;31merror \033[0m");
-		fprintf(ctx->error, "[line %d:%d]: ", parser->line, col);
+		fprintf(ctx->error, "%s [line %d:%d]: \033[1;31merror: \033[0m", parser->name, parser->line, col);
 
 		va_list l;
 		va_start(l, message);
@@ -937,8 +971,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\033[0m\n");
 	} else if (!ctx->simple_errors) {
-		fprintf(ctx->error, "error ");
-		fprintf(ctx->error, "[line %d:%d]: ", parser->line, col);
+		fprintf(ctx->error, "%s [line %d:%d]: error: ", parser->name, parser->line, col);
 
 		va_list l;
 		va_start(l, message);
@@ -961,7 +994,7 @@ static void parse_error(struct lsp_state* ctx, struct parser* parser, const char
 		}
 		fprintf(ctx->error, "^\n");
 	} else { 
-		fprintf(ctx->error, "error [line %d]: ", parser->line);
+		fprintf(ctx->error, "%s [line %d:%d]: error: ", parser->name, parser->line, col);
 
 		va_list l;
 		va_start(l, message);
@@ -1465,7 +1498,7 @@ resolved_l:
 	return true;
 }
 
-struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
+struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* name, const char* str) {
 	struct lsp_chunk chunk = { 0 };
 
 	struct parser parser = { 0 };
@@ -1473,6 +1506,8 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* str) {
 	parser.start = str;
 	parser.cur = str;
 	parser.source = str;
+
+	parser.name = name;
 
 	parser_begin_scope(ctx, &parser);
 
@@ -1495,7 +1530,7 @@ struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path) {
 	u64 size;
 
 	if (read_raw(file_path, (u8**)&buf, &size, true)) {
-		struct lsp_val r = lsp_do_string(ctx, buf);
+		struct lsp_val r = lsp_do_string(ctx, file_path, buf);
 
 		core_free(buf);
 

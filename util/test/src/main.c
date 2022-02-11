@@ -81,7 +81,7 @@ bool lsp() {
 bool lsp_add() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(+ 10 20)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(+ 10 20)");
 
 	bool good = v.as.num == 30.0;
 
@@ -93,7 +93,7 @@ bool lsp_add() {
 bool lsp_sub() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(- 20 10)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(- 20 10)");
 
 	bool good = v.as.num == 10.0;
 
@@ -105,7 +105,7 @@ bool lsp_sub() {
 bool lsp_mul() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(* 20 10)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(* 20 10)");
 
 	bool good = v.as.num == 200.0;
 
@@ -117,7 +117,7 @@ bool lsp_mul() {
 bool lsp_div() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(/ 20 10)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(/ 20 10)");
 
 	bool good = v.as.num == 2.0;
 
@@ -129,7 +129,7 @@ bool lsp_div() {
 bool lsp_not() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(! true)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(! true)");
 
 	bool good = v.as.boolean == false;
 
@@ -141,7 +141,7 @@ bool lsp_not() {
 bool lsp_neg() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(neg 10)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(neg 10)");
 
 	bool good = v.as.num == -10.0;
 
@@ -153,7 +153,7 @@ bool lsp_neg() {
 bool lsp_cat() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(cat \"Hello, \" \"World!\")");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(cat \"Hello, \" \"World!\")");
 
 	bool good = memcmp(v.as.obj->as.str.chars, "Hello, World!", v.as.obj->as.str.len) == 0;
 
@@ -165,7 +165,7 @@ bool lsp_cat() {
 bool lsp_var() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(set a 14)\na");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(set a 14)\na");
 
 	bool good = v.as.num == 14.0;
 
@@ -177,7 +177,7 @@ bool lsp_var() {
 bool lsp_fun() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(set add_nums (fun (x y) ( (ret (+ x y)))))(set a (add_nums 10 20)) a a");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(set add_nums (fun (x y) ( (ret (+ x y)))))(set a (add_nums 10 20)) a a");
 
 	bool good = v.as.num == 30.0;
 
@@ -195,7 +195,7 @@ bool lsp_nat_fun() {
 
 	lsp_register(ctx, "add_nums", 2, native_add_nums);
 
-	struct lsp_val v = lsp_do_string(ctx, "(add_nums 10 20)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(add_nums 10 20)");
 
 	bool good = v.as.num == 30.0;
 
@@ -207,7 +207,7 @@ bool lsp_nat_fun() {
 bool lsp_lt() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(< 1 2)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(< 1 2)");
 
 	bool good = v.as.boolean;
 
@@ -219,8 +219,8 @@ bool lsp_lt() {
 bool lsp_lte() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v1 = lsp_do_string(ctx, "(<= 1 1)");
-	struct lsp_val v2 = lsp_do_string(ctx, "(<= 1 2)");
+	struct lsp_val v1 = lsp_do_string(ctx, "test", "(<= 1 1)");
+	struct lsp_val v2 = lsp_do_string(ctx, "test", "(<= 1 2)");
 
 	bool good = v1.as.boolean && v2.as.boolean;
 
@@ -232,7 +232,7 @@ bool lsp_lte() {
 bool lsp_gt() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(> 2 1)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(> 2 1)");
 
 	bool good = v.as.boolean;
 
@@ -244,8 +244,8 @@ bool lsp_gt() {
 bool lsp_gte() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v1 = lsp_do_string(ctx, "(>= 2 2)");
-	struct lsp_val v2 = lsp_do_string(ctx, "(>= 2 1)");
+	struct lsp_val v1 = lsp_do_string(ctx, "test", "(>= 2 2)");
+	struct lsp_val v2 = lsp_do_string(ctx, "test", "(>= 2 1)");
 
 	bool good = v1.as.boolean && v2.as.boolean;
 
@@ -257,7 +257,7 @@ bool lsp_gte() {
 bool lsp_eq() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(= 2 2)");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(= 2 2)");
 
 	bool good = v.as.boolean;
 
@@ -269,7 +269,7 @@ bool lsp_eq() {
 bool lsp_while() {
 	struct lsp_state* ctx = new_lsp_state(null, null);
 
-	struct lsp_val v = lsp_do_string(ctx, "(set i 0)(while (< i 10)((set i (+ i 1)))) i i");
+	struct lsp_val v = lsp_do_string(ctx, "test", "(set i 0)(while (< i 10)((set i (+ i 1)))) i i");
 
 	bool good = v.as.num == 10.0;
 
