@@ -702,32 +702,32 @@ eval_halt:
 }
 
 /* This is a very simple garbage collector. It iterates all
- * the objects and sets their reference count to zero unless
+ * the objects and sets their mark count to zero unless
  * the object is a constant. Then, it iterates the stack and
- * adds a reference to each object should it exist on the stack.
- * Again, it iterates all of the objects; Should an object have
- * a null reference count, it is freed. */
+ * marks each object should it exist on the stack. Again, it
+ * iterates all of the objects; Should an object have a null
+ * mark, it is freed. */
 void lsp_collect_garbage(struct lsp_state* ctx) {
 	for (u32 i = 0; i < ctx->obj_count; i++) {
 		struct lsp_obj* obj = ctx->objs + i;
 
-		obj->ref = 0;
+		obj->mark = 0;
 
 		if (obj->is_const) {
-			obj->ref++;
+			obj->mark = 1;
 		}
 	}
 
 	for (struct lsp_val* slot = ctx->stack; slot < ctx->stack_top; slot++) {
 		if (lsp_is_obj(*slot)) {
-			slot->as.obj->ref++;
+			slot->as.obj->mark = 1;
 		}
 	}
 
 	for (u32 i = 0; i < ctx->obj_count; i++) {
 		struct lsp_obj* obj = ctx->objs + i;
 
-		if (obj->ref == 0 && !obj->recyclable) {
+		if (obj->mark == 0 && !obj->recyclable) {
 			lsp_free_obj(ctx, obj);
 		}
 	}

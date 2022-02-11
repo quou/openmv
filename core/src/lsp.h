@@ -25,7 +25,7 @@ typedef void (*lsp_ptr_destroy_fun)(struct lsp_state*, void** ptr);
 
 struct lsp_obj {
 	u8 type;
-	u32 ref;
+	u8 mark;
 	bool is_const;
 	bool recyclable;
 
