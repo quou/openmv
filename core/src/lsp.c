@@ -151,6 +151,10 @@ static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, st
 		return 0;
 	}
 
+	if (lsp_is_obj(val)) {
+		val.as.obj->is_const = true;
+	}
+
 	chunk->consts[chunk->const_count] = val;
 
 	return chunk->const_count++;
@@ -161,21 +165,43 @@ static void deinit_chunk(struct lsp_chunk* chunk) {
 	if (chunk->lines) { core_free(chunk->lines); }
 }
 
+/* This function tries to allocate a new object. If there are
+ * too many objects, it invokes the garbage collector to free
+ * up some objects before trying again. Should that still fail,
+ * it returns a null object. */
 static struct lsp_obj* lsp_new_obj(struct lsp_state* ctx, u8 type) {
+	bool retried = false;
+
+	goto after_retry;
+
+retry:
+	retried = true;
+
+after_retry:
+
 	for (u32 i = 0; i < ctx->obj_count; i++) {
 		if (ctx->objs[i].recyclable) {
 			ctx->objs[i].recyclable = false;
 			ctx->objs[i].type = type;
+			ctx->objs[i].is_const = false;
 			return ctx->objs + i;
 		}
 	}
 
 	if (ctx->obj_count >= max_objs) {
+		fprintf(ctx->info, "Freeing space for new objects...\n");
+		lsp_collect_garbage(ctx);
+
+		if (!retried) {
+			goto retry;
+		}
+
 		fprintf(ctx->error, "Too many objects. Maximum: %d.\n", max_objs);
 		return null;
 	}
 
 	ctx->objs[ctx->obj_count].type = type;
+	ctx->objs[ctx->obj_count].is_const = false;
 
 	return ctx->objs + ctx->obj_count++;
 }
@@ -288,6 +314,16 @@ void lsp_set_simple_errors(struct lsp_state* state, bool simple) {
 	state->simple_errors = simple;
 }
 
+/* Prints a traceback in pretty colours!
+ *
+ * Like this:
+ *
+ * exception [line 2]: Operands to `+' must be numbers.
+ *        Traceback (most recent call first):
+ *              => other_fun           [line 11]
+ *              => some_fun            [line 24]
+ *              => <main>
+ */
 void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
 
@@ -658,6 +694,38 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 eval_halt:
 	return *ctx->stack_top;
+}
+
+/* This is a very simple garbage collector. It iterates all
+ * the objects and sets their reference count to zero unless
+ * the object is a constant. Then, it iterates the stack and
+ * adds a reference to each object should it exist on the stack.
+ * Again, it iterates all of the objects; Should an object have
+ * a null reference count, it is freed. */
+void lsp_collect_garbage(struct lsp_state* ctx) {
+	for (u32 i = 0; i < ctx->obj_count; i++) {
+		struct lsp_obj* obj = ctx->objs + i;
+
+		obj->ref = 0;
+
+		if (obj->is_const) {
+			obj->ref++;
+		}
+	}
+
+	for (struct lsp_val* slot = ctx->stack; slot < ctx->stack_top; slot++) {
+		if (lsp_is_obj(*slot)) {
+			slot->as.obj->ref++;
+		}
+	}
+
+	for (u32 i = 0; i < ctx->obj_count; i++) {
+		struct lsp_obj* obj = ctx->objs + i;
+
+		if (obj->ref == 0 && !obj->recyclable) {
+			lsp_free_obj(ctx, obj);
+		}
+	}
 }
 
 enum {
@@ -1794,6 +1862,12 @@ struct lsp_val std_table_get(struct lsp_state* ctx, u32 argc, struct lsp_val* ar
 	return *(struct lsp_val*)val;
 }
 
+struct lsp_val std_collect_garbage(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_collect_garbage(ctx);
+
+	return lsp_make_nil();
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -1802,6 +1876,7 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "shift_left", 2, std_shift_left);
 	lsp_register(ctx, "shift_right", 2, std_shift_right);
 	lsp_register(ctx, "mod", 2, std_mod);
+	lsp_register(ctx, "collect_garbage", 0, std_collect_garbage);
 
 	lsp_register_ptr(ctx, "File", null, null);
 	lsp_register(ctx, "fgood", 1, std_fgood);

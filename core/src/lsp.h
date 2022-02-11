@@ -25,6 +25,8 @@ typedef void (*lsp_ptr_destroy_fun)(struct lsp_state*, void** ptr);
 
 struct lsp_obj {
 	u8 type;
+	u32 ref;
+	bool is_const;
 	bool recyclable;
 
 	union {
@@ -48,6 +50,7 @@ struct lsp_val {
 #define lsp_make_bool(b_)        ((struct lsp_val) { .type = lsp_val_bool, .as.boolean = b_ })
 
 #define lsp_is_nil(v_)  ((v_).type == lsp_val_nil)
+#define lsp_is_obj(v_)  ((v_).type == lsp_val_obj)
 #define lsp_is_num(v_)  ((v_).type == lsp_val_num)
 #define lsp_is_bool(v_) ((v_).type == lsp_val_bool)
 #define lsp_is_str(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_str)
@@ -111,3 +114,5 @@ API u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name);
 API void lsp_register_std(struct lsp_state* ctx);
 
 API void lsp_exception(struct lsp_state* ctx, const char* message, ...);
+
+API void lsp_collect_garbage(struct lsp_state* ctx);

@@ -8,7 +8,7 @@
 	(put " Y: ")
 	(print y)
 
-	(other_fun)
+;	(other_fun)
 )))
 
 (set a 290)
@@ -108,3 +108,5 @@
 (set test_tab (new Table))
 (table_set test_tab "test_key" 20)
 (print (table_get test_tab "test_key"))
+
+(collect_garbage)
