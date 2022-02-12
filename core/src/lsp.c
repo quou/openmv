@@ -377,7 +377,7 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 			fprintf(ctx->error, "[line %d]", frame->line);
 		}
 		fprintf(ctx->error, "\n");
-	}	
+	}
 
 	ctx->exception = true;
 }
