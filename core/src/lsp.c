@@ -1904,6 +1904,52 @@ struct lsp_val std_collect_garbage(struct lsp_state* ctx, u32 argc, struct lsp_v
 	return lsp_make_nil();
 }
 
+struct lsp_val std_type(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	const char* str = "nil";
+
+	struct lsp_val v = args[0];
+
+	switch (v.type) {
+		case lsp_val_num:
+			str = "number";
+			break;
+		case lsp_val_bool:
+			str = "boolean";
+			break;
+		case lsp_val_nil:
+			str = "nil";
+			break;
+		case lsp_val_obj:
+			switch (v.as.obj->type) {
+				case lsp_obj_str:
+					str = "string";
+					break;
+				case lsp_obj_fun:
+					str = "function";
+					break;
+				case lsp_obj_ptr:
+					str = ctx->ptrs[v.as.obj->as.ptr.type].name;
+					break;
+			}
+			break;
+	}
+
+	return lsp_make_str(ctx, str, strlen(str));
+}
+
+struct lsp_val std_except(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_obj_assert(ctx, args[0], lsp_obj_str, "Argument 0 to `except' must be a string.");
+
+	char* message = core_alloc(lsp_as_str(args[0]).len + 1);
+	message[lsp_as_str(args[0]).len] = '\0';
+	memcpy(message, lsp_as_str(args[0]).chars, lsp_as_str(args[0]).len);
+
+	lsp_exception(ctx, "%s", message);
+
+	core_free(message);
+	return lsp_make_nil();
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -1913,6 +1959,8 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "shift_right", 2, std_shift_right);
 	lsp_register(ctx, "mod", 2, std_mod);
 	lsp_register(ctx, "collect_garbage", 0, std_collect_garbage);
+	lsp_register(ctx, "type", 1, std_type);
+	lsp_register(ctx, "except", 1, std_except);
 
 	lsp_register_ptr(ctx, "File", null, null);
 	lsp_register(ctx, "fgood", 1, std_fgood);

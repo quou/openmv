@@ -1,3 +1,168 @@
+/* A simple Lisp-like, dynamic programming language implementation.
+ *
+ * The language has but six types:
+ *    - nil
+ *          Represents a value with nothing in it; A `nil' value.
+ *    - number
+ *          Represents a 64 bit floating point number.
+ *    - boolean
+ *          Represents a true or false value.
+ *    - string
+ *          Represents a string of text. Strings are *not* null-terminated,
+ *          meaning storing their length is required. Because of this, strings
+ *          can be used to represent generic binary data, as well as just text.
+ *    - function
+ *          Represents a user-defined function.
+ *    - pointer (C user data)
+ *          Represents a pointer to a block of memory managed by the host
+ *          application.
+ *
+ * = PROGRAMMING GUIDE =
+ *    = The Basics =
+ *      All expressions must be parenthesised. Maths is in Polish notation,
+ *      meaning the operator comes first, followed by the arguments, like so:
+ *
+ *          (+ 10 30)
+ *
+ *    = Literals =
+ *      | Type      | Example(s)                 |
+ *      ------------------------------------------
+ *      | nil       | nil                        |
+ *      | string    | "Hello, world!"            |
+ *      | number    | 85      44.3               |
+ *      | boolean   | true    false              |
+ *      | function  | (fun (x y) ((+ x y)))      |
+ *
+ *    = Operators =
+ *      | Symbol | Params | Description                                     | Return type |
+ *      -----------------------------------------------------------------------------------
+ *      | +      | 2      | Adds two numbers                                | number      |
+ *      | -      | 2      | Subtracts the second number from the first      | number      |
+ *      | *      | 2      | Multiplies two numbers                          | number      |
+ *      | /      | 2      | Divides the first number by the second          | number      |
+ *      | &      | 2      | True if both inputs are true                    | boolean     |
+ *      | |      | 2      | True if one of the inputs are true              | boolean     |
+ *      | !      | 1      | The reverse of the input                        | boolean     |
+ *      | =      | 2      | True if the inputs equal each other             | boolean     |
+ *      | <      | 2      | True if the first input is less than the second | boolean     |
+ *      | <=     | 2      | True if the first input is less than or equal   | boolean     |
+ *      |        |        | to the second                                   |             |
+ *      | >      | 2      | True if the first input is greater than the     | boolean     |
+ *      |        |        | second                                          |             |
+ *      | >=     | 2      | True if the first input is greater than or equal| boolean     |
+ *      |        |        | to the second                                   |             |
+ *
+ *    = Built-in Functions =
+ *      | Keyword | Description                             | Example                     |
+ *      | print   | Prints a value, followed by a new line  | (print "Hello, world!")     |
+ *      | put     | Prints a value                          | (put "Hello, world!")       |
+ *      | set     | Sets the value of or declares a variable| (set x 200)                 |
+ *      | cat     | Concatenate two strings                 | (cat "Hello, " "world!")    |
+ *      | ret     | Halt a function and return a value      | (ret 25)                    |
+ *      | neg     | Negate a number                         | (neg 22)                    |
+ *
+ *    = If Statements = 
+ *      If statements are declared like so:
+ *          (if true (
+ *              (print "True")
+ *          ) (
+ *              (print "False")
+ *          ))
+ *      Every if statement must also have an else clause. If an else clause isn't required,
+ *      you may simply place `(nil)' in the place of one, to do nothing.
+ *
+ *    = While Statements =
+ *      This language supports a single kind of loop: The while loop. It works how would
+ *      expect a while loop to work in C:
+ *          (set i 0)
+ *          (while (< i 10) (
+ *              (print i)
+ *              (set i (+ i 1))
+ *          ))
+ *
+ *    = Functions =
+ *      Functions can be declared like so:
+ *          (set add_numbers (fun (a b) (
+ *              (ret (+ a b))
+ *          ))
+ *       ...And called like this:
+ *          (add_numbers 29 3)
+ *
+ *    = Comments =
+ *      Anything starting with a semi-colon (;) is treated as a comment. Comments go until
+ *      the end of the line.
+ *
+ *    = Native functions =
+ *      Native functions are a way for the scripts to communicate with the host application.
+ *      They take the form of C functions that are registered to the script engine and called
+ *      from the script in the same way that script-defined functions would be called.
+ *
+ *           static struct lsp_val native(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+ *               printf("Hello, from a native function!\n");
+ *               return lsp_make_nil();
+ *           }
+ *
+ *           lsp_register(state, "native", 0, native);
+ *
+ *    = Pointers =
+ *      Pointers are a way for scripts to manage data allocated by the host application. This
+ *      is done through an allocator and deallocator function provided by the host.
+ *
+ *          static void ptr_create(struct lsp_state* ctx, void** ptr) {
+ *              *ptr = core_alloc(sizeof(int));
+ *              **(int**)ptr = 10;
+ *          }
+ *
+ *          static void ptr_destroy(struct lsp_state* ctx, void** ptr) {
+ *              core_free(*ptr);
+ *          }
+ *
+ *          lsp_register_ptr(ctx, "TestPointer", ptr_create, ptr_destroy);
+ *
+ *      Pointers can be allocated from a script using the `new' keyword, like so:
+ *          (set test_ptr (new TestPointer))
+ *      This will call the `ptr_create' function. When the garbage collector runs and
+ *      decides that the object is ready to be destroyed, the `ptr_destroy' function
+ *      will be called.
+ *
+ *    = Garbage Collection =
+ *      The garbage collector runs whenever it is out of space for objects. The default amount of
+ *      objects is 1024. The garbage collector can also be run using the `collect_garbage' standard
+ *      library function.
+ *
+ *    = Standard Library =
+ *      The function `lsp_register_std' can be called from C to register the standard library to a
+ *      script engine. This is an optional step, and the language can operate without the standard
+ *      library.
+ *
+ *      The standard library provides things like a vector and table class.
+ *
+ *      Standard Pointers:
+ *          | Vector |
+ *          | Table  |
+ *
+ *      Standard Functions:
+ *          | Name           | Description                                    | Return type      |
+ *          --------------------------------------------------------------------------------------
+ *          | memory_usage   | Get the current application memory usage       | number           |
+ *          | stack_count    | Get the current size of the VM's stack         | number           |
+ *          | bit_and        | Do a bitwise and operation on two numbers      | number           |
+ *          | bit_or         | Do a bitwise or operation on two numbers       | number           |
+ *          | shift_left     | Shift the first input left by the second       | number           |
+ *          | shift_right    | Shift the first input right by the second      | number           |
+ *          | mod            | Returns the remainder from a division          | number           |
+ *          | collect_garbage| Run the garbage collector                      | nil              |
+ *          | type           | Get the type of a value                        | string           |
+ *          | except         | Throw a runtime error                          | nil              |
+ *          | vector_push    | Push a value into a vector                     | nil              |
+ *          | vector_at      | Get the value at an index in a vector          | any              |
+ *          | vector_count   | Get the number of items in a vector            | number           |
+ *          | vector_remove  | Remove an element at an index in a vector      | nil              |
+ *          | vector_find    | Find the index of a specific value in a vector | number/nil       |
+ *          | table_set      | Set a value at a key in a table                | nil              |
+ *          | table_get      | Get a value at a key in a table                | any              |
+ */
+
 #pragma once
 
 #include "common.h"

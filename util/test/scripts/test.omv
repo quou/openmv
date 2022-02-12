@@ -110,3 +110,7 @@
 (print (table_get test_tab "test_key"))
 
 (collect_garbage)
+
+(print (type "h"))
+
+(except "This is an exception, thrown from a script!")
