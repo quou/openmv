@@ -1112,7 +1112,12 @@ static struct token next_tok(struct parser* parser) {
 		case '+': return make_token(parser, tok_add);
 		case '*': return make_token(parser, tok_mul);
 		case '/': return make_token(parser, tok_div);
-		case '-': return make_token(parser, tok_sub);
+		case '-':
+			if (!is_digit(parser_peek(parser))) {	
+				return make_token(parser, tok_sub);
+			}
+
+			parser_advance(parser);
 
 		case '0': case '1': case '2':
 		case '3': case '4': case '5':
@@ -2045,6 +2050,9 @@ struct lsp_val std_type(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 					break;
 				case lsp_obj_fun:
 					str = "function";
+					break;
+				case lsp_obj_arr:
+					str = "array";
 					break;
 				case lsp_obj_ptr:
 					str = ctx->ptrs[v.as.obj->as.ptr.type].name;

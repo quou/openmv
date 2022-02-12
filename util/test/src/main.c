@@ -70,7 +70,7 @@ bool lsp() {
 	lsp_register(ctx, "native_fun", 1, native);
 	lsp_register(ctx, "print_test_ptr", 1, print_test_ptr);
 
-	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/split.lsp");
+	struct lsp_val v = lsp_do_file(ctx, "util/test/scripts/string.lsp");
 
 	printf("Stack size: %d\n", lsp_get_stack_count(ctx));
 
