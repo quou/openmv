@@ -108,3 +108,6 @@
 (seta some_array 300 "haha")
 
 (print (# some_array))
+
+(set thing "hello, world!")
+(print (at thing 5)) ; Prints ,

@@ -753,16 +753,24 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 					return lsp_make_nil();
 				}
 
-				if (arr.type != lsp_val_obj || arr.as.obj->type != lsp_obj_arr) {	
-					lsp_exception(ctx, "Operand 0 to `at' must be an array.");
+				if (lsp_is_str(arr)) {
+					if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_str(arr).len) {
+						lsp_exception(ctx, "Index out of bounds of string.");
+						return lsp_make_nil();
+					}
+
+					lsp_push(ctx, lsp_make_str(ctx, &lsp_as_str(arr).chars[(u32)lsp_as_num(idx)], 1));
+				} else if (lsp_is_arr(arr)) {
+					if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_arr(arr).count) {
+						lsp_exception(ctx, "Index out of bounds of array.");
+						return lsp_make_nil();
+					}
+
+					lsp_push(ctx, lsp_as_arr(arr).vals[(u32)lsp_as_num(idx)]);
+				} else {
+					lsp_exception(ctx, "Operand 0 to `at' must be a string or an array.");
 					return lsp_make_nil();
 				}
-
-				if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_arr(arr).count) {
-					lsp_exception(ctx, "Index out of bounds of array.");
-				}
-
-				lsp_push(ctx, lsp_as_arr(arr).vals[(u32)lsp_as_num(idx)]);
 			} break;
 			case op_seta: {
 				struct lsp_val val = lsp_pop(ctx);
