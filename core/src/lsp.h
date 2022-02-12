@@ -62,7 +62,7 @@
  *      | ret     | Halt a function and return a value      | (ret 25)                    |
  *      | array   | Create a new array                      | (array (10 50 2)            |
  *      | at      | Get the value at an index in an array   | (at some_arr 2)             |
- *      | push    | Set the value in an array, resize.      | (push some_arr 4 "Hi!")     |
+ *      | seta    | Set the value in an array, resize.      | (seta some_arr 4 "Hi!")     |
  *      | rm      | Remove a value from an array by index   | (rm some_arr 3)             |
  *
  *    = If Statements = 
