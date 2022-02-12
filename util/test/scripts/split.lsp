@@ -12,14 +12,10 @@
 
 	(set r (array))
 
-	(print delim)
-
 	(set cur "")
 
 	(set i 0)
 	(while (< i (# str)) (
-		(print (at str i))
-
 		(if (= (at str i) delim) (
 			(seta r (# r) cur)
 			(set cur "")

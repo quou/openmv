@@ -1661,6 +1661,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			parser->in_fun = true;
 
+			const char* ns = parser->ass_name_start;
+			u32 nl = parser->ass_name_len;
+
 			while (1) {
 				advance();
 
@@ -1717,7 +1720,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
 
-			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, parser->ass_name_start, parser->ass_name_len, new_chunk, argc));
+			u8 a = lsp_add_fun(ctx, lsp_make_fun(ctx, ns, nl, new_chunk, argc));
 			lsp_chunk_add_op(ctx, chunk, op_push_fun, parser->line);
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 
