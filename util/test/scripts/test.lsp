@@ -100,4 +100,7 @@
 (rm some_array 1)
 (print (at some_array 1))
 (print some_array)
+
+(seta some_array 300 "haha")
+
 (print (# some_array))

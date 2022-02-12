@@ -260,8 +260,9 @@ struct lsp_val lsp_make_arr(struct lsp_state* ctx, struct lsp_val* vals, u32 len
 		.as.obj = obj
 	};
 
-	obj->as.arr.vals = core_alloc(len * sizeof(struct lsp_val));
+	obj->as.arr.cap = len < 8 ? 8 : len;
 	obj->as.arr.count = len;
+	obj->as.arr.vals = core_alloc(obj->as.arr.cap * sizeof(struct lsp_val));
 	memcpy(obj->as.arr.vals, vals, len * sizeof(struct lsp_val));
 
 	return v;
@@ -776,15 +777,23 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 					return lsp_make_nil();
 				}
 
-				if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_arr(arr).count) {
+				if (lsp_as_num(idx) < 0) {
 					lsp_exception(ctx, "Index out of bounds of array.");
 					return lsp_make_nil();
 				}
 
 				u32 i = (u32)lsp_as_num(idx);
 
+				if (i + 1 > lsp_as_arr(arr).cap) {
+					lsp_as_arr(arr).cap = i + 1;
+					lsp_as_arr(arr).vals = core_realloc(lsp_as_arr(arr).vals, lsp_as_arr(arr).cap * sizeof(struct lsp_val));
+
+					for (u32 it = lsp_as_arr(arr).count; it < lsp_as_arr(arr).cap; it++) {
+						lsp_as_arr(arr).vals[it] = lsp_make_nil();
+					}
+				}
+
 				if (i + 1 > lsp_as_arr(arr).count) {
-					lsp_as_arr(arr).vals = core_realloc(lsp_as_arr(arr).vals, i * sizeof(struct lsp_val));
 					lsp_as_arr(arr).count = i + 1;
 				}
 
@@ -1704,18 +1713,25 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser->in_fun = false;
 		} else if (tok.type == tok_array) {
 			advance();
-			expect_tok(tok_left_paren, "Expected a list after `array'.");
 
-			u32 count;
-			parse_block_c(count);
+			if (tok.type == tok_left_paren) {
+				u32 count = 0;
 
-			if (count > UINT8_MAX) {
-				parse_error(ctx, parser, "Too many elements in array initialiser.");
-				return false;
+				parse_block_c(count);
+
+				if (count > UINT8_MAX) {
+					parse_error(ctx, parser, "Too many elements in array initialiser.");
+					return false;
+				}
+
+				lsp_chunk_add_op(ctx, chunk, op_new_arr, parser->line);
+				lsp_chunk_add_op(ctx, chunk, (u8)count, parser->line);
+			} else {
+				expect_tok(tok_right_paren, "Expected `)'.");
+				lsp_chunk_add_op(ctx, chunk, op_new_arr, parser->line);
+				lsp_chunk_add_op(ctx, chunk, 0, parser->line);
+				return true;
 			}
-
-			lsp_chunk_add_op(ctx, chunk, op_new_arr, parser->line);
-			lsp_chunk_add_op(ctx, chunk, (u8)count, parser->line);
 		} else if (tok.type == tok_at) {
 			parser_recurse();
 			parser_recurse();

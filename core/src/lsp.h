@@ -196,7 +196,7 @@ struct lsp_obj {
 		struct { char* chars; u32 len; }                          str;
 		struct { char* name; struct lsp_chunk* chunk; u32 argc; } fun;
 		struct { u8 type; void* ptr; }                            ptr;
-		struct { u32 count; struct lsp_val* vals; }               arr;
+		struct { u32 count; u32 cap; struct lsp_val* vals; }      arr;
 	} as;
 };
 
