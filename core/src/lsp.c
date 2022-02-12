@@ -652,10 +652,10 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx))));
 				break;
 			case op_and:
-				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx)) && is_falsey(lsp_pop(ctx))));
+				lsp_push(ctx, lsp_make_bool(!is_falsey(lsp_pop(ctx)) && !is_falsey(lsp_pop(ctx))));
 				break;
 			case op_or:
-				lsp_push(ctx, lsp_make_bool(is_falsey(lsp_pop(ctx)) || is_falsey(lsp_pop(ctx))));
+				lsp_push(ctx, lsp_make_bool(!is_falsey(lsp_pop(ctx)) || !is_falsey(lsp_pop(ctx))));
 				break;
 			case op_neg: {
 				struct lsp_val v = lsp_pop(ctx);
@@ -1694,6 +1694,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 				argc++;
 			}
+			parser->local_count++;
 
 			advance();
 			expect_tok(tok_left_paren, "Expected a block after argument list.");
@@ -1728,6 +1729,9 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				u32 count = 0;
 
 				parse_block_c(count);
+
+				advance();
+				expect_tok(tok_right_paren, "Expected `)' after list.");
 
 				if (count > UINT8_MAX) {
 					parse_error(ctx, parser, "Too many elements in array initialiser.");

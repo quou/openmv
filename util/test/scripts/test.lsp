@@ -98,7 +98,7 @@
 
 (print " ==")
 
-(set some_array (array (22 4 (cat "Hello," "world!")))
+(set some_array (array (22 4 (cat "Hello," "world!"))))
 (print (at some_array 2))
 (seta some_array 2 "a")
 (rm some_array 1)
