@@ -656,6 +656,11 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				u32 instruction = (u32)(ctx->ip - chunk->code - 1);
 				u32 line = chunk->lines[instruction];
 
+				if (ctx->frame_count >= max_frames) {
+					lsp_exception(ctx, "Stack overflow.");
+					return lsp_make_nil();
+				}
+
 				struct lsp_frame* frame = &ctx->frames[ctx->frame_count++];
 				frame->fun = v.as.obj;
 				frame->line = line;

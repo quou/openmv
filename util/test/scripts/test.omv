@@ -1,5 +1,5 @@
-(set other_fun (fun () (
-	(+ nil nil)
+(set other_fun (fun (a b) (
+	(+ a b)
 )))
 
 (set some_fun (fun (x y) (
@@ -8,7 +8,10 @@
 	(put " Y: ")
 	(print y)
 
-;	(other_fun)
+	; Recursion is a thing!
+	(if (> x 0) (
+		(some_fun (- x 1) y)
+	) ((nil)))
 )))
 
 (set a 290)
