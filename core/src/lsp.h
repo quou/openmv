@@ -51,6 +51,7 @@
  *      |        |        | second                                          |             |
  *      | >=     | 2      | True if the first input is greater than or equal| boolean     |
  *      |        |        | to the second                                   |             |
+ *      | #      | 1      | Get the length of an array or string.           | number      |
  *
  *    = Built-in Functions =
  *      | Keyword | Description                             | Example                     |
@@ -59,7 +60,10 @@
  *      | set     | Sets the value of or declares a variable| (set x 200)                 |
  *      | cat     | Concatenate two strings                 | (cat "Hello, " "world!")    |
  *      | ret     | Halt a function and return a value      | (ret 25)                    |
- *      | neg     | Negate a number                         | (neg 22)                    |
+ *      | array   | Create a new array                      | (array (10 50 2)            |
+ *      | at      | Get the value at an index in an array   | (at some_arr 2)             |
+ *      | push    | Set the value in an array, resize.      | (push some_arr 4 "Hi!")     |
+ *      | rm      | Remove a value from an array by index   | (rm some_arr 3)             |
  *
  *    = If Statements = 
  *      If statements are declared like so:
@@ -154,13 +158,6 @@
  *          | collect_garbage| Run the garbage collector                      | nil              |
  *          | type           | Get the type of a value                        | string           |
  *          | except         | Throw a runtime error                          | nil              |
- *          | vector_push    | Push a value into a vector                     | nil              |
- *          | vector_at      | Get the value at an index in a vector          | any              |
- *          | vector_count   | Get the number of items in a vector            | number           |
- *          | vector_remove  | Remove an element at an index in a vector      | nil              |
- *          | vector_find    | Find the index of a specific value in a vector | number/nil       |
- *          | table_set      | Set a value at a key in a table                | nil              |
- *          | table_get      | Get a value at a key in a table                | any              |
  */
 
 #pragma once
@@ -180,7 +177,8 @@ enum {
 enum {
 	lsp_obj_str = 0,
 	lsp_obj_fun,
-	lsp_obj_ptr
+	lsp_obj_ptr,
+	lsp_obj_arr
 };
 
 typedef struct lsp_val (*lsp_nat_fun_t)(struct lsp_state*, u32, struct lsp_val*);
@@ -198,6 +196,7 @@ struct lsp_obj {
 		struct { char* chars; u32 len; }                          str;
 		struct { char* name; struct lsp_chunk* chunk; u32 argc; } fun;
 		struct { u8 type; void* ptr; }                            ptr;
+		struct { u32 count; struct lsp_val* vals; }               arr;
 	} as;
 };
 
@@ -219,12 +218,14 @@ struct lsp_val {
 #define lsp_is_num(v_)  ((v_).type == lsp_val_num)
 #define lsp_is_bool(v_) ((v_).type == lsp_val_bool)
 #define lsp_is_str(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_str)
+#define lsp_is_arr(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_arr)
 #define lsp_is_ptr(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_ptr)
 #define lsp_is_fun(v_)  ((v_).type == lsp_val_obj && (v_).as.obj->type == lsp_obj_fun)
 
 #define lsp_as_num(v_)  ((v_).as.num)
 #define lsp_as_bool(v_) ((v_).as.boolean)
 #define lsp_as_str(v_)  ((v_).as.obj->as.str)
+#define lsp_as_arr(v_)  ((v_).as.obj->as.arr)
 #define lsp_as_fun(v_)  ((v_).as.obj->as.fun)
 #define lsp_as_ptr(v_)  ((v_).as.obj->as.ptr)
 
@@ -253,6 +254,7 @@ struct lsp_val {
 	} while (0)
 
 API struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len);
+API struct lsp_val lsp_make_arr(struct lsp_state* ctx, struct lsp_val* vals, u32 len);
 API struct lsp_val lsp_make_fun(struct lsp_state* ctx, const char* name_start, u32 name_len, struct lsp_chunk* chunk, u32 argc);
 API struct lsp_val lsp_make_ptr(struct lsp_state* ctx, u8 idx);
 

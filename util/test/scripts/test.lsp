@@ -77,7 +77,7 @@
 (print test)
 (print_test_ptr test)
 
-(set file_path "util/test/scripts/test.omv")
+(set file_path "util/test/scripts/test.lsp")
 (set test_file (fopen file_path "r"))
 
 (if (fgood test_file) (
@@ -89,31 +89,15 @@
 	))
 	(fclose test_file)
 ) (
-	(put "Failed to read file: ")
-	(print file_path)
+	(except (cat "Failed to read file: " file_path))
 ))
 
-(set test_vec (new Vector))
-(vector_push test_vec 200)
-(vector_push test_vec 2)
-(vector_push test_vec "Hello, world!")
-(vector_push test_vec "Hello, world!")
+(print " ==")
 
-(vector_remove test_vec 2)
-
-(set i 0)
-(while (< i (vector_count test_vec)) (
-	(print (vector_at test_vec i))
-
-	(set i (+ i 1))
-))
-
-(set test_tab (new Table))
-(table_set test_tab "test_key" 20)
-(print (table_get test_tab "test_key"))
-
-(collect_garbage)
-
-(print (type "h"))
-
-(except "This is an exception, thrown from a script!")
+(set some_array (array (22 4 (cat "Hello," "world!")))
+(print (at some_array 2))
+(seta some_array 2 "a")
+(rm some_array 1)
+(print (at some_array 1))
+(print some_array)
+(print (# some_array))

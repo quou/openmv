@@ -50,6 +50,11 @@ enum {
 	op_call,
 	op_call_nat,
 	op_new,
+	op_new_arr,
+	op_at,
+	op_seta,
+	op_count,
+	op_rm
 };
 
 struct lsp_chunk {
@@ -212,6 +217,9 @@ void lsp_free_obj(struct lsp_state* ctx, struct lsp_obj* obj) {
 		case lsp_obj_str:
 			core_free(obj->as.str.chars);
 			break;
+		case lsp_obj_arr:
+			core_free(obj->as.arr.vals);
+			break;
 		case lsp_obj_fun:
 			deinit_chunk(obj->as.fun.chunk);
 			core_free(obj->as.fun.chunk);
@@ -240,6 +248,21 @@ struct lsp_val lsp_make_str(struct lsp_state* ctx, const char* start, u32 len) {
 	obj->as.str.chars = core_alloc(len);
 	obj->as.str.len = len;
 	memcpy(obj->as.str.chars, start, len);
+
+	return v;
+}
+
+struct lsp_val lsp_make_arr(struct lsp_state* ctx, struct lsp_val* vals, u32 len) {
+	struct lsp_obj* obj = lsp_new_obj(ctx, lsp_obj_arr);
+
+	struct lsp_val v = {
+		.type = lsp_val_obj,
+		.as.obj = obj
+	};
+
+	obj->as.arr.vals = core_alloc(len * sizeof(struct lsp_val));
+	obj->as.arr.count = len;
+	memcpy(obj->as.arr.vals, vals, len * sizeof(struct lsp_val));
 
 	return v;
 }
@@ -455,6 +478,8 @@ bool lsp_vals_eq(struct lsp_state* ctx, struct lsp_val a, struct lsp_val b) {
 		lsp_push(ctx, lsp_make_bool(a.as.num op_ b.as.num)); \
 	} while (0)
 
+static void print_val(FILE* out, struct lsp_val val);
+
 static void print_obj(FILE* out, struct lsp_obj* obj) {
 	switch (obj->type) {
 		case lsp_obj_str:
@@ -465,6 +490,16 @@ static void print_obj(FILE* out, struct lsp_obj* obj) {
 			break;
 		case lsp_obj_ptr:
 			fprintf(out, "<pointer %p>", obj->as.ptr.ptr);
+			break;
+		case lsp_obj_arr:
+			fprintf(out, "(");
+			for (u32 i = 0; i < obj->as.arr.count; i++) {
+				print_val(out, obj->as.arr.vals[i]);
+				if (i != obj->as.arr.count - 1) {
+					fprintf(out, " ");
+				}
+			}
+			fprintf(out, ")");
 			break;
 		default:
 			fprintf(out, "<object %p>", obj);
@@ -487,7 +522,7 @@ static void print_val(FILE* out, struct lsp_val val) {
 			print_obj(out, val.as.obj);
 			break;
 		default:
-			fprintf(out, "<unkown value type>");
+			fprintf(out, "<unknown value type>");
 			break;
 	}
 }
@@ -696,6 +731,99 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->ip++;
 				lsp_push(ctx, lsp_make_ptr(ctx, *ctx->ip));
 				break;
+			case op_new_arr: {
+				ctx->ip++;
+				struct lsp_val* start = (ctx->stack_top - *ctx->ip) + 1;
+
+				for (u8 i = 0; i < *ctx->ip; i++) {
+					lsp_pop(ctx);
+				}
+
+				lsp_push(ctx, lsp_make_arr(ctx, start, *ctx->ip));
+			} break;
+			case op_at: {
+				struct lsp_val idx = lsp_pop(ctx);
+				struct lsp_val arr = lsp_pop(ctx);
+
+				if (idx.type != lsp_val_num) {
+					lsp_exception(ctx, "Operand 1 to `at' must be a number.");
+					return lsp_make_nil();
+				}
+
+				if (arr.type != lsp_val_obj || arr.as.obj->type != lsp_obj_arr) {	
+					lsp_exception(ctx, "Operand 0 to `at' must be an array.");
+					return lsp_make_nil();
+				}
+
+				if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_arr(arr).count) {
+					lsp_exception(ctx, "Index out of bounds of array.");
+				}
+
+				lsp_push(ctx, lsp_as_arr(arr).vals[(u32)lsp_as_num(idx)]);
+			} break;
+			case op_seta: {
+				struct lsp_val val = lsp_pop(ctx);
+				struct lsp_val idx = lsp_pop(ctx);
+				struct lsp_val arr = lsp_pop(ctx);
+
+				if (!lsp_is_num(idx)) {
+					lsp_exception(ctx, "Operand 1 to `push' must be a number.");
+					return lsp_make_nil();
+				}
+
+				if (arr.type != lsp_val_obj || arr.as.obj->type != lsp_obj_arr) {	
+					lsp_exception(ctx, "Operand 0 to `push' must be an array.");
+					return lsp_make_nil();
+				}
+
+				if (lsp_as_num(idx) < 0 || (u32)lsp_as_num(idx) >= lsp_as_arr(arr).count) {
+					lsp_exception(ctx, "Index out of bounds of array.");
+					return lsp_make_nil();
+				}
+
+				u32 i = (u32)lsp_as_num(idx);
+
+				if (i + 1 > lsp_as_arr(arr).count) {
+					lsp_as_arr(arr).vals = core_realloc(lsp_as_arr(arr).vals, i * sizeof(struct lsp_val));
+					lsp_as_arr(arr).count = i + 1;
+				}
+
+				lsp_as_arr(arr).vals[i] = val;
+			} break;
+			case op_count: {
+				struct lsp_val v = lsp_pop(ctx);
+
+				if (lsp_is_str(v)) {
+					lsp_push(ctx, lsp_make_num(lsp_as_str(v).len));
+				} else if (lsp_is_arr(v)) {
+					lsp_push(ctx, lsp_make_num(lsp_as_arr(v).count));
+				} else {
+					lsp_exception(ctx, "Operand to `#' must be a string or an array.");
+					return lsp_make_nil();
+				}
+			} break;
+			case op_rm: {
+				struct lsp_val idx = lsp_pop(ctx);
+				struct lsp_val arr = lsp_pop(ctx);
+
+				if (!lsp_is_arr(arr)) {
+					lsp_exception(ctx, "Operand 0 `rm' must be an array.");
+					return lsp_make_nil();
+				}
+
+				if (!lsp_is_num(idx)) {
+					lsp_exception(ctx, "Operand 1 to `rm' must be a number.");
+					return lsp_make_nil();
+				}
+
+				u32 i = (u32)lsp_as_num(idx);
+
+				if (lsp_as_arr(arr).count > 1) {
+					lsp_as_arr(arr).vals[i] = lsp_as_arr(arr).vals[lsp_as_arr(arr).count - 1];
+				}
+
+				lsp_as_arr(arr).count--;
+			} break;
 			default: break;
 		}
 
@@ -704,6 +832,20 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 eval_halt:
 	return *ctx->stack_top;
+}
+
+static void lsp_mark_obj(struct lsp_state* ctx, struct lsp_val val) {
+	if (!lsp_is_obj(val)) {
+		return;
+	}
+
+	val.as.obj->mark = 1;
+
+	if (val.as.obj->type == lsp_obj_arr) {
+		for (u32 i = 0; i < lsp_as_arr(val).count; i++) {
+			lsp_mark_obj(ctx, lsp_as_arr(val).vals[i]);
+		}
+	}
 }
 
 /* This is a very simple garbage collector. It iterates all
@@ -724,9 +866,7 @@ void lsp_collect_garbage(struct lsp_state* ctx) {
 	}
 
 	for (struct lsp_val* slot = ctx->stack; slot < ctx->stack_top; slot++) {
-		if (lsp_is_obj(*slot)) {
-			slot->as.obj->mark = 1;
-		}
+		lsp_mark_obj(ctx, *slot);
 	}
 
 	for (u32 i = 0; i < ctx->obj_count; i++) {
@@ -741,6 +881,7 @@ void lsp_collect_garbage(struct lsp_state* ctx) {
 enum {
 	tok_left_paren = 0,
 	tok_right_paren,
+	tok_count,
 	tok_add,
 	tok_mul,
 	tok_div,
@@ -769,6 +910,10 @@ enum {
 	tok_fun,
 	tok_ret,
 	tok_while,
+	tok_array,
+	tok_at,
+	tok_seta,
+	tok_rm,
 	tok_keyword_count,
 	tok_end,
 	tok_error
@@ -832,7 +977,11 @@ static const char* keywords[] = {
 	[tok_neg]   = "neg",
 	[tok_fun]   = "fun",
 	[tok_ret]   = "ret",
-	[tok_while] = "while"
+	[tok_while] = "while",
+	[tok_array] = "array",
+	[tok_at]    = "at",
+	[tok_seta]  = "seta",
+	[tok_rm]    = "rm"
 };
 
 static struct token make_token(struct parser* parser, u32 type) {
@@ -972,6 +1121,8 @@ static struct token next_tok(struct parser* parser) {
 
 		case '<': return make_token(parser, parser_match(parser, '=') ? tok_lte : tok_lt);
 		case '>': return make_token(parser, parser_match(parser, '=') ? tok_gte : tok_gt);
+
+		case '#': return make_token(parser, tok_count);
 
 		case '"': {
 			parser->start++;
@@ -1199,6 +1350,34 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 		} \
 	} while (0)
 
+#define parse_block_c(c_) \
+	do { \
+		(c_) = 0; \
+		while (1) { \
+			parser->depth++; \
+			if (!parse(ctx, parser, chunk)) { \
+				return false; \
+			} else { \
+				(c_)++; \
+			} \
+			parser->depth--; \
+			struct token tok = parser->token; \
+			const char* cur = parser->cur; \
+			u32 p_line = parser->line; \
+			parser->token = next_tok(parser); \
+			bool found = false; \
+			if (parser->token.type == tok_right_paren) { \
+				found = true; \
+			} \
+			parser->cur = cur; \
+			parser->token = tok; \
+			parser->line = p_line; \
+			if (found) { \
+				break; \
+			} \
+		} \
+	} while (0)
+
 #define count_args() \
 	do { \
 		while (1) { \
@@ -1310,6 +1489,13 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 		} else if (tok.type == tok_neg) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_neg, parser->line);
+		} else if (tok.type == tok_count) {
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_count, parser->line);
+		} else if (tok.type == tok_rm) {
+			parser_recurse();
+			parser_recurse();
+			lsp_chunk_add_op(ctx, chunk, op_rm, parser->line);
 		} else if (tok.type == tok_new) {
 			advance();
 			expect_tok(tok_iden, "Expected an identifier.");
@@ -1516,6 +1702,31 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 
 			parser->in_fun = false;
+		} else if (tok.type == tok_array) {
+			advance();
+			expect_tok(tok_left_paren, "Expected a list after `array'.");
+
+			u32 count;
+			parse_block_c(count);
+
+			if (count > UINT8_MAX) {
+				parse_error(ctx, parser, "Too many elements in array initialiser.");
+				return false;
+			}
+
+			lsp_chunk_add_op(ctx, chunk, op_new_arr, parser->line);
+			lsp_chunk_add_op(ctx, chunk, (u8)count, parser->line);
+		} else if (tok.type == tok_at) {
+			parser_recurse();
+			parser_recurse();
+
+			lsp_chunk_add_op(ctx, chunk, op_at, parser->line);
+		} else if (tok.type == tok_seta) {
+			parser_recurse();
+			parser_recurse();
+			parser_recurse();
+
+			lsp_chunk_add_op(ctx, chunk, op_seta, parser->line);
 		} else if (tok.type == tok_ret) {
 			parser_recurse();
 			lsp_chunk_add_op(ctx, chunk, op_halt, parser->line);
@@ -1773,136 +1984,6 @@ struct lsp_val std_fgets(struct lsp_state* ctx, u32 argc, struct lsp_val* args) 
 	return lsp_make_nil();
 }
 
-struct lsp_std_vector {
-	struct lsp_val* values;
-	u32 capacity;
-	u32 count;
-};
-
-void std_vector_create(struct lsp_state* ctx, void** ptr) {
-	*ptr = core_calloc(1, sizeof(struct lsp_std_vector));
-}
-
-void std_vector_destroy(struct lsp_state* ctx, void** ptr) {
-	struct lsp_std_vector* vec = *ptr;
-
-	if (vec->values) {
-		core_free(vec->values);
-	}
-
-	core_free(vec);
-}
-
-struct lsp_val std_vector_push(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_push' must be a pointer of type `Vector'.");
-
-	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
-
-	if (vec->count >= vec->capacity) {
-		vec->capacity = vec->capacity < 8 ? 8 : vec->capacity * 2;
-		vec->values = core_realloc(vec->values, vec->capacity * sizeof(struct lsp_val));
-	}
-
-	vec->values[vec->count++] = args[1];
-
-	return lsp_make_nil();
-}
-
-struct lsp_val std_vector_at(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_at' must be a pointer of type `Vector'.");
-	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `vector_at' must be a number.");
-
-	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
-	u32 idx = (u32)lsp_as_num(args[1]);
-	
-	return vec->values[idx];
-}
-
-struct lsp_val std_vector_count(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_count' must be a pointer of type `Vector'.");
-
-	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
-	return lsp_make_num(vec->count);
-}
-
-struct lsp_val std_vector_remove(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_remove' must be a pointer of type `Vector'.");
-	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `vector_remove' must be a number.");
-
-	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
-	u32 idx = lsp_as_num(args[1]);
-
-	if (vec->count > 1) {	
-		vec->values[idx] = vec->values[vec->count - 1];
-	}
-
-	vec->count--;
-
-	return lsp_make_nil();
-}
-
-struct lsp_val std_vector_find(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	lsp_arg_ptr_assert(ctx, args[0], "Vector", "Argument 0 to `vector_find' must be a pointer of type `Vector'.");
-
-	struct lsp_std_vector* vec = lsp_as_ptr(args[0]).ptr;
-	struct lsp_val val = args[1];
-
-	for (u32 i = 0; i < vec->count; i++) {
-		if (lsp_vals_eq(ctx, val, vec->values[i])) {
-			return lsp_make_num(i);
-		}
-	}
-
-	return lsp_make_nil();
-}
-
-void std_table_create(struct lsp_state* ctx, void** ptr) {
-	*ptr = new_table(sizeof(struct lsp_val));
-}
-
-void std_table_destroy(struct lsp_state* ctx, void** ptr) {
-	free_table(*ptr);
-}
-
-struct lsp_val std_table_set(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {	
-	lsp_arg_ptr_assert(ctx, args[0], "Table", "Argument 0 to `table_set' must be a pointer of type `Table'.");
-	lsp_arg_obj_assert(ctx, args[1], lsp_obj_str, "Argument 1 to `table_set' must be a string.");
-
-	u32 len = lsp_as_str(args[1]).len;
-	char* key = core_alloc(len + 1);
-	key[len] = '\0';
-	memcpy(key, lsp_as_str(args[1]).chars, len);
-
-	struct table* table = lsp_as_ptr(args[0]).ptr;
-	table_set(table, key, &args[2]);
-
-	core_free(key);
-
-	return lsp_make_nil();
-}
-
-struct lsp_val std_table_get(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {	
-	lsp_arg_ptr_assert(ctx, args[0], "Table", "Argument 0 to `table_get' must be a pointer of type `Table'.");
-	lsp_arg_obj_assert(ctx, args[1], lsp_obj_str, "Argument 1 to `table_get' must be a string.");
-
-	u32 len = lsp_as_str(args[1]).len;
-	char* key = core_alloc(len + 1);
-	key[len] = '\0';
-	memcpy(key, lsp_as_str(args[1]).chars, len);
-
-	struct table* table = lsp_as_ptr(args[0]).ptr;
-	void* val = table_get(table, key);
-
-	if (!val) {
-		core_free(key);
-		lsp_make_nil();
-	}
-
-	core_free(key);
-
-	return *(struct lsp_val*)val;
-}
-
 struct lsp_val std_collect_garbage(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	lsp_collect_garbage(ctx);
 
@@ -1972,15 +2053,4 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "fopen", 2, std_fopen);
 	lsp_register(ctx, "fclose", 1, std_fclose);
 	lsp_register(ctx, "fgets", 1, std_fgets);
-
-	lsp_register_ptr(ctx, "Vector", std_vector_create, std_vector_destroy);
-	lsp_register(ctx, "vector_push", 2, std_vector_push);
-	lsp_register(ctx, "vector_at", 2, std_vector_at);
-	lsp_register(ctx, "vector_count", 1, std_vector_count);
-	lsp_register(ctx, "vector_remove", 2, std_vector_remove);
-	lsp_register(ctx, "vector_find", 2, std_vector_find);
-
-	lsp_register_ptr(ctx, "Table", std_table_create, std_table_destroy);
-	lsp_register(ctx, "table_set", 3, std_table_set);
-	lsp_register(ctx, "table_get", 2, std_table_get);
 }
