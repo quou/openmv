@@ -1697,7 +1697,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 				argc++;
 			}
-			parser->local_count++;
+			parser->locals[parser->local_count++].depth = parser->scope_depth;
 
 			advance();
 			expect_tok(tok_left_paren, "Expected a block after argument list.");
