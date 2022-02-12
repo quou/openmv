@@ -673,6 +673,8 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				struct lsp_val v = lsp_pop(ctx);
 
+				struct lsp_val* old_frame_start = ctx->frame_start;
+
 				ctx->frame_start = (ctx->stack_top - argc) + 1;
 
 				u8* old_ip = ctx->ip;
@@ -710,7 +712,7 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				ctx->chunk = old_chunk;
 				ctx->ip = old_ip;
 
-				ctx->frame_start = null;
+				ctx->frame_start = old_frame_start;
 
 				ctx->frame_count--;
 			} break;

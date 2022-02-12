@@ -1,6 +1,4 @@
-(set other_fun (fun (a b) (
-	(+ a b)
-)))
+(set other_fun nil)
 
 (set some_fun (fun (x y) (
 	(put "Hello, I'm a function! X: ")
@@ -8,10 +6,16 @@
 	(put " Y: ")
 	(print y)
 
+	(print (other_fun 10 1))
+
 	; Recursion is a thing!
 	(if (> x 0) (
 		(some_fun (- x 1) y)
 	) ((nil)))
+)))
+
+(set other_fun (fun (a b) (
+	(ret (+ a b))
 )))
 
 (set a 290)

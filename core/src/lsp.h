@@ -139,12 +139,6 @@
  *      script engine. This is an optional step, and the language can operate without the standard
  *      library.
  *
- *      The standard library provides things like a vector and table class.
- *
- *      Standard Pointers:
- *          | Vector |
- *          | Table  |
- *
  *      Standard Functions:
  *          | Name           | Description                                    | Return type      |
  *          --------------------------------------------------------------------------------------
