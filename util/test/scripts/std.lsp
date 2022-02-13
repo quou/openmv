@@ -1,4 +1,4 @@
-; Simple string manipulation library
+; Simple standard library
 
 ; Function to split a string into an array by
 ; a specified delimiter
@@ -32,10 +32,10 @@
 	(ret r)
 )))
 
-; Take a sub string of a larger string
+; Take a sub string of a larger string or array
 (set sub (fun (str start end) (
-	(if (! (= (type str) "string")) (
-		(except "Argument 0 to `sub' must be a string.")
+	(if (& (! (= (type str) "string")) (! (= (type str) "array"))) (
+		(except "Argument 0 to `sub' must be a string or array.")
 	) ((nil)))
 
 	(if (! (= (type start) "number")) (
@@ -54,17 +54,25 @@
 		(set start 0)
 	) ((nil)))
 
-	(set r "")
+	(if (= (type str) "string") (
+		(set r "")
 
-	(set i start)
-	(while (< i end) (
-		(set r (cat r (at str i)))
-		(set i (+ i 1))
+		(set i start)
+		(while (< i end) (
+			(set r (cat r (at str i)))
+			(set i (+ i 1))
+		))
+
+		(ret r)
+	) (
+		(set r (array))
+
+		(set i start)
+		(while (< i end) (
+			(seta r (# r) (at str i))
+			(set i (+ i 1))
+		))
+
+		(ret r)
 	))
-
-	(ret r)
 )))
-
-(print (split "Hey,there,this,is,a,string." ","))
-
-(print (sub "Hello, world!" 2 -3))

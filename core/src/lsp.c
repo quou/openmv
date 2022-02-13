@@ -879,7 +879,7 @@ void lsp_collect_garbage(struct lsp_state* ctx) {
 
 		obj->mark = 0;
 
-		if (obj->is_const) {
+		if (obj->is_const || obj->type == lsp_obj_fun) {
 			obj->mark = 1;
 		}
 	}
