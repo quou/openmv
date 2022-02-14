@@ -37,7 +37,7 @@ API void CDECL on_reload(void* instance) {
 }
 
 API struct window* CDECL create_window() {
-	return new_window(make_v2i(1366, 768), "OpenMV", true);
+	return new_window(make_v2i(1366, 768), "OpenMV", false);
 }
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
@@ -104,7 +104,18 @@ void load_default_room() {
 }
 
 static struct lsp_val command_window_size(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `window_size' must be a number.");
+	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `window_size' must be a number.");
+
 	set_window_size(main_window, make_v2i((i32)args[0].as.num, (i32)args[1].as.num));
+	return lsp_make_nil();
+}
+
+static struct lsp_val command_fullscreen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_bool, "Argument 0 to `fullscreen' must be a boolean.");
+
+	set_window_fullscreen(main_window, lsp_as_bool(args[0]));
+
 	return lsp_make_nil();
 }
 
@@ -117,6 +128,7 @@ API void CDECL on_init() {
 	logic_store->lsp = new_lsp_state(logic_store->lsp_out, logic_store->lsp_out);
 	lsp_register_std(logic_store->lsp);
 	lsp_register(logic_store->lsp, "window_size", 2, command_window_size);
+	lsp_register(logic_store->lsp, "fullscreen", 1, command_fullscreen);
 
 	FILE* autoexec_file = fopen("autoexec.lsp", "rb");
 	if (autoexec_file) {

@@ -22,6 +22,7 @@ API bool window_should_close(struct window* window);
 API void set_window_should_close(struct window* window, bool close);
 
 API void set_window_size(struct window* window, v2i size);
+API void set_window_fullscreen(struct window* window, bool fullscreen);
 
 API void set_on_text_input(struct window* window, on_text_input_func func);
 API void set_window_uptr(struct window* window, void* uptr);

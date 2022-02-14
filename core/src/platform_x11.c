@@ -42,6 +42,8 @@ struct window {
 
 	i32 scroll;
 
+	bool fullscreen;
+
 	void* uptr;
 
 	on_text_input_func on_text_input;
@@ -399,6 +401,28 @@ void set_window_size(struct window* window, v2i size) {
 	}
 
 	XResizeWindow(window->display, window->window, size.x, size.y);
+}
+
+void set_window_fullscreen(struct window* window, bool fullscreen) {
+	Atom wm_state = XInternAtom(window->display, "_NET_WM_STATE", False);
+	Atom fs = XInternAtom(window->display, "_NET_WM_STATE_FULLSCREEN", False);
+	XEvent xev = { 0 };
+	xev.type = ClientMessage;
+	xev.xclient.window = window->window;
+	xev.xclient.message_type = wm_state;
+	xev.xclient.format = 32;
+	xev.xclient.data.l[0] = (fullscreen ? 1 : 0);
+	xev.xclient.data.l[1] = fs;
+	xev.xclient.data.l[2] = 0;
+	xev.xclient.data.l[3] = 0;
+	XMapWindow(window->display, window->window);
+	XSendEvent(window->display, DefaultRootWindow(window->display), False,
+		SubstructureRedirectMask | SubstructureNotifyMask, &xev);
+	XFlush(window->display);
+	XWindowAttributes gwa;
+	XGetWindowAttributes(window->display, window->window, &gwa);
+	window->w = gwa.width;
+	window->h = gwa.height;
 }
 
 void query_window(struct window* window, i32* width, i32* height) {

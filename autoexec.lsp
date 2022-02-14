@@ -1,2 +1,2 @@
-(print "Hello, world!")
-(window_size 800 600)
+(window_size 1920 1080)
+(fullscreen true)
