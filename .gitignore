@@ -51,3 +51,6 @@ sdk.tar
 /release/
 
 command.log
+
+*.pdb
+*.exp

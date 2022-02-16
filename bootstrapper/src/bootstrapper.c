@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "bootstrapper.h"
 #include "dynlib.h"
@@ -102,10 +100,7 @@ struct script_context* new_script_context(const char* lib_path) {
 
 	ctx->lib_path = lib_path;
 
-	struct stat s;
-	if (stat(lib_path, &s) == 0) {
-		ctx->lib_mod_time = s.st_mtime;
-	}
+	ctx->lib_mod_time = file_mod_time(lib_path);
 
 #ifdef RELEASE
 	working_script_name = lib_path;
@@ -168,33 +163,31 @@ void script_context_update(struct script_context* ctx, double ts) {
 	if (ctx->timer >= 1.0) {
 		ctx->timer = 0.0;
 
-		struct stat s;
-		if (stat(ctx->lib_path, &s) == 0) {
-			if (s.st_mtime > ctx->lib_mod_time) {
-				ctx->lib_mod_time = s.st_mtime;
+		u64 mtime = file_mod_time(ctx->lib_path);
+		if (mtime > ctx->lib_mod_time) {
+			ctx->lib_mod_time = mtime;
 
-				if (ctx->handle) {
-					close_dynlib(ctx->handle);
+			if (ctx->handle) {
+				close_dynlib(ctx->handle);
+			}
+
+			copy_asm(ctx->lib_path);
+			open_funcs(ctx);
+
+			if (ctx->get_storage_size) {
+				u64 size = ctx->get_storage_size();
+
+				if (size != ctx->instance_size) {
+					ctx->instance = core_realloc(ctx->instance, size);
+					if (size > ctx->instance_size) {
+					memset((u8*)ctx->instance + ctx->instance_size, 0, size - ctx->instance_size);
+					}
+
+					ctx->instance_size = size;
 				}
 
-				copy_asm(ctx->lib_path);
-				open_funcs(ctx);
-
-				if (ctx->get_storage_size) {
-					u64 size = ctx->get_storage_size();
-
-					if (size != ctx->instance_size) {
-						ctx->instance = core_realloc(ctx->instance, size);
-						if (size > ctx->instance_size) {
-						memset((u8*)ctx->instance + ctx->instance_size, 0, size - ctx->instance_size);
-						}
-
-						ctx->instance_size = size;
-					}
-
-					if (ctx->on_reload) {
-						ctx->on_reload(ctx->instance);
-					}
+				if (ctx->on_reload) {
+					ctx->on_reload(ctx->instance);
 				}
 			}
 		}

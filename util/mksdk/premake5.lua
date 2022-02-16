@@ -3,8 +3,6 @@ project "mksdk"
 	language "C"
 	cdialect "C99"
 
-	toolset "clang"
-
 	targetdir "../../bin"
 	objdir "obj"
 

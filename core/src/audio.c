@@ -1,8 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "audio.h"
 #include "core.h"
+
 #include "util/miniaudio.h"
 
 #define sample_format ma_format_f32
@@ -35,7 +37,7 @@ struct audio_clip {
 };
 
 void audio_init() {
-	audio.clip_count = 0;
+	memset(&audio, 0, sizeof(struct audio));
 
 	audio.device_config = ma_device_config_init(ma_device_type_playback);
 	audio.device_config.playback.format = sample_format;

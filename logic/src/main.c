@@ -20,11 +20,11 @@
 
 struct logic_store* logic_store;
 
-API u64 CDECL get_storage_size() {
+EXPORT_SYM u64 C_DECL get_storage_size() {
 	return sizeof(struct logic_store);
 }
 
-API void CDECL on_reload(void* instance) {
+EXPORT_SYM void C_DECL on_reload(void* instance) {
 	logic_store = instance;
 
 	/* Sprites are also reloaded every time the code is.
@@ -36,7 +36,7 @@ API void CDECL on_reload(void* instance) {
 	preload_sprites();
 }
 
-API struct window* CDECL create_window() {
+EXPORT_SYM struct window* C_DECL create_window() {
 	return new_window(make_v2i(1366, 768), "OpenMV", false);
 }
 
@@ -93,7 +93,7 @@ void init_debug_ui() {
 void load_default_room() {
 	if (logic_store->room) {
 		free_room(logic_store->room);
-	}	
+	}
 
 	logic_store->room = load_room(logic_store->world, "res/maps/a1/incinerator.dat");
 
@@ -119,7 +119,7 @@ static struct lsp_val command_fullscreen(struct lsp_state* ctx, u32 argc, struct
 	return lsp_make_nil();
 }
 
-API void CDECL on_init() {
+EXPORT_SYM void C_DECL on_init() {
 	logic_store->lsp_out = fopen("command.log", "w");
 	if (!logic_store->lsp_out) {
 		fprintf(stderr, "Failed to open `command.log'\n");
@@ -192,7 +192,7 @@ API void CDECL on_init() {
 	}
 }
 
-API void CDECL on_update(double ts) {
+EXPORT_SYM void C_DECL on_update(double ts) {
 	struct renderer* renderer = logic_store->renderer;
 	struct world* world = logic_store->world;
 
@@ -408,7 +408,7 @@ API void CDECL on_update(double ts) {
 	}
 }
 
-API void CDECL on_deinit() {
+EXPORT_SYM void C_DECL on_deinit() {
 	close_dynlib(logic_store->dialogue_lib);
 
 	shops_deinit();

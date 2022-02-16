@@ -23,22 +23,22 @@ typedef uint64_t u64;
 	#error platform not supported.
 #endif
 
+#if defined(PLATFORM_WINDOWS)
+	#define EXPORT_SYM __declspec(dllexport)
+	#define IMPORT_SYM __declspec(dllimport)
+#else
+	#define EXPORT_SYM
+	#define IMPORT_SYM
+#endif
+
 #if defined(EXPORT_SYMBOLS)
-	#if defined(PLATFORM_WINDOWS)
-		#define API __declspec(dllexport)
-	#else
-		#define API
-	#endif
+	#define API EXPORT_SYM
 #elif defined(IMPORT_SYMBOLS)
-	#if defined(PLATFORM_WINDOWS)
-		#define API __declspec(dllimport)
-	#else
-		#define API
-	#endif
+	#define API IMPORT_SYM
 #endif
 
 #if defined(_MSC_VER)
-	#define CDECL __cdecl
+	#define C_DECL __cdecl
 #else
-	#define CDECL
+	#define C_DECL
 #endif

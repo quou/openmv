@@ -130,3 +130,21 @@ enum {
 
 	MOUSE_BTN_COUNT
 };
+
+/* File system */
+struct dir_iter;
+struct dir_entry {
+	char name[1024];
+
+	struct dir_iter* iter;
+};
+
+API struct dir_iter* new_dir_iter(const char* dir_name);
+API void free_dir_iter(struct dir_iter* it);
+API struct dir_entry* dir_iter_cur(struct dir_iter* it);
+API bool dir_iter_next(struct dir_iter* it);
+
+API bool file_exists(const char* name);
+API bool file_is_regular(const char* name);
+API bool file_is_dir(const char* name);
+API u64 file_mod_time(const char* name);

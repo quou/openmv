@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "platform.h"
 #include "core.h"
 #include "coresys.h"
 #include "logic_store.h"
@@ -252,13 +253,5 @@ void ask_savegame() {
 }
 
 bool savegame_exists() {
-	bool r = true;
-
-	FILE* file = fopen("savegame", "r");
-
-	if (!file) {
-		r = false;
-	}
-
-	return r;
+	return file_exists("savegame");
 }

@@ -3,8 +3,6 @@ project "bootstrapper"
 	language "C"
 	cdialect "C99"
 
-	toolset "clang"
-
 	targetdir "../bin"
 	targetname "openmv"
 	objdir "obj"

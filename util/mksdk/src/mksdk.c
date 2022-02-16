@@ -1,10 +1,9 @@
-#include <dirent.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #include "common.h"
 #include "core.h"
 #include "microtar.h"
+#include "platform.h"
 
 #define buffer_size 1048576
 u8* buffer;
@@ -40,7 +39,7 @@ bool add_file_ex(mtar_t* tar, const char* src, const char* dst) {
 		return false;
 	}
 
-	printf("Adding: %s\tDestination: %s\n", src, dst);
+	printf("%40.40s    =>    %s\n", src, dst);
 
 	fseek(in, 0, SEEK_END);
 	u64 size = ftell(in);
@@ -63,35 +62,18 @@ bool add_file(mtar_t* tar, const char* src) {
 }
 
 void add_dir(mtar_t* tar, const char* dirname) {
-	DIR* dir = opendir(dirname);
-	if (!dir) {
-		fprintf(stderr, "Failed to open directory: %s\n", dirname);
-		return;
-	}
+	struct dir_iter* it = new_dir_iter(dirname);
+	do {
+		struct dir_entry* entry = dir_iter_cur(it);
 
-	struct dirent* entry;
-	while ((entry = readdir(dir))) {
-		if (strcmp(entry->d_name, ".") == 0)  { continue; }
-		if (strcmp(entry->d_name, "..") == 0) { continue; }
-
-		char full[512];
-		strcpy(full, dirname);
-		if (full[strlen(full) - 1] != '/') {
-			strcat(full, "/");
+		if (file_is_regular(entry->name)) {
+			add_file(tar, entry->name);
+		} else if (file_is_dir(entry->name)) {
+			add_dir(tar, entry->name);
 		}
-		strcat(full, entry->d_name);
+	} while (dir_iter_next(it));
 
-		struct stat s;
-		if (stat(full, &s) != -1) {
-			if (S_ISREG(s.st_mode)) {
-				add_file(tar, full);
-			} else if (S_ISDIR(s.st_mode)) {
-				add_dir(tar, full);
-			}
-		}
-	}
-
-	closedir(dir);
+	free_dir_iter(it);
 }
 
 i32 main() {

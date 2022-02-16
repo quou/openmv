@@ -3,8 +3,6 @@ project "logic"
 	language "C"
 	cdialect "C99"
 
-	toolset "clang"
-
 	targetdir "../"
 	objdir "obj"
 
@@ -27,7 +25,8 @@ project "logic"
 	}
 
 	defines {
-		"EXPORT_SYMBOLS"
+		"IMPORT_SYMBOLS",
+		"LOGIC_EXPORT_SYMBOLS"
 	}
 
 	filter "configurations:debug"

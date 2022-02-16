@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "logic_common.h"
 #include "entity.h"
 #include "video.h"
 
@@ -31,10 +32,10 @@ bool rect_room_overlap(struct room* room, struct rect rect, v2i* normal);
 
 typedef void (*dialogue_ask_submit_func)(bool, void*);
 
-API void dialogue_message(const char* text, void* ctx);
-API void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ctx);
+LOGIC_API void dialogue_message(const char* text, void* ctx);
+LOGIC_API void dialogue_ask(const char* text, dialogue_ask_submit_func on_submit, void* ctx);
 
-API struct player* get_player();
+LOGIC_API struct player* get_player();
 
 char* get_room_path(struct room* room);
 

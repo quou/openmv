@@ -9,6 +9,11 @@
 #include "video.h"
 
 void video_init() {
+	if (!gladLoadGL()) {
+		fprintf(stderr, "Failed to load OpenGL.\n");
+		abort();
+	}
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_SCISSOR_TEST);

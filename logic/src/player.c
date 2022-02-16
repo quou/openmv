@@ -573,7 +573,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				.position = v2f_add(transform->position, pos),
 				.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
 			add_component(world, flash, struct animated_sprite, f_sprite);
-			add_componentv(world, flash, struct anim_fx);
+			add_componentv(world, flash, struct anim_fx, 0);
 		}
 
 		/* Update pointers because the pools might have been reallocated. */
@@ -870,7 +870,7 @@ entity new_impact_effect(struct world* world, v2f position, u32 anim_id) {
 		.position = position,
 		.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(f_sprite.frames[0].w, f_sprite.frames[0].h)));
 	add_component(world, e, struct animated_sprite, f_sprite);
-	add_componentv(world, e, struct anim_fx);
+	add_componentv(world, e, struct anim_fx, 0);
 	return e;
 }
 

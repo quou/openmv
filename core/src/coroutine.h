@@ -14,6 +14,12 @@ typedef void (*coroutine_func)(struct coroutine*, void*);
 #define coroutine_end \
 	} }
 
+/* This causes an error that reads `case expression not constant' on
+ * the Microsoft compilers, because they do something stupid and
+ * non-standard with their __LINE__ define.
+ *
+ * To fix it: under `Debug info:' in the project settings, select anything =
+ * other than `Program Database for Edit and Continue'. */
 #define coroutine_yield() \
 	do { co->state = __LINE__; return; case __LINE__:; } while (0) 
 

@@ -365,7 +365,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 					.position = v2f_add(transform->position, muzzle_pos),
 					.dimentions = v2i_mul(make_v2i(sprite_scale, sprite_scale), make_v2i(8, 8)));
 				add_component(world, flash, struct animated_sprite, f_sprite);
-				add_componentv(world, flash, struct anim_fx);
+				add_componentv(world, flash, struct anim_fx, 0);
 			}
 
 			transform->position = v2f_add(transform->position, v2f_mul(scav->velocity, make_v2f(ts, ts)));

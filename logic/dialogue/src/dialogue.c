@@ -109,22 +109,22 @@ static coroutine_decl(gunsmith_play)
 	}
 coroutine_end
 
-API void CDECL broken_robot_on_next() {
+EXPORT_SYM void C_DECL broken_robot_on_next() {
 	coroutine_resume(broken_robot_co);
 }
 
-API void CDECL broken_robot_on_play(void* ctx) {
+EXPORT_SYM void C_DECL broken_robot_on_play(void* ctx) {
 	broken_robot_co = new_coroutine(broken_robot_play, ctx);
 }
 
-API void CDECL gunsmith_on_next() {
+EXPORT_SYM void C_DECL gunsmith_on_next() {
 	coroutine_resume(gunsmith_co);
 }
 
-API void CDECL gunsmith_on_play(void* ctx) {
+EXPORT_SYM void C_DECL gunsmith_on_play(void* ctx) {
 	gunsmith_co = new_coroutine(gunsmith_play, ctx);
 }
 
-API void CDECL miner_robot_on_play(void* ctx) {
+EXPORT_SYM void C_DECL miner_robot_on_play(void* ctx) {
 	dialogue_message("......", ctx);
 }

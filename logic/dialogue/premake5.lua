@@ -3,8 +3,6 @@ project "dialogue"
 	language "C"
 	cdialect "C99"
 
-	toolset "clang"
-
 	targetdir "../../"
 	objdir "obj"
 
@@ -29,7 +27,8 @@ project "dialogue"
 	}
 
 	defines {
-		"EXPORT_SYMBOLS"
+		"IMPORT_SYMBOLS",
+		"LOGIC_IMPORT_SYMBOLS"
 	}
 
 	filter "configurations:debug"

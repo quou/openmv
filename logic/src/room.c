@@ -760,7 +760,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 					add_componentv(room->world, e, struct transform, .position = transform->position,
 						.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 					add_component(room->world, e, struct sprite, sprite);
-					add_componentv(room->world, e, struct lava_interact);
+					add_componentv(room->world, e, struct lava_interact, 0);
 					add_componentv(room->world, e, struct collider,
 						.rect = {
 							-(sprite.rect.w * sprite_scale) / 2,

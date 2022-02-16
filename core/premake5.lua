@@ -3,8 +3,6 @@ project "core"
 	language "C"
 	cdialect "gnu99" -- GNU because of POSIX features in the platform.
 
-	toolset "clang"
-
 	targetdir "../bin"
 	objdir "obj"
 

@@ -64,9 +64,6 @@ struct window {
 	on_text_input_func on_text_input;
 };
 
-HDC g_device_context;
-HGLRC g_render_context;
-
 static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
 	LONG_PTR user_data = GetWindowLongPtr(hwnd, GWLP_USERDATA);
 	struct window* window = (struct window*)user_data;
@@ -87,7 +84,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			return 0;
 		};
 		case WM_KEYDOWN: {
-			if (((29 << 30) & lparam) != 0) { /* Ignore repeat */
+			if (((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
 				return 0;
 			}
 			i32 key = search_key_table(&window->keymap, wparam);
@@ -162,37 +159,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			return 0;
 		}
 		case WM_CREATE: {
-			g_device_context = GetDC(hwnd);
-			
-			PIXELFORMATDESCRIPTOR pfd = { 0 };
-			pfd.nVersion = 1;
-			pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-			pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-			pfd.iPixelType = PFD_TYPE_RGBA;
-			pfd.cColorBits = 32;
-			pfd.cDepthBits = 24;
-			pfd.cStencilBits = 8;
-			pfd.iLayerType = PFD_MAIN_PLANE;
-
-			i32 pf;
-			if (!(pf = ChoosePixelFormat(g_device_context, &pfd))) {
-				printf("Error choosing pixel format\n");
-				core_free(window);
-				return 0;
-			}
-			SetPixelFormat(g_device_context, pf, &pfd);
-
-			if (!(g_render_context = wglCreateContext(g_device_context))) {
-				fprintf(stderr, "Failed to create OpenGL context.\n");
-				core_free(window);
-				return 0;
-			}
-
-			wglMakeCurrent(g_device_context, g_render_context);
-
-			if (!gladLoadGL()) {
-				fprintf(stderr, "Failed to load OpenGL.\n");
-			}
+		
 			return 0;
 		}
 		default: break;
@@ -217,7 +184,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	wc.cbWndExtra = 0;
 	wc.lpszMenuName = NULL;
 	wc.hbrBackground = NULL;
-	wc.lpszClassName = "openmv";
+	wc.lpszClassName = L"openmv";
 	RegisterClass(&wc);
 
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
@@ -236,13 +203,38 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	window->w = create_width;
 	window->h = create_height;
 
-	window->hwnd = CreateWindowEx(dw_ex_style, "openmv", "", dw_style, 0, 0,
+	window->hwnd = CreateWindowExA(dw_ex_style, "openmv", "", dw_style, 0, 0,
 		create_width, create_height, null, null, GetModuleHandle(null), window);
 	SetWindowLongPtr(window->hwnd, GWLP_USERDATA, (LONG_PTR)window);
 	SetWindowTextA(window->hwnd, title);
 
-	window->render_context = g_render_context;
-	window->device_context = g_device_context;
+	window->device_context = GetDC(window->hwnd);
+
+	PIXELFORMATDESCRIPTOR pfd = { 0 };
+	pfd.nVersion = 1;
+	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cColorBits = 32;
+	pfd.cDepthBits = 24;
+	pfd.cStencilBits = 8;
+	pfd.iLayerType = PFD_MAIN_PLANE;
+
+	i32 pf;
+	if (!(pf = ChoosePixelFormat(window->device_context, &pfd))) {
+		printf("Error choosing pixel format\n");
+		core_free(window);
+		return 0;
+	}
+	SetPixelFormat(window->device_context, pf, &pfd);
+
+	if (!(window->render_context = wglCreateContext(window->device_context))) {
+		fprintf(stderr, "Failed to create OpenGL context.\n");
+		core_free(window);
+		return 0;
+	}
+
+	wglMakeCurrent(window->device_context, window->render_context);
 
 	window->open = true;
 
@@ -427,3 +419,113 @@ void set_window_fullscreen(struct window* window, bool fullscreen) {
 
 }
 
+struct dir_iter {
+	char root[1024];
+
+	HANDLE find;
+
+	u32 i;
+
+	struct dir_entry entry;
+};
+
+struct dir_iter* new_dir_iter(const char* dir_name) {
+	if (!file_is_dir(dir_name)) {
+		fprintf(stderr, "Failed to open directory: `%s'", dir_name);
+		return null;
+	}
+
+	struct dir_iter* it = core_calloc(1, sizeof(struct dir_iter));
+
+	u32 len = (u32)strlen(dir_name);
+	strcpy(it->root, dir_name);
+
+	for (u32 i = 0; i < len; i++) {
+		if (it->root[i] == '/') {
+			it->root[i] = '\\';
+		}
+	}
+
+	/* Documentation for FindFirstFile and FindNextFile states
+	 * that the file name should not end in a trailing backslash. */
+	if (it->root[len - 1] == '\\') {
+		it->root[len - 1] = '\0';
+	}
+
+	dir_iter_next(it);
+
+	return it;
+}
+
+void free_dir_iter(struct dir_iter* it) {
+	FindClose(it->find);
+}
+
+struct dir_entry* dir_iter_cur(struct dir_iter* it) {
+	return &it->entry;
+}
+
+bool dir_iter_next(struct dir_iter* it) {
+	WIN32_FIND_DATAA data;
+
+	if (it->i == 0) {
+		it->find = FindFirstFileA(it->root, &data);
+
+		if (it->find == INVALID_HANDLE_VALUE) { return false; }
+	} else {
+		if (!FindNextFileA(it->find, &data)) { return false; }
+	}
+
+	if (strcmp(data.cFileName, ".")  == 0) { return dir_iter_next(it); }
+	if (strcmp(data.cFileName, "..") == 0) { return dir_iter_next(it); }
+
+	strcpy(it->entry.name, data.cFileName);
+
+	it->i++;
+
+	return true;
+}
+
+bool file_exists(const char* name) {
+	DWORD attribs = GetFileAttributes(name);
+
+	return attribs != INVALID_FILE_ATTRIBUTES;
+}
+
+bool file_is_regular(const char* name) {
+	DWORD attribs = GetFileAttributes(name);
+
+	return attribs == FILE_ATTRIBUTE_NORMAL;
+}
+
+bool file_is_dir(const char* name) {
+	DWORD attribs = GetFileAttributes(name);
+
+	return attribs == FILE_ATTRIBUTE_DIRECTORY;
+}
+
+u64 file_mod_time(const char* name) {
+	HANDLE file = CreateFileA(name, GENERIC_READ, 0, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null);
+
+	if (file == INVALID_HANDLE_VALUE) {
+		return 0;
+	}
+
+	FILETIME ft;
+
+	if (!GetFileTime(file, null, null, &ft)) {
+		return 0;
+	}
+
+	CloseHandle(file);
+
+	LARGE_INTEGER date, adjust;
+	date.HighPart = ft.dwHighDateTime;
+	date.LowPart = ft.dwLowDateTime;
+
+	adjust.QuadPart = 11644473600000 * 10000;
+
+	date.QuadPart -= adjust.QuadPart;
+
+	return date.QuadPart / 10000000;
+}

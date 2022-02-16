@@ -1,5 +1,7 @@
 #pragma once
 
+#include "logic_common.h"
+
 void savegame_init();
 void savegame_deinit();
 
@@ -30,5 +32,5 @@ struct persistent {
 	} as;
 };
 
-API void set_persistent(const char* name, u32 type, const void* val);
-API struct persistent* get_persistent(const char* name);
+LOGIC_API void set_persistent(const char* name, u32 type, const void* val);
+LOGIC_API struct persistent* get_persistent(const char* name);

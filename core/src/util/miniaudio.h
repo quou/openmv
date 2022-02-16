@@ -11538,7 +11538,7 @@ DEVICE I/O
 #ifndef MA_NO_DEVICE_IO
 #ifdef MA_WIN32
     #include <objbase.h>
-    #include <mmreg.h>
+  //  #include <mmreg.h>
     #include <mmsystem.h>
 #endif
 

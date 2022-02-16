@@ -3,8 +3,6 @@ project "packer"
 	language "C"
 	cdialect "C99"
 
-	toolset "clang"
-
 	targetdir "../../bin"
 	objdir "obj"
 
