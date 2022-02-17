@@ -18,11 +18,11 @@ struct animated_tile {
 	bool exists;
 
 	i16 frames[anim_tile_frame_count];
-	double durations[anim_tile_frame_count];
+	f64 durations[anim_tile_frame_count];
 
 	u32 frame_count;
 	u32 current_frame;
-	double timer;
+	f64 timer;
 };
 
 struct tileset {
@@ -45,8 +45,8 @@ struct polygon {
 	u32 count;
 };
 
-struct float_rect {
-	float x, y, w, h;
+struct f32_rect {
+	f32 x, y, w, h;
 };
 
 struct object {
@@ -56,7 +56,7 @@ struct object {
 	char* type;
 
 	union {
-		struct float_rect rect;
+		struct f32_rect rect;
 		v2f point;
 		struct polygon polygon;
 	} as;
@@ -75,7 +75,7 @@ struct property {
 
 	union {
 		bool boolean;
-		double number;
+		f64 number;
 		char* string;
 	} as;
 };

@@ -45,7 +45,7 @@ bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 }
 
 static i32 area(v2i a, v2i b, v2i c) {
-	return (i32)abs((i32)((double)((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y))) / 2.0));
+	return (i32)abs((i32)((f64)((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y))) / 2.0));
 }
 
 bool point_vs_tri(v2i p, v2i a, v2i b, v2i c) {

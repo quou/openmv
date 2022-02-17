@@ -160,12 +160,12 @@ i32 random_int(i32 min, i32 max) {
 	return (rand() % (max - min + 1)) + min;
 }
 
-double random_double(double min, double max) {
-	double scale = rand() / (double)RAND_MAX;
+f64 random_f64(f64 min, f64 max) {
+	f64 scale = rand() / (f64)RAND_MAX;
 	return min + scale * (max - min);
 }
 
-bool random_chance(double chance) {
-	double scale = rand() / (double)RAND_MAX;
+bool random_chance(f64 chance) {
+	f64 scale = rand() / (f64)RAND_MAX;
 	return (scale * (100.0 - 0.0)) <= chance;
 }

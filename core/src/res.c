@@ -202,7 +202,7 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	strcpy(cache_name, path);
 
 	if (type == res_font) {
-		sprintf(cache_name, "%s%g", path, *(float*)udata);
+		sprintf(cache_name, "%s%g", path, *(f32*)udata);
 	}
 
 	struct res* got = table_get(res_table, cache_name);
@@ -229,7 +229,7 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 			core_free(raw);
 			break;
 		case res_font:
-			new_res.as.font = load_font_from_memory(raw, raw_size, *(float*)udata);
+			new_res.as.font = load_font_from_memory(raw, raw_size, *(f32*)udata);
 			break;
 		case res_audio_clip:
 			new_res.as.audio_clip = new_audio_clip(raw, raw_size);
@@ -292,7 +292,7 @@ struct texture* load_texture(const char* path) {
 	return res_load(path, res_texture, null)->as.texture;
 }
 
-struct font* load_font(const char* path, float size) {
+struct font* load_font(const char* path, f32 size) {
 	return res_load(path, res_font, &size)->as.font;
 }
 

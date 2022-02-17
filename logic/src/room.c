@@ -83,15 +83,15 @@ struct room {
 	char* path;
 	char* name;
 
-	double name_timer;
+	f64 name_timer;
 
 	struct world* world;
 
 	bool transitioning_out;
 	bool transitioning_in;
 
-	double transition_timer;
-	double transition_speed;
+	f64 transition_timer;
+	f64 transition_speed;
 
 	char* transition_to;
 	char* entrance;
@@ -488,7 +488,7 @@ struct room* load_room(struct world* world, const char* path) {
 								on_next_name = on_next_prop->as.string;
 							}
 
-							struct float_rect r = object->as.rect;
+							struct f32_rect r = object->as.rect;
 
 							room->dialogue[room->dialogue_count++] = (struct dialogue) {
 								.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
@@ -502,8 +502,8 @@ struct room* load_room(struct world* world, const char* path) {
 						struct object* object = layer->as.object_layer.objects + ii;
 
 						if (object->shape == object_shape_point) {
-							double min = 0.0;
-							double max = 0.0;
+							f64 min = 0.0;
+							f64 max = 0.0;
 
 							struct property* min_prop = table_get(object->properties, "min_increment");
 							if (min_prop && min_prop->type == prop_number) {
@@ -531,7 +531,7 @@ struct room* load_room(struct world* world, const char* path) {
 							entity e = new_entity(world);
 							add_componentv(world, e, struct transform, .position = { r.x * sprite_scale, r.y * sprite_scale });
 							add_componentv(world, e, struct entity_spawner, .spawn_type = spawn_type,
-								.next_spawn = random_double(min, max), .max_increment = (double)max, .min_increment = (double)min);
+								.next_spawn = random_f64(min, max), .max_increment = (f64)max, .min_increment = (f64)min);
 							add_componentv(world, e, struct room_child, .parent = room);
 						}
 					}
@@ -540,7 +540,7 @@ struct room* load_room(struct world* world, const char* path) {
 						struct object* object = layer->as.object_layer.objects + ii;
 
 						if (object->shape == object_shape_rect) {
-							struct float_rect r = object->as.rect;
+							struct f32_rect r = object->as.rect;
 
 							entity e = new_entity(world);
 							add_componentv(world, e, struct lava, .collider = {
@@ -556,8 +556,8 @@ struct room* load_room(struct world* world, const char* path) {
 						struct object* object = layer->as.object_layer.objects + ii;
 
 						if (object->shape == object_shape_point) {
-							float intensity = 1.0f;
-							float range = 1000.0f;
+							f32 intensity = 1.0f;
+							f32 range = 1000.0f;
 							
 							v2f r = object->as.point;
 
@@ -687,7 +687,7 @@ static void draw_tile_layer(struct room* room, struct renderer* renderer, struct
 	}
 }
 
-void draw_room(struct room* room, struct renderer* renderer, double ts) {
+void draw_room(struct room* room, struct renderer* renderer, f64 ts) {
 	if (room->name && room->name_timer >= 0.0) {
 		room->name_timer -= ts;
 	
@@ -716,7 +716,7 @@ void update_room_light(struct room* room, struct renderer* renderer) {
 	}
 }
 
-void update_room(struct room* room, double ts, double actual_ts) {
+void update_room(struct room* room, f64 ts, f64 actual_ts) {
 	/* Update tile animations */
 	for (u32 i = 0; i < room->tileset_count; i++) {
 		for (u32 ii = 0; ii < room->tilesets[i].tile_count; ii++) {
@@ -741,7 +741,7 @@ void update_room(struct room* room, double ts, double actual_ts) {
 
 		spawner->next_spawn -= ts;
 		if (spawner->next_spawn <= 0.0) {
-			spawner->next_spawn = random_double(spawner->min_increment, spawner->max_increment);
+			spawner->next_spawn = random_f64(spawner->min_increment, spawner->max_increment);
 
 			switch (spawner->spawn_type) {
 				case spawn_type_broken_robot: {
@@ -807,9 +807,9 @@ void update_room(struct room* room, double ts, double actual_ts) {
 						.dimentions = { sprite.rect.w * sprite_scale, sprite.rect.h * sprite_scale });
 					add_component(room->world, e, struct sprite, sprite);
 					add_componentv(room->world, e, struct lava_particle,
-						.velocity = { random_double(-100, 100), random_double(-600, -300) },
+						.velocity = { random_f64(-100, 100), random_f64(-600, -300) },
 						.lifetime = 1.0,
-						.rotation_inc = random_double(-100, 100));
+						.rotation_inc = random_f64(-100, 100));
 				}
 
 				destroy_entity(room->world, view.e);
@@ -925,16 +925,16 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 		if (rect_overlap(body_rect, rect, &normal)) {
 			collided = true;
 			if (normal.x == 1) {
-				position->x = ((float)rect.x - body_rect.w) - collider.x;
+				position->x = ((f32)rect.x - body_rect.w) - collider.x;
 				velocity->x = 0.0f;
 			} else if (normal.x == -1) {
-				position->x = ((float)rect.x + rect.w) - collider.x;
+				position->x = ((f32)rect.x + rect.w) - collider.x;
 				velocity->x = 0.0f;
 			} else if (normal.y == 1) {
-				position->y = ((float)rect.y - body_rect.h) - collider.y;
+				position->y = ((f32)rect.y - body_rect.h) - collider.y;
 				velocity->y = 0.0f;
 			} else if (normal.y == -1) {
-				position->y = ((float)rect.y + rect.h) - collider.y;
+				position->y = ((f32)rect.y + rect.h) - collider.y;
 				velocity->y = 0.0f;
 			}
 		}
@@ -959,10 +959,10 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 			}
 		} else {
 			if (point_vs_rtri(check_point, start, end)) {
-		 		float col_centre = body_rect.x + (body_rect.w / 2);
+		 		f32 col_centre = body_rect.x + (body_rect.w / 2);
 
-				float slope = (float)(end.y - start.y) / (float)(end.x - start.x); /* Rise/Run. */
-		 		float b = (start.y - (slope * start.x));
+				f32 slope = (f32)(end.y - start.y) / (f32)(end.x - start.x); /* Rise/Run. */
+		 		f32 b = (start.y - (slope * start.x));
 
 		 		/* y = mx + b */
 				position->y = (((slope * col_centre) + b) - body_rect.h) - collider.y;

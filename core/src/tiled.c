@@ -31,14 +31,14 @@ static i16 read_i16(struct file* file) {
 	return i;
 }
 
-static float read_f32(struct file* file) {	
-	float f;
+static f32 read_f32(struct file* file) {	
+	f32 f;
 	file_read(&f, sizeof(f), 1, file);
 	return f;
 }
 
-static double read_f64(struct file* file) {	
-	double f;
+static f64 read_f64(struct file* file) {	
+	f64 f;
 	file_read(&f, sizeof(f), 1, file);
 	return f;
 }
@@ -132,7 +132,7 @@ struct tiled_map* load_map(const char* filename) {
 				i32 duration = read_i32(&file);
 				
 				tile->frames[iii] = tile_id;
-				tile->durations[iii] = (double)duration * 0.001;
+				tile->durations[iii] = (f64)duration * 0.001;
 			}
 		}
 	}

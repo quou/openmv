@@ -234,7 +234,7 @@ void ui_begin_frame(struct ui_context* ui) {
 
 	ui->window_count = 0;
 
-	ui->renderer->camera = m4f_orth(0.0f, (float)w, (float)h, 0.0f, -1.0f, 1.0f);
+	ui->renderer->camera = m4f_orth(0.0f, (f32)w, (f32)h, 0.0f, -1.0f, 1.0f);
 	ui->renderer->dimentions = make_v2i(w, h);
 }
 

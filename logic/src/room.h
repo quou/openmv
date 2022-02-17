@@ -21,9 +21,9 @@ struct path {
 
 struct room* load_room(struct world* world, const char* path);
 void free_room(struct room* room);
-void update_room(struct room* room, double ts, double actual_ts);
+void update_room(struct room* room, f64 ts, f64 actual_ts);
 void update_room_light(struct room* room, struct renderer* renderer);
-void draw_room(struct room* room, struct renderer* renderer, double ts);
+void draw_room(struct room* room, struct renderer* renderer, f64 ts);
 void draw_room_forground(struct room* room, struct renderer* renderer, struct renderer* transition_renderer);
 bool handle_body_collisions(struct room* room, struct rect rect, v2f* position, v2f* velocity);
 void handle_body_interactions(struct room** room, struct rect rect, entity body, bool body_on_ground);
@@ -59,13 +59,13 @@ enum {
 
 struct entity_spawner {
 	u32 spawn_type;
-	double next_spawn;
-	double max_increment;
-	double min_increment;
+	f64 next_spawn;
+	f64 max_increment;
+	f64 min_increment;
 };
 
 struct fall {
-	double mul;
+	f64 mul;
 	v2f velocity;
 };
 
@@ -79,6 +79,6 @@ struct lava {
 
 struct lava_particle {
 	v2f velocity;
-	double lifetime;
-	float rotation_inc;
+	f64 lifetime;
+	f32 rotation_inc;
 };

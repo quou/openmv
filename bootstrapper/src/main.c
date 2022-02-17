@@ -68,7 +68,7 @@ int main() {
 	call_on_init(scripts);
 
 	u64 now = get_time(), last = now; 
-	double timestep = 0.0;
+	f64 timestep = 0.0;
 
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
@@ -83,7 +83,7 @@ int main() {
 		audio_update();
 
 		now = get_time();
-		timestep = (double)(now - last) / (double)get_frequency();
+		timestep = (f64)(now - last) / (f64)get_frequency();
 		last = now;
 
 		if (timestep > 0.1) {

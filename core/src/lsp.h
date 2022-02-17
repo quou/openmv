@@ -4,7 +4,7 @@
  *    - nil
  *          Represents a value with nothing in it; A `nil' value.
  *    - number
- *          Represents a 64 bit floating point number.
+ *          Represents a 64 bit f32ing point number.
  *    - boolean
  *          Represents a true or false value.
  *    - string
@@ -197,7 +197,7 @@ struct lsp_obj {
 struct lsp_val {
 	u8 type;
 	union {
-		double num;
+		f64 num;
 		bool boolean;
 		struct lsp_obj* obj;
 	} as;

@@ -181,7 +181,7 @@ EXPORT_SYM void C_DECL on_init() {
 	}
 }
 
-EXPORT_SYM void C_DECL on_update(double ts) {
+EXPORT_SYM void C_DECL on_update(f64 ts) {
 	struct renderer* renderer = logic_store->renderer;
 	struct world* world = logic_store->world;
 
@@ -209,19 +209,19 @@ EXPORT_SYM void C_DECL on_update(double ts) {
 		logic_store->show_components = !logic_store->show_components;
 	}
 
-	double time_scale;
+	f64 time_scale;
 	if (logic_store->frozen || logic_store->paused) {
 		time_scale = 0.0;
 	} else {
 		time_scale = 1.0;
 	}
 
-	double timestep = ts * time_scale;
+	f64 timestep = ts * time_scale;
 
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
 	logic_store->ui_renderer->dimentions = make_v2i(win_w, win_h);
-	logic_store->ui_renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
+	logic_store->ui_renderer->camera = m4f_orth(0.0f, (f32)win_w, (f32)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (!logic_store->frozen && !logic_store->paused) {
 		player_system(world, renderer, &logic_store->room, timestep);
@@ -349,7 +349,7 @@ EXPORT_SYM void C_DECL on_update(double ts) {
 			ui_text(ui, logic_store->fps_buf);
 
 			char buf[256];
-			sprintf(buf, "Memory Usage (KIB): %g", round(((double)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
+			sprintf(buf, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_text(ui, buf);
 
 			sprintf(buf, "Entities: %u", get_alive_entity_count(world));

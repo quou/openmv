@@ -14,6 +14,9 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+typedef float f32;
+typedef double f64;
+
 /* Platform stuff */
 #if defined(_WIN32) || defined(__CYGWIN__)
 	#define PLATFORM_WINDOWS

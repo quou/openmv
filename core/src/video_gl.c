@@ -182,7 +182,7 @@ void bind_shader(const struct shader* shader) {
 	glUseProgram(shader ? shader->id : 0);
 }
 
-void shader_set_f(const struct shader* shader, const char* name, const float v) {
+void shader_set_f(const struct shader* shader, const char* name, const f32 v) {
 	if (shader->panic) { return; }
 
 	u32 location = glGetUniformLocation(shader->id, name);
@@ -235,14 +235,14 @@ void shader_set_m3f(const struct shader* shader, const char* name, const m3f v) 
 	if (shader->panic) { return; }
 
 	u32 location = glGetUniformLocation(shader->id, name);
-	glUniformMatrix3fv(location, 1, GL_FALSE, (float*)v.m);
+	glUniformMatrix3fv(location, 1, GL_FALSE, (f32*)v.m);
 }
 
 void shader_set_m4f(const struct shader* shader, const char* name, const m4f v) {
 	if (shader->panic) { return; }
 
 	u32 location = glGetUniformLocation(shader->id, name);
-	glUniformMatrix4fv(location, 1, GL_FALSE, (float*)v.m);
+	glUniformMatrix4fv(location, 1, GL_FALSE, (f32*)v.m);
 }
 
 void init_vb(struct vertex_buffer* vb, const i32 flags) {
@@ -275,10 +275,10 @@ void bind_vb_for_edit(const struct vertex_buffer* vb) {
 	}
 }
 
-void push_vertices(const struct vertex_buffer* vb, float* vertices, u32 count) {
+void push_vertices(const struct vertex_buffer* vb, f32* vertices, u32 count) {
 	const u32 mode = vb->flags & VB_STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 
-	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertices, mode);
+	glBufferData(GL_ARRAY_BUFFER, count * sizeof(f32), vertices, mode);
 }
 
 void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
@@ -286,12 +286,12 @@ void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
 
 	vb->index_count = count;
 
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(float), indices, mode);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(f32), indices, mode);
 }
 
-void update_vertices(const struct vertex_buffer* vb, float* vertices, u32 offset, u32 count) {
-	glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(float),
-		count * sizeof(float), vertices);
+void update_vertices(const struct vertex_buffer* vb, f32* vertices, u32 offset, u32 count) {
+	glBufferSubData(GL_ARRAY_BUFFER, offset * sizeof(f32),
+		count * sizeof(f32), vertices);
 }
 
 void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count) {
@@ -305,7 +305,7 @@ void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count
 	u32 stride, u32 offset) {
 	
 	glVertexAttribPointer(index, component_count, GL_FLOAT, GL_FALSE,
-		stride * sizeof(float), (void*)(u64)(offset * sizeof(float)));
+		stride * sizeof(f32), (void*)(u64)(offset * sizeof(f32)));
 	glEnableVertexAttribArray(index);
 }
 

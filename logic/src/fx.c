@@ -16,7 +16,7 @@ entity new_jetpack_particle(struct world* world, v2f position) {
 	return e;
 }
 
-void fx_system(struct world* world, double ts) {
+void fx_system(struct world* world, f64 ts) {
 	for (view(world, view,
 		type_info(struct jetpack_fx),
 		type_info(struct transform),

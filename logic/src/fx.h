@@ -4,9 +4,9 @@
 #include "maths.h"
 
 struct jetpack_fx {
-	double timer;
+	f64 timer;
 };
 
 entity new_jetpack_particle(struct world* world, v2f position);
 
-void fx_system(struct world* world, double ts);
+void fx_system(struct world* world, f64 ts);

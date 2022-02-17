@@ -16,7 +16,7 @@ enum {
 	persist_i32 = 0,
 	persist_u32,
 	persist_bool,
-	persist_float,
+	persist_f32,
 	persist_str,
 };
 
@@ -27,7 +27,7 @@ struct persistent {
 		i32 i;
 		i32 u;
 		bool b;
-		double f;
+		f64 f;
 		char* str;
 	} as;
 };

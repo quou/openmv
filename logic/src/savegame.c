@@ -44,8 +44,8 @@ void set_persistent(const char* name, u32 type, const void* val) {
 		case persist_bool:
 			p.as.b = *(bool*)val;
 			break;
-		case persist_float:
-			p.as.f = *(double*)val;
+		case persist_f32:
+			p.as.f = *(f64*)val;
 			break;
 		case persist_str:
 			p.as.str = copy_string(val);
@@ -156,7 +156,7 @@ void savegame() {
 			case persist_bool:
 				fwrite(&p->as.b, sizeof(p->as.b), 1, file);
 				break;
-			case persist_float:
+			case persist_f32:
 				fwrite(&p->as.f, sizeof(p->as.f), 1, file);
 				break;
 			case persist_str: {
@@ -220,7 +220,7 @@ void loadgame() {
 			case persist_bool:
 				fread(&p.as.b, sizeof(p.as.b), 1, file);
 				break;
-			case persist_float:
+			case persist_f32:
 				fread(&p.as.f, sizeof(p.as.f), 1, file);
 				break;
 			case persist_str: {

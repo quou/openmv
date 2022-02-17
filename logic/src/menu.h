@@ -24,4 +24,4 @@ void prompts_deinit();
 void message_prompt(const char* text);
 void message_prompt_ex(const char* text, prompt_finish_func on_finish, void* udata);
 void prompt_ask(const char* text, prompt_submit_func on_submit, void* udata);
-void prompts_update(double ts);
+void prompts_update(f64 ts);

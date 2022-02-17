@@ -29,7 +29,7 @@ void shops_deinit() {
 	shop.shopping = false;
 }
 
-void shops_update(double ts) {
+void shops_update(f64 ts) {
 	if (shop.shopping) {
 
 	}

@@ -19,7 +19,7 @@ struct shader {
 API void init_shader(struct shader* shader, const char* source, const char* name);
 API void deinit_shader(struct shader* shader);
 API void bind_shader(const struct shader* shader);
-API void shader_set_f(const struct shader* shader, const char* name, const float v);
+API void shader_set_f(const struct shader* shader, const char* name, const f32 v);
 API void shader_set_i(const struct shader* shader, const char* name, const i32 v);
 API void shader_set_u(const struct shader* shader, const char* name, const u32 v);
 API void shader_set_b(const struct shader* shader, const char* name, const bool v);
@@ -50,9 +50,9 @@ API void init_vb(struct vertex_buffer* vb, const i32 flags);
 API void deinit_vb(struct vertex_buffer* vb);
 API void bind_vb_for_draw(const struct vertex_buffer* vb);
 API void bind_vb_for_edit(const struct vertex_buffer* vb);
-API void push_vertices(const struct vertex_buffer* vb, float* vertices, u32 count);
+API void push_vertices(const struct vertex_buffer* vb, f32* vertices, u32 count);
 API void push_indices(struct vertex_buffer* vb, u32* indices, u32 count);
-API void update_vertices(const struct vertex_buffer* vb, float* vertices, u32 offset, u32 count);
+API void update_vertices(const struct vertex_buffer* vb, f32* vertices, u32 offset, u32 count);
 API void update_indices(struct vertex_buffer* vb, u32* indices, u32 offset, u32 count);
 API void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count,
  	u32 stride, u32 offset);
@@ -92,13 +92,13 @@ struct textured_quad {
 	bool unlit;
 
 	v2f origin;
-	float rotation;
+	f32 rotation;
 };
 
 struct light {
 	v2f position;
-	float range;
-	float intensity;
+	f32 range;
+	f32 intensity;
 };
 
 /* For some reason the renderer is really slow, and I do not know
@@ -128,7 +128,7 @@ struct renderer {
 
 	v2f light_pos;
 
-	float ambient_light;
+	f32 ambient_light;
 
 	struct light lights[max_lights];
 	u32 light_count;
@@ -162,13 +162,13 @@ API i32 render_text_fancy(struct renderer* renderer, struct font* font,
 		const char* text, u32 n, i32 x, i32 y, struct color color,
 		struct textured_quad* coin);
 
-API struct font* load_font_from_memory(void* data, u64 filesize, float size);
+API struct font* load_font_from_memory(void* data, u64 filesize, f32 size);
 API void free_font(struct font* font);
 
 API void set_font_tab_size(struct font* font, i32 n);
 API i32 get_font_tab_size(struct font* font);
 
-API float get_font_size(struct font* font);
+API f32 get_font_size(struct font* font);
 
 API i32 text_width(struct font* font, const char* text);
 API i32 text_height(struct font* font);

@@ -25,7 +25,7 @@ API void CDECL on_init() {
 	printf("Init\n");
 }
 
-API void CDECL on_update(double ts) {
+API void CDECL on_update(f64 ts) {
 	printf("Update. Timestep: %g\n", ts);
 }
 

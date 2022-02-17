@@ -45,7 +45,7 @@ void apply_lights(struct world* world, struct renderer* renderer) {
 	}
 }
 
-void render_system(struct world* world, struct renderer* renderer, double ts) {
+void render_system(struct world* world, struct renderer* renderer, f64 ts) {
 	render_queue.count = 0;
 
 	for (view(world, view, type_info(struct transform), type_info(struct sprite))) {

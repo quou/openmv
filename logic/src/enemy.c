@@ -109,7 +109,7 @@ entity new_scav(struct world* world, struct room* room, v2f position) {
 	return e;
 }
 
-void enemy_system(struct world* world, struct room* room, double ts) {
+void enemy_system(struct world* world, struct room* room, f64 ts) {
 	/* Bat system */
 	for (view(world, view, type_info(struct transform), type_info(struct bat))) {
 		struct transform* transform = view_get(&view, struct transform);
@@ -118,7 +118,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		if (!has_component(world, view.e, struct path_follow)) {
 			bat->offset += ts;
 
-			transform->position.y = bat->old_position.y + (float)sin(bat->offset) * 100.0f;
+			transform->position.y = bat->old_position.y + (f32)sin(bat->offset) * 100.0f;
 		}
 	}
 
@@ -138,7 +138,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		v2f dir = v2f_normalised(v2f_sub(target, transform->position));
 		transform->position = v2f_add(transform->position, v2f_mul(dir, make_v2f(follow->speed * ts, follow->speed * ts)));
 
-		float dist_sqrd = powf(target.x - transform->position.x, 2.0f) + powf(target.y - transform->position.y, 2.0f);
+		f32 dist_sqrd = powf(target.x - transform->position.x, 2.0f) + powf(target.y - transform->position.y, 2.0f);
 		if (dist_sqrd < 10.0f) {
 			follow->node += follow->reverse ? -1 : 1;
 
@@ -162,7 +162,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
 
 		if (!spider->triggered) {
-			float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+			f32 dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
 
 			if (dist_sqrd < 100000) {
 				spider->triggered = true;
@@ -207,7 +207,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		struct transform* p_transform = get_component(world, logic_store->player, struct transform);
 
 		if (!drill->triggered) {
-			float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+			f32 dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
 
 			if (dist_sqrd < 100000) {
 				drill->triggered = true;
@@ -259,14 +259,14 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 			p_collider->rect.w, p_collider->rect.h
 		};
 
-		float dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
+		f32 dist_sqrd = powf(p_transform->position.x - transform->position.x, 2.0f) + powf(p_transform->position.y - transform->position.y, 2.0f);
 
 		if (!scav->triggered) {
 			if (dist_sqrd < 100000.0f) {
 				scav->triggered = true;
 			}
 		} else {
-			float dist = sqrtf(dist_sqrd);
+			f32 dist = sqrtf(dist_sqrd);
 
 			scav->velocity.y += g_gravity * ts;
 
@@ -330,7 +330,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 
 				/* Spawn the projectile */
 				struct sprite sprite = get_sprite(sprid_projectile_lvl1);
-				float rotation = 0.0;
+				f32 rotation = 0.0;
 				struct rect col;
 
 				col.x = (-sprite.rect.h / 2) * sprite_scale;
@@ -421,7 +421,7 @@ void enemy_system(struct world* world, struct room* room, double ts) {
 		struct player* player = get_component(world, logic_store->player, struct player);
 		if (enemy->hp <= 0) {
 			/* Chance to get a heart is much higher if the player has low hp. */
-			double chance = 5;
+			f64 chance = 5;
 			if (player->hp < player->max_hp) {
 				chance = 30;
 			}

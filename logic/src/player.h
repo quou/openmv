@@ -16,17 +16,17 @@ struct player {
 	bool on_ground;
 	bool dashing;
 
-	double dash_time;
-	double dash_cooldown_timer;
-	double dash_fx_time;
+	f64 dash_time;
+	f64 dash_cooldown_timer;
+	f64 dash_fx_time;
 
-	double shoot_timer;
+	f64 shoot_timer;
 
-	double accum;
+	f64 accum;
 
 	bool invul;
-	double invul_timer;
-	double invul_flash_timer;
+	f64 invul_timer;
+	f64 invul_flash_timer;
 	bool visible;
 
 	i32 dash_count;
@@ -43,9 +43,9 @@ struct player {
 
 	i32 money;
 
-	float projectile_distance;
-	float projectile_speed;
-	double shoot_cooldown;
+	f32 projectile_distance;
+	f32 projectile_speed;
+	f64 shoot_cooldown;
 	i32 level;
 
 	bool played_step;
@@ -61,9 +61,9 @@ struct player {
 
 entity new_player_entity(struct world* world);
 void kill_player(struct world* world, entity player_handle);
-void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts);
+void player_system(struct world* world, struct renderer* renderer, struct room** room, f64 ts);
 void update_player_light(struct world* world, struct renderer* renderer, entity player);
-void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts);
+void camera_system(struct world* world, struct renderer* renderer, struct room* room, f64 ts);
 void hud_system(struct world* world, struct renderer* renderer);
 
 entity new_heart(struct world* world, struct room* room, v2f position, i32 value);
@@ -99,8 +99,8 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position);
 struct projectile {
 	i32 face;
 	bool up;
-	float distance;
-	float speed;
+	f32 distance;
+	f32 speed;
 
 	v2f original_position;
 
@@ -109,22 +109,22 @@ struct projectile {
 	i32 damage;
 };
 
-void projectile_system(struct world* world, struct room* room, double ts);
+void projectile_system(struct world* world, struct room* room, f64 ts);
 
 struct anim_fx {
 	u32 d;
 };
 
-void anim_fx_system(struct world* world, double ts);
+void anim_fx_system(struct world* world, f64 ts);
 
 entity new_impact_effect(struct world* world, v2f position, u32 anim_id);
 
 struct damage_num_fx {
 	char text[32];
-	float velocity;
-	double timer;
+	f32 velocity;
+	f64 timer;
 };
 
-void damage_fx_system(struct world* world, struct renderer* renderer, double ts);
+void damage_fx_system(struct world* world, struct renderer* renderer, f64 ts);
 
 entity new_damage_number(struct world* world, v2f position, i32 number);

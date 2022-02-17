@@ -35,33 +35,33 @@ static u32 item_sprites[] = {
 };
 
 struct player_constants {
-	float move_speed;
-	float jump_force;
-	float gravity;
-	float max_gravity;
-	float accel;
-	float friction;
-	float slow_friction;
-	float dash_force;
-	float low_jump_mul;
+	f32 move_speed;
+	f32 jump_force;
+	f32 gravity;
+	f32 max_gravity;
+	f32 accel;
+	f32 friction;
+	f32 slow_friction;
+	f32 dash_force;
+	f32 low_jump_mul;
 	i32 ground_hit_range;
-	double max_dash;
-	double dash_fx_interval;
-	double dash_cooldown;
+	f64 max_dash;
+	f64 dash_fx_interval;
+	f64 dash_cooldown;
 
-	double invul_time;
-	double invul_flash_interval;
+	f64 invul_time;
+	f64 invul_flash_interval;
 
-	float projectile_distance_lvl1;
-	float projectile_distance_lvl2;
-	float projectile_distance_lvl3;
-	float projectile_speed_lvl1;
-	float projectile_speed_lvl2;
-	float projectile_speed_lvl3;
+	f32 projectile_distance_lvl1;
+	f32 projectile_distance_lvl2;
+	f32 projectile_distance_lvl3;
+	f32 projectile_speed_lvl1;
+	f32 projectile_speed_lvl2;
+	f32 projectile_speed_lvl3;
 
-	double shoot_cooldown_lvl1;
-	double shoot_cooldown_lvl2;
-	double shoot_cooldown_lvl3;
+	f64 shoot_cooldown_lvl1;
+	f64 shoot_cooldown_lvl2;
+	f64 shoot_cooldown_lvl3;
 
 	v2f left_muzzle_pos;
 	v2f right_muzzle_pos;
@@ -191,7 +191,7 @@ static void player_take_damage(struct world* world, entity p, i32 amount) {
 	}
 }
 
-void player_system(struct world* world, struct renderer* renderer, struct room** room, double ts) {
+void player_system(struct world* world, struct renderer* renderer, struct room** room, f64 ts) {
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player),
@@ -527,7 +527,7 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 				sprite = get_sprite(sprid_projectile_lvl3);
 			}
 
-			float rotation;
+			f32 rotation;
 			struct rect p_rect;
 
 			if (face_up) {
@@ -690,7 +690,7 @@ void kill_player(struct world* world, entity player_handle) {
 	prompt_ask("You have died. Want to retry?", on_player_die, null);
 }
 
-void camera_system(struct world* world, struct renderer* renderer, struct room* room, double ts) {
+void camera_system(struct world* world, struct renderer* renderer, struct room* room, f64 ts) {
 	for (view(world, view,
 			type_info(struct transform),
 			type_info(struct player))) {
@@ -699,7 +699,7 @@ void camera_system(struct world* world, struct renderer* renderer, struct room* 
 		struct player* player = view_get(&view, struct player);
 
 		/* Camera movement. */
-		float distance_to_player = sqrtf(powf(logic_store->camera_position.x - transform->position.x, 2)
+		f32 distance_to_player = sqrtf(powf(logic_store->camera_position.x - transform->position.x, 2)
 			+ powf(logic_store->camera_position.y - transform->position.y, 2));
 
 		v2f camera_dir = v2f_normalised(v2f_sub(transform->position, logic_store->camera_position));
@@ -758,7 +758,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 				2 * sprite_scale
 			},
 			.dimentions = {
-				(i32)(((float)player->hp / (float)player->max_hp) * 25.0f) * sprite_scale,
+				(i32)(((f32)player->hp / (f32)player->max_hp) * 25.0f) * sprite_scale,
 				hp_bar_sprite.rect.h * sprite_scale
 			},
 			.rect = hp_bar_sprite.rect,
@@ -827,7 +827,7 @@ void hud_system(struct world* world, struct renderer* renderer) {
 	}
 }
 
-void projectile_system(struct world* world, struct room* room, double ts) {
+void projectile_system(struct world* world, struct room* room, f64 ts) {
 	for (view(world, view, type_info(struct transform), type_info(struct projectile), type_info(struct collider))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct projectile* projectile = view_get(&view, struct projectile);
@@ -841,7 +841,7 @@ void projectile_system(struct world* world, struct room* room, double ts) {
 			transform->position.x += projectile->speed * ts;
 		}
 
-		float dist = sqrtf(powf(transform->position.x - projectile->original_position.x, 2.0f)
+		f32 dist = sqrtf(powf(transform->position.x - projectile->original_position.x, 2.0f)
 			+ powf(transform->position.y - projectile->original_position.y, 2.0f));
 
 		if (dist > projectile->distance) {
@@ -874,7 +874,7 @@ entity new_impact_effect(struct world* world, v2f position, u32 anim_id) {
 	return e;
 }
 
-void anim_fx_system(struct world* world, double ts) {
+void anim_fx_system(struct world* world, f64 ts) {
 	for (view(world, view, type_info(struct transform), type_info(struct anim_fx), type_info(struct animated_sprite))) {
 		struct transform* transform = view_get(&view, struct transform);
 		struct animated_sprite* anim = view_get(&view, struct animated_sprite);
@@ -885,7 +885,7 @@ void anim_fx_system(struct world* world, double ts) {
 	}
 }
 
-void damage_fx_system(struct world* world, struct renderer* renderer, double ts) {
+void damage_fx_system(struct world* world, struct renderer* renderer, f64 ts) {
 	struct texture* atlas = get_texture(texid_icon);
 
 	for (view(world, view, type_info(struct transform), type_info(struct damage_num_fx))) {
@@ -895,7 +895,7 @@ void damage_fx_system(struct world* world, struct renderer* renderer, double ts)
 		d->velocity += 30.0 * ts;
 		transform->position.y -= d->velocity * ts;
 
-		float x = 0.0f;
+		f32 x = 0.0f;
 
 		for (char* c = d->text; *c; c++) {
 			char idx = (*c - '0') + 1;
@@ -948,7 +948,7 @@ entity new_coin_pickup(struct world* world, struct room* room, v2f position) {
 		.dimentions = { rect.w * sprite_scale, rect.h * sprite_scale });
 	add_component(world, e, struct animated_sprite, sprite);
 	add_componentv(world, e, struct room_child, .parent = room);
-	add_componentv(world, e, struct coin_pickup, .velocity.x = (float)random_double(-100, 100));
+	add_componentv(world, e, struct coin_pickup, .velocity.x = (f32)random_f64(-100, 100));
 	add_componentv(world, e, struct collider,
 		.rect = { 0, 0, rect.w * sprite_scale, rect.h * sprite_scale });
 

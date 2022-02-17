@@ -35,7 +35,7 @@ struct audio_clip {
 
 	u32 id;
 
-	float volume;
+	f32 volume;
 };
 
 void audio_init() {
@@ -77,8 +77,8 @@ void audio_update() {
 	}
 }
 
-static u32 read_and_mix(ma_decoder* decoder, float* out, u32 frame_count) {
-	float* temp = core_alloc(4096 * sizeof(float));
+static u32 read_and_mix(ma_decoder* decoder, f32* out, u32 frame_count) {
+	f32* temp = core_alloc(4096 * sizeof(f32));
 	u32 temp_cap = 4096 / channel_count;
 	u32 read = 0;
 
@@ -118,7 +118,7 @@ static void data_callback(ma_device* device, void* out, const void* in, u32 fram
 		struct audio_clip* clip = audio.clips[i];
 
 		if (clip->playing) {
-			u32 read = read_and_mix(&clip->decoder, (float*)out, frame_count);
+			u32 read = read_and_mix(&clip->decoder, (f32*)out, frame_count);
 			if (read < frame_count) {
 				clip->playing = false;
 			}
@@ -191,6 +191,6 @@ void loop_audio_clip(struct audio_clip* clip, bool loop) {
 	clip->loop = loop;
 }
 
-void set_audio_clip_volume(struct audio_clip* clip, float volume) {
+void set_audio_clip_volume(struct audio_clip* clip, f32 volume) {
 	clip->volume = volume / 100.0f;
 }

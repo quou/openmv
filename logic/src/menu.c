@@ -110,7 +110,7 @@ void menu_update(struct menu* menu) {
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
 
-	menu->renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
+	menu->renderer->camera = m4f_orth(0.0f, (f32)win_w, (f32)win_h, 0.0f, -1.0f, 1.0f);
 
 	i32 y = (win_h / 2) - (menu->item_count * text_height(menu->font) / 2);
 
@@ -216,9 +216,9 @@ struct prompt_ctx {
 	u32 message_len;
 	u32 current_character;
 
-	double type_speed;
+	f64 type_speed;
 
-	double timer;
+	f64 timer;
 
 	struct renderer* renderer;
 	struct font* font;
@@ -313,12 +313,12 @@ void prompt_ask(const char* text, prompt_submit_func on_submit, void* udata) {
 	logic_store->frozen = true;
 }
 
-void prompts_update(double ts) {
+void prompts_update(f64 ts) {
 	struct prompt_ctx* ctx = (struct prompt_ctx*)logic_store->prompt_ctx;
 
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
-	ctx->renderer->camera = m4f_orth(0.0f, (float)win_w, (float)win_h, 0.0f, -1.0f, 1.0f);
+	ctx->renderer->camera = m4f_orth(0.0f, (f32)win_w, (f32)win_h, 0.0f, -1.0f, 1.0f);
 
 	if (ctx->message) {
 		struct textured_quad back = {

@@ -39,10 +39,10 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	configure_vb(&renderer->vb, 0, 2, els_per_vert, 0);  /* vec2 position */
 	configure_vb(&renderer->vb, 1, 2, els_per_vert, 2);  /* vec2 uv */
 	configure_vb(&renderer->vb, 2, 4, els_per_vert, 4);  /* vec4 color */
-	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8);  /* float texture_id */
-	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9);  /* float inverted */
-	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* float unlit */
-	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* float trans_id */
+	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8);  /* f32 texture_id */
+	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9);  /* f32 inverted */
+	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* f32 unlit */
+	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* f32 trans_id */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
@@ -51,7 +51,7 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	renderer->shader = shader;
 	bind_shader(&renderer->shader);
 
-	renderer->camera = m4f_orth(0.0f, (float)dimentions.x, (float)dimentions.y, 0.0f, -1.0f, 1.0f);
+	renderer->camera = m4f_orth(0.0f, (f32)dimentions.x, (f32)dimentions.y, 0.0f, -1.0f, 1.0f);
 	shader_set_m4f(&renderer->shader, "camera", renderer->camera);
 	renderer->dimentions = dimentions;
 
@@ -115,8 +115,8 @@ void renderer_flush(struct renderer* renderer) {
 
 	if (renderer->camera_enable) {
 		m4f view = m4f_translate(m4f_identity(), make_v3f(
-			-((float)renderer->camera_pos.x) + ((float)renderer->dimentions.x / 2),
-			-((float)renderer->camera_pos.y) + ((float)renderer->dimentions.y / 2),
+			-((f32)renderer->camera_pos.x) + ((f32)renderer->dimentions.x / 2),
+			-((f32)renderer->camera_pos.y) + ((f32)renderer->dimentions.y / 2),
 			0.0f));
 		shader_set_m4f(&renderer->shader, "view", view);
 	} else {
@@ -150,7 +150,7 @@ void renderer_push_light(struct renderer* renderer, struct light light) {
 void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	bind_vb_for_edit(&renderer->vb);
 	
-	float tx = 0, ty = 0, tw = 0, th = 0;
+	f32 tx = 0, ty = 0, tw = 0, th = 0;
 
 	i32 tidx = -1;
 	if (quad->texture) {
@@ -174,36 +174,36 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 			}
 		}
 
-		tx = (float)quad->rect.x/ (float)quad->texture->width;
-		ty = (float)quad->rect.y/ (float)quad->texture->height;
-		tw = (float)quad->rect.w/ (float)quad->texture->width;
-		th = (float)quad->rect.h/ (float)quad->texture->height;
+		tx = (f32)quad->rect.x/ (f32)quad->texture->width;
+		ty = (f32)quad->rect.y/ (f32)quad->texture->height;
+		tw = (f32)quad->rect.w/ (f32)quad->texture->width;
+		th = (f32)quad->rect.h/ (f32)quad->texture->height;
 	}
 
-	const float r = (float)quad->color.r / 255.0f;
-	const float g = (float)quad->color.g / 255.0f;
-	const float b = (float)quad->color.b / 255.0f;
-	const float a = (float)quad->color.a / 255.0f;
+	const f32 r = (f32)quad->color.r / 255.0f;
+	const f32 g = (f32)quad->color.g / 255.0f;
+	const f32 b = (f32)quad->color.b / 255.0f;
+	const f32 a = (f32)quad->color.a / 255.0f;
 
-	const float w = (float)quad->dimentions.x;
-	const float h = (float)quad->dimentions.y;
-	const float x = (float)quad->position.x;
-	const float y = (float)quad->position.y;
+	const f32 w = (f32)quad->dimentions.x;
+	const f32 h = (f32)quad->dimentions.y;
+	const f32 x = (f32)quad->position.x;
+	const f32 y = (f32)quad->position.y;
 
 	/* I thought this was causing the lack of performance, but removing it had no effect. */
-	m4f transform = m4f_translate(m4f_identity(), make_v3f((float)quad->position.x, (float)quad->position.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f((float)quad->origin.x, (float)quad->origin.y, 0.0f));
-	transform = m4f_rotate(transform, (float)torad((float)quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
-	transform = m4f_scale(transform, make_v3f((float)quad->dimentions.x, (float)quad->dimentions.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f((float)-quad->origin.x, (float)-quad->origin.y, 0.0f));
+	m4f transform = m4f_translate(m4f_identity(), make_v3f((f32)quad->position.x, (f32)quad->position.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f((f32)quad->origin.x, (f32)quad->origin.y, 0.0f));
+	transform = m4f_rotate(transform, (f32)torad((f32)quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
+	transform = m4f_scale(transform, make_v3f((f32)quad->dimentions.x, (f32)quad->dimentions.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f((f32)-quad->origin.x, (f32)-quad->origin.y, 0.0f));
 
-	float trans_id = (float)renderer->transform_count;
+	f32 trans_id = (f32)renderer->transform_count;
 
-	float verts[] = {
-		0.0f, 0.0f, tx, ty,           r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
-		1.0f, 0.0f, tx + tw, ty,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
-		1.0f, 1.0f, tx + tw, ty + th, r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id,
-		0.0f, 1.0f, tx, ty + th,      r, g, b, a, (float)tidx, (float)quad->inverted, (float)quad->unlit, trans_id
+	f32 verts[] = {
+		0.0f, 0.0f, tx, ty,           r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
+		1.0f, 0.0f, tx + tw, ty,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
+		1.0f, 1.0f, tx + tw, ty + th, r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
+		0.0f, 1.0f, tx, ty + th,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id
 	};
 
 	renderer->transforms[renderer->transform_count++] = transform;
@@ -246,7 +246,7 @@ struct font {
 	void* data;
 	stbtt_fontinfo info;
 	struct glyph_set* sets[MAX_GLYPHSET];
-	float size;
+	f32 size;
 	i32 height;
 };
 
@@ -269,7 +269,7 @@ static const char* utf8_to_codepoint(const char* p, u32* dst) {
 static struct glyph_set* load_glyph_set(struct font* font, i32 idx) {
 	i32 width, height, r, ascent, descent, linegap, scaled_ascent, i;
 	unsigned char n;
-	float scale, s;
+	f32 scale, s;
 	struct glyph_set* set;
 
 	set = core_calloc(1, sizeof(struct glyph_set));
@@ -299,7 +299,7 @@ retry:
 	scaled_ascent = (i32)(ascent * scale + 0.5);
 	for (i = 0; i < 256; i++) {
 		set->glyphs[i].yoff += scaled_ascent;
-		set->glyphs[i].xadvance = (float)floor(set->glyphs[i].xadvance);
+		set->glyphs[i].xadvance = (f32)floor(set->glyphs[i].xadvance);
 	}
 
 	for (i = width * height - 1; i >= 0; i--) {
@@ -324,10 +324,10 @@ static struct glyph_set* get_glyph_set(struct font* font, i32 code_poi32) {
 	return font->sets[idx];
 }
 
-struct font* load_font_from_memory(void* data, u64 filesize, float size) {
+struct font* load_font_from_memory(void* data, u64 filesize, f32 size) {
 	struct font* font;
 	i32 r, ascent, descent, linegap;
-	float scale;
+	f32 scale;
 
 	font = core_calloc(1, sizeof(struct font));
 	font->data = data;
@@ -391,7 +391,7 @@ i32 get_font_tab_size(struct font* font) {
 	return (i32)(set->glyphs['\t'].xadvance / set->glyphs[' '].xadvance);
 }
 
-float get_font_size(struct font* font) {
+f32 get_font_size(struct font* font) {
 	return font->size;
 }
 

@@ -10,7 +10,7 @@
 #include "video.h"
 
 struct logic_store {
-	double fps_timer;
+	f64 fps_timer;
 	char fps_buf[256];
 
 	struct renderer* renderer;

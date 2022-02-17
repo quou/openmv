@@ -10,12 +10,12 @@ struct enemy {
 	i32 money_drop;
 
 	bool invul;
-	double invul_timer;
+	f64 invul_timer;
 };
 
 struct bat {
 	v2f old_position;
-	double offset;
+	f64 offset;
 
 	char* path_name;
 };
@@ -33,7 +33,7 @@ struct scav {
 
 	bool triggered;
 
-	double shoot_cooldown;
+	f64 shoot_cooldown;
 
 	struct room* room;
 };
@@ -51,7 +51,7 @@ struct path_follow {
 	struct room* room;
 
 	i32 node;
-	float speed;
+	f32 speed;
 	bool reverse;
 
 	bool first_frame;
@@ -62,4 +62,4 @@ entity new_spider(struct world* world, struct room* room, v2f position);
 entity new_drill(struct world* world, struct room* room, v2f position);
 entity new_scav(struct world* world, struct room* room, v2f position);
 
-void enemy_system(struct world* world, struct room* room, double ts);
+void enemy_system(struct world* world, struct room* room, f64 ts);

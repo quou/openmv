@@ -9,6 +9,7 @@
 
 syn keyword CType i8 i16 i32 i64
 syn keyword CType u8 u16 u32 u64
+syn keyword CType f32 f64
 
 syn keyword CType entity
 syn keyword CType entity_version

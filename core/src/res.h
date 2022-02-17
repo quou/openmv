@@ -17,7 +17,7 @@ API void res_unload(const char* path);
 
 API struct shader load_shader(const char* path);
 API struct texture* load_texture(const char* path);
-API struct font* load_font(const char* path, float size);
+API struct font* load_font(const char* path, f32 size);
 API struct audio_clip* load_audio_clip(const char* path);
 
 /* File API, for reading only.

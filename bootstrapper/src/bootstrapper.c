@@ -10,7 +10,7 @@ const char* working_script_name = "./workasm.dll";
 typedef struct window* (*script_on_create_window_func)();
 
 typedef void (*script_on_init_func)();
-typedef void (*script_on_update_func)(double ts);
+typedef void (*script_on_update_func)(f64 ts);
 typedef void (*script_on_deinit_func)();
 
 typedef void (*script_on_reload_func)(void*);
@@ -32,7 +32,7 @@ struct script_context {
 	void* instance;
 	u64 instance_size;
 
-	double timer;
+	f64 timer;
 };
 
 static void open_funcs(struct script_context* ctx) {
@@ -150,7 +150,7 @@ struct window* script_call_create_window(struct script_context* ctx) {
 	return null;
 }
 
-void script_context_update(struct script_context* ctx, double ts) {
+void script_context_update(struct script_context* ctx, f64 ts) {
 /* Don't hot reload in release mode, for performance reasons.
  *
  * It isn't required, either, unless someone is trying to mod the game,
@@ -201,7 +201,7 @@ void call_on_init(struct script_context* ctx) {
 	}
 }
 
-void call_on_update(struct script_context* ctx, double ts) {
+void call_on_update(struct script_context* ctx, f64 ts) {
 	if (ctx->on_update) {
 		ctx->on_update(ts);
 	}
