@@ -1,3 +1,5 @@
+@import "util/test/scripts/std.lsp"
+
 (set other_fun nil)
 
 (set some_fun (fun (x y) (
@@ -97,6 +99,8 @@
 ))
 
 (print " ==")
+
+(print (split "ssd, sddg, hj" ","))
 
 (set some_array (array (22 4 (cat "Hello," "world!"))))
 (print (at some_array 2))

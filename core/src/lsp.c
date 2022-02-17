@@ -4,6 +4,7 @@
 
 #include "core.h"
 #include "lsp.h"
+#include "platform.h"
 #include "res.h"
 #include "table.h"
 
@@ -900,6 +901,7 @@ void lsp_collect_garbage(struct lsp_state* ctx) {
 enum {
 	tok_left_paren = 0,
 	tok_right_paren,
+	tok_prep,
 	tok_count,
 	tok_add,
 	tok_mul,
@@ -1142,6 +1144,8 @@ static struct token next_tok(struct parser* parser) {
 		case '|': return make_token(parser, tok_or);
 		case '!': return make_token(parser, tok_not);
 		case '=': return make_token(parser, tok_eq);
+
+		case '@': return make_token(parser, tok_prep);
 
 		case '<': return make_token(parser, parser_match(parser, '=') ? tok_lte : tok_lt);
 		case '>': return make_token(parser, parser_match(parser, '=') ? tok_gte : tok_gt);
@@ -1845,6 +1849,53 @@ resolved_l:
 		lsp_chunk_add_op(ctx, chunk, op_push_true, parser->line);
 	} else if (tok.type == tok_false) {	
 		lsp_chunk_add_op(ctx, chunk, op_push_false, parser->line);
+	} else if (tok.type == tok_prep) {
+		advance();
+		expect_tok(tok_iden, "Expected a preprocessor directive.");
+
+		if (tok.len == 6 && memcmp(tok.start, "import", tok.len) == 0) {
+			advance();
+			expect_tok(tok_str, "Expected a string literal after `import'.");
+
+			char* f_name = core_alloc(tok.len + 1);
+			f_name[tok.len] = '\0';
+			memcpy(f_name, tok.start, tok.len);
+
+			u64 f_size;
+			u8* buf;
+
+			if (!read_raw(f_name, &buf, &f_size, true)) {
+				parse_error(ctx, parser, "Failed to resolve import `%s'.\n", f_name);
+				core_free(f_name);
+				return false;
+			}
+
+			struct parser old_parser = *parser;
+			parser->line = 1;
+			parser->start = (const char*)buf;
+			parser->cur = (const char*)buf;
+			parser->source = (const char*)buf;
+			parser->name = f_name;
+
+			while (parser->token.type != tok_end) {
+				if (!parse(ctx, parser, parser->chunk)) {
+					return false;
+				}
+			}
+
+			parser->line = old_parser.line;
+			parser->start = old_parser.start;
+			parser->cur = old_parser.cur;
+			parser->source = old_parser.source;
+			parser->name = old_parser.name;
+			parser->token = old_parser.token;
+
+			core_free(buf);
+			core_free(f_name);
+		} else {
+			parse_error(ctx, parser, "Invalid preprocessor directive.");
+			return false;
+		}
 	} else if (tok.type == tok_end) {
 		parser->token = tok;
 		return true;
