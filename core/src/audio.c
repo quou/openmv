@@ -34,6 +34,8 @@ struct audio_clip {
 	bool loop;
 
 	u32 id;
+
+	float volume;
 };
 
 void audio_init() {
@@ -77,7 +79,7 @@ void audio_update() {
 
 static u32 read_and_mix(ma_decoder* decoder, float* out, u32 frame_count) {
 	float* temp = core_alloc(4096 * sizeof(float));
-	u32 temp_cap = (sizeof(temp) / sizeof(float)) / channel_count;
+	u32 temp_cap = 4096 / channel_count;
 	u32 read = 0;
 
 	while (read < frame_count) {
@@ -94,7 +96,7 @@ static u32 read_and_mix(ma_decoder* decoder, float* out, u32 frame_count) {
 		}
 
 		for (u32 i = 0; i < frames_read * channel_count; i++) {
-			out[read * channel_count + i] += temp[i];
+			out[read * channel_count + i] += temp[i] * ((struct audio_clip*)decoder->pUserData)->volume;
 		}
 
 		read += frames_read;
@@ -134,6 +136,8 @@ struct audio_clip* new_audio_clip(u8* data, u64 size) {
 	clip->data = data;
 	clip->data_size = size;
 
+	clip->volume = 1.0f;
+
 	clip->decoder_config = ma_decoder_config_init(sample_format, channel_count, sample_rate);
 	ma_result r = ma_decoder_init_memory(clip->data, clip->data_size, &clip->decoder_config, &clip->decoder);
 	if (r != MA_SUCCESS) {
@@ -143,6 +147,8 @@ struct audio_clip* new_audio_clip(u8* data, u64 size) {
 
 		return null;
 	}
+
+	clip->decoder.pUserData = clip;
 
 	return clip;
 }
@@ -183,4 +189,8 @@ void stop_audio_clip(struct audio_clip* clip) {
 
 void loop_audio_clip(struct audio_clip* clip, bool loop) {
 	clip->loop = loop;
+}
+
+void set_audio_clip_volume(struct audio_clip* clip, float volume) {
+	clip->volume = volume / 100.0f;
 }
