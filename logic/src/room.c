@@ -7,6 +7,7 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
+#include "dialogue.h"
 #include "dynlib.h"
 #include "enemy.h"
 #include "keymap.h"
@@ -31,16 +32,6 @@ struct door {
 	struct rect rect;
 	char* change_to;
 	char* entrance;
-};
-
-typedef void (*on_dialogue_next_func)();
-typedef void (*on_dialogue_play_func)(void* ctx);
-
-struct dialogue {
-	struct rect rect;
-	on_dialogue_next_func on_next;
-	on_dialogue_play_func on_play;
-	bool want_next;
 };
 
 struct tile_layer {
@@ -501,8 +492,8 @@ struct room* load_room(struct world* world, const char* path) {
 
 							room->dialogue[room->dialogue_count++] = (struct dialogue) {
 								.rect = { r.x * sprite_scale, r.y * sprite_scale, r.w * sprite_scale, r.h * sprite_scale },
-								.on_play = on_play_name ? dynlib_get_sym(logic_store->dialogue_lib, on_play_name) : null,
-								.on_next = on_next_name ? dynlib_get_sym(logic_store->dialogue_lib, on_next_name) : null,
+								.on_play = on_play_name ? get_dialogue_fun(on_play_name) : null,
+								.on_next = on_next_name ? get_dialogue_fun(on_next_name) : null,
 							};
 						}
 					}

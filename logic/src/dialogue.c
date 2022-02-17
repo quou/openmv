@@ -1,9 +1,11 @@
+#include <string.h>
 #include "common.h"
 #include "coroutine.h"
+#include "logic_store.h"
 #include "player.h"
 #include "room.h"
 #include "savegame.h"
-#include "logic_store.h"
+#include "table.h"
 
 struct coroutine broken_robot_co;
 struct coroutine gunsmith_co;
@@ -109,22 +111,65 @@ static coroutine_decl(gunsmith_play)
 	}
 coroutine_end
 
-EXPORT_SYM void C_DECL broken_robot_on_next() {
+void broken_robot_on_next() {
 	coroutine_resume(broken_robot_co);
 }
 
-EXPORT_SYM void C_DECL broken_robot_on_play(void* ctx) {
+void broken_robot_on_play(void* ctx) {
 	broken_robot_co = new_coroutine(broken_robot_play, ctx);
 }
 
-EXPORT_SYM void C_DECL gunsmith_on_next() {
+void gunsmith_on_next() {
 	coroutine_resume(gunsmith_co);
 }
 
-EXPORT_SYM void C_DECL gunsmith_on_play(void* ctx) {
+void gunsmith_on_play(void* ctx) {
 	gunsmith_co = new_coroutine(gunsmith_play, ctx);
 }
 
-EXPORT_SYM void C_DECL miner_robot_on_play(void* ctx) {
+void miner_robot_on_play(void* ctx) {
 	dialogue_message("......", ctx);
+}
+
+struct dialogue_func {
+	char* name;
+	void* ptr;
+};
+
+#define set_dialogue(f_) \
+	do { \
+		u32 idx = logic_store->dialogue_func_count++; \
+		((struct dialogue_func*)logic_store->dialogue_funcs)[idx].name = copy_string(#f_); \
+		((struct dialogue_func*)logic_store->dialogue_funcs)[idx].ptr = (f_); \
+	} while (0)
+
+void init_dialogue() {
+	logic_store->dialogue_funcs = core_alloc(64 * sizeof(struct dialogue_func));
+
+	set_dialogue(broken_robot_on_next);
+	set_dialogue(broken_robot_on_play);
+	set_dialogue(gunsmith_on_next);
+	set_dialogue(gunsmith_on_play);
+	set_dialogue(miner_robot_on_play);
+}
+
+void deinit_dialogue() {
+	for (u32 i = 0; i < logic_store->dialogue_func_count; i++) {
+		core_free(((struct dialogue_func*)logic_store->dialogue_funcs)[i].name);
+	}
+
+	core_free(logic_store->dialogue_funcs);
+}
+
+void* get_dialogue_fun(const char* name) {
+	struct dialogue_func* fs = logic_store->dialogue_funcs;
+
+	for (u32 i = 0; i < logic_store->dialogue_func_count; i++) {
+		if (strcmp(name, fs[i].name) == 0) {
+			return fs[i].ptr;
+		}
+	}
+
+	fprintf(stderr, "No such dialogue function: `%s'\n", name);
+	return null;
 }

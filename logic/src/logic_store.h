@@ -20,6 +20,9 @@ struct logic_store {
 	bool show_ui;
 	bool show_components;
 
+	void* dialogue_funcs;
+	u32 dialogue_func_count;
+
 	struct font* debug_font;
 
 	struct world* world;
@@ -39,8 +42,6 @@ struct logic_store {
 	struct audio_clip* explosion_sound;
 
 	struct table* savegame_persist;
-
-	void* dialogue_lib;
 
 	struct lsp_state* lsp;
 	char lsp_buf[256];

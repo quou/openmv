@@ -2,7 +2,6 @@ workspace "openmv"
 	configurations { "debug", "release" }
 
 include "core"
-include "logic/dialogue"
 include "logic"
 include "bootstrapper"
 

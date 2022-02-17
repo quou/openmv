@@ -4,6 +4,8 @@
 #include "consts.h"
 #include "core.h"
 #include "coresys.h"
+#include "dialogue.h"
+#include "dynlib.h"
 #include "enemy.h"
 #include "entity.h"
 #include "fx.h"
@@ -16,7 +18,6 @@
 #include "shop.h"
 #include "sprites.h"
 #include "ui.h"
-#include "dynlib.h"
 
 struct logic_store* logic_store;
 
@@ -136,19 +137,7 @@ EXPORT_SYM void C_DECL on_init() {
 		lsp_do_file(logic_store->lsp, "autoexec.lsp");
 	}
 
-#ifndef PLATFORM_WINDOWS
-	logic_store->dialogue_lib = open_dynlib("./libdialogue.so");
-
-	if (!logic_store->dialogue_lib) {
-		fprintf(stderr, "Failed to load libdialogue.so: %s\n", dynlib_get_error());
-	}
-#else
-	logic_store->dialogue_lib = open_dynlib("dialogue.dll");
-	
-	if (!logic_store->dialogue_lib) {
-		fprintf(stderr, "Failed to load dialogue.dll.\n");
-	}
-#endif	
+	init_dialogue();
 
 	keymap_init();
 	default_keymap();
@@ -409,7 +398,7 @@ EXPORT_SYM void C_DECL on_update(double ts) {
 }
 
 EXPORT_SYM void C_DECL on_deinit() {
-	close_dynlib(logic_store->dialogue_lib);
+	deinit_dialogue();
 
 	shops_deinit();
 	prompts_deinit();
