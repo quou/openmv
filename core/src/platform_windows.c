@@ -14,7 +14,8 @@ bool global_has_pc;
 void init_time() {
 	if (QueryPerformanceFrequency((LARGE_INTEGER*)&global_freq)) {
 		global_has_pc = true;
-	} else {
+	}
+	else {
 		global_freq = 1000;
 		global_has_pc = false;
 	}
@@ -29,7 +30,8 @@ u64 get_time() {
 
 	if (global_has_pc) {
 		QueryPerformanceCounter((LARGE_INTEGER*)&now);
-	} else {
+	}
+	else {
 		now = (u64)timeGetTime();
 	}
 
@@ -40,6 +42,7 @@ struct window {
 	i32 w, h;
 
 	bool open;
+	bool resizable;
 
 	HWND hwnd;
 	HDC device_context;
@@ -69,96 +72,96 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 	struct window* window = (struct window*)user_data;
 
 	switch (msg) {
-		case WM_DESTROY:
-			window->open = false;
+	case WM_DESTROY:
+		window->open = false;
+		return 0;
+	case WM_SIZE: {
+		if (!window) { break; }
+		i32 nw = lparam & 0xFFFF;
+		i32 nh = (lparam >> 16) & 0xFFFF;
+
+		glViewport(0, 0, nw, nh);
+
+		window->w = nw;
+		window->h = nh;
+		return 0;
+	};
+	case WM_KEYDOWN: {
+		if (((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
 			return 0;
-		case WM_SIZE: {
-			if (!window) { break; }
-			i32 nw = lparam & 0xFFFF;
-			i32 nh = (lparam >> 16) & 0xFFFF;
+		}
+		i32 key = search_key_table(&window->keymap, (i32)wparam);
+		window->held_keys[key] = true;
+		window->pressed_keys[key] = true;
 
-			glViewport(0, 0, nw, nh);
+		if (window->on_text_input) {
+			char state[256];
+			char buf[256];
+			GetKeyboardState(state);
 
-			window->w = nw;
-			window->h = nh;
-			return 0;
-		};
-		case WM_KEYDOWN: {
-			if (((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
-				return 0;
-			}
-			i32 key = search_key_table(&window->keymap, (i32)wparam);
-			window->held_keys[key] = true;
-			window->pressed_keys[key] = true;
+			unsigned int scan_code = (lparam >> 16) & 0xFF;
+			int i = ToAscii((u32)wparam, scan_code, state, (LPWORD)buf, 0);
+			buf[i] = 0;
 
-			if (window->on_text_input) {
-				char state[256];
-				char buf[256];
-				GetKeyboardState(state);
-
-				unsigned int scan_code = (lparam >> 16) & 0xFF;
-				int i = ToAscii((u32)wparam, scan_code, state, (LPWORD)buf, 0);
-				buf[i] = 0;
-
-				u32 len = (u32)strlen(buf);
-				for (u32 i = 0; i < len; i++) {
-					if (buf[i] < ' ' || buf[i] > '~') {
-						buf[i] = '\0';
-					}
-				}
-				len = (u32)strlen(buf);
-				if (len > 0) {
-					window->on_text_input(window, buf, window->uptr);
+			u32 len = (u32)strlen(buf);
+			for (u32 i = 0; i < len; i++) {
+				if (buf[i] < ' ' || buf[i] > '~') {
+					buf[i] = '\0';
 				}
 			}
+			len = (u32)strlen(buf);
+			if (len > 0) {
+				window->on_text_input(window, buf, window->uptr);
+			}
+		}
 
-			return 0;
-		}
-		case WM_KEYUP: {
-			i32 key = search_key_table(&window->keymap, (i32)wparam);
-			window->held_keys[key] = false;
-			window->released_keys[key] = true;
+		return 0;
+	}
+	case WM_KEYUP: {
+		i32 key = search_key_table(&window->keymap, (i32)wparam);
+		window->held_keys[key] = false;
+		window->released_keys[key] = true;
 
-			return 0;
-		}
-		case WM_MOUSEMOVE: {
-			u32 x = lparam & 0xFFFF;
-			u32 y = (lparam >> 16) & 0xFFFF;
+		return 0;
+	}
+	case WM_MOUSEMOVE: {
+		u32 x = lparam & 0xFFFF;
+		u32 y = (lparam >> 16) & 0xFFFF;
 
-			window->mouse_pos = make_v2i((i32)x, (i32)y);
-			return 0;
-		}
-		case WM_LBUTTONDOWN: {
-			window->held_btns[MOUSE_BTN_LEFT] = true;
-			window->pressed_btns[MOUSE_BTN_LEFT] = true;
-			return 0;
-		}
-		case WM_LBUTTONUP: {
-			window->held_btns[MOUSE_BTN_LEFT] = false;
-			window->released_btns[MOUSE_BTN_LEFT] = true;
-			return 0;
-		}
-		case WM_MBUTTONDOWN: {
-			window->held_btns[MOUSE_BTN_MIDDLE] = true;
-			window->pressed_btns[MOUSE_BTN_MIDDLE] = true;
-			return 0;
-		}
-		case WM_MBUTTONUP: {
-			window->held_btns[MOUSE_BTN_MIDDLE] = false;
-			window->released_btns[MOUSE_BTN_MIDDLE] = true;
-			return 0;
-		}
-		case WM_RBUTTONDOWN: {
-			window->held_btns[MOUSE_BTN_RIGHT] = true;
-			window->pressed_btns[MOUSE_BTN_RIGHT] = true;
-			return 0;
-		}
-		case WM_RBUTTONUP: {
-			window->held_btns[MOUSE_BTN_RIGHT] = false;
-			window->released_btns[MOUSE_BTN_RIGHT] = true;
-			return 0;
-		}
-		default: break;
+		window->mouse_pos = make_v2i((i32)x, (i32)y);
+		return 0;
+	}
+	case WM_LBUTTONDOWN: {
+		window->held_btns[MOUSE_BTN_LEFT] = true;
+		window->pressed_btns[MOUSE_BTN_LEFT] = true;
+		return 0;
+	}
+	case WM_LBUTTONUP: {
+		window->held_btns[MOUSE_BTN_LEFT] = false;
+		window->released_btns[MOUSE_BTN_LEFT] = true;
+		return 0;
+	}
+	case WM_MBUTTONDOWN: {
+		window->held_btns[MOUSE_BTN_MIDDLE] = true;
+		window->pressed_btns[MOUSE_BTN_MIDDLE] = true;
+		return 0;
+	}
+	case WM_MBUTTONUP: {
+		window->held_btns[MOUSE_BTN_MIDDLE] = false;
+		window->released_btns[MOUSE_BTN_MIDDLE] = true;
+		return 0;
+	}
+	case WM_RBUTTONDOWN: {
+		window->held_btns[MOUSE_BTN_RIGHT] = true;
+		window->pressed_btns[MOUSE_BTN_RIGHT] = true;
+		return 0;
+	}
+	case WM_RBUTTONUP: {
+		window->held_btns[MOUSE_BTN_RIGHT] = false;
+		window->released_btns[MOUSE_BTN_RIGHT] = true;
+		return 0;
+	}
+	default: break;
 	};
 
 	return DefWindowProc(hwnd, msg, wparam, lparam);
@@ -185,7 +188,8 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 	DWORD dw_style = WS_CAPTION | WS_SYSMENU |
 		WS_MINIMIZEBOX | WS_VISIBLE;
-	
+
+	window->resizable = resizable;
 	if (resizable) {
 		dw_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 	}
@@ -411,7 +415,30 @@ void set_window_size(struct window* window, v2i size) {
 }
 
 void set_window_fullscreen(struct window* window, bool fullscreen) {
+	if (fullscreen) {
+		POINT Point = { 0 };
+		HMONITOR Monitor = MonitorFromPoint(Point, MONITOR_DEFAULTTONEAREST);
+		MONITORINFO MonitorInfo = { sizeof(MonitorInfo) };
+		if (GetMonitorInfo(Monitor, &MonitorInfo)) {
+			DWORD Style = WS_POPUP | WS_VISIBLE;
+			SetWindowLongPtr(window->hwnd, GWL_STYLE, Style);
+			SetWindowPos(window->hwnd, 0, MonitorInfo.rcMonitor.left, MonitorInfo.rcMonitor.top,
+				MonitorInfo.rcMonitor.right - MonitorInfo.rcMonitor.left,
+				MonitorInfo.rcMonitor.bottom - MonitorInfo.rcMonitor.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+		}
+	}
+	else {
+		DWORD style = WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE;
 
+		if (window->resizable) {
+			style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
+		}
+
+		SetWindowLongPtr(window->hwnd, GWL_STYLE, style);
+		SetWindowPos(window->hwnd, 0,
+			0, 0, window->w, window->h,
+			SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+	}
 }
 
 struct dir_iter {
@@ -473,13 +500,14 @@ bool dir_iter_next(struct dir_iter* it) {
 		it->find = FindFirstFileA(it->root, &data);
 
 		if (it->find == INVALID_HANDLE_VALUE) { return false; }
-	} else {
+	}
+	else {
 		if (!FindNextFileA(it->find, &data)) { return false; }
 	}
 
 	it->i++;
 
-	if (strcmp(data.cFileName, ".") == 0)  { return dir_iter_next(it); }
+	if (strcmp(data.cFileName, ".") == 0) { return dir_iter_next(it); }
 	if (strcmp(data.cFileName, "..") == 0) { return dir_iter_next(it); }
 
 	strcpy(it->entry.name, it->original);
