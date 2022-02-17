@@ -20,8 +20,7 @@ Created from the ground up in C99.
  - [x] Resource Packing.
  - [x] Tilemap system.
  - [x] Dialogue system for NPCs.
- - [ ] Command system for allow for easy configuration.
- - [ ] Advanced Rendering (Post processing fx, etc.).
+ - [x] Command system for allow for easy configuration.
  - [ ] Actually make a damn game.
 
 ## Building
@@ -53,6 +52,15 @@ reason why it wouldn't work under a 32-bit system with GCC, though (The Premake
 scripts will need to be modified to build under 32-bit). Windows *should* work,
 but I rarely test it, so some minor modifications might be needed here and there.
 
+### Note for MSVC users
+OpenMV builds and runs under MSVC, as of recent. It relies on the `__LINE__`
+preprocessor directive that is a part of ANSI C. However, Microsoft's edit and
+continue debugging feature does something stupid that causes this directive
+to be variable, which breaks the build. To "fix" this, you must disable the
+edit and continue feature in the project settings, by selecting "Program
+Database" under "Debug info" instead of "Program Database for Edit and
+Continue".
+
 ## Using the Engine
 You may use this project as a fairly solid foundation for other game projects. The
 renderer, entity component system, map loader, resource manager and audio systems are
@@ -66,8 +74,7 @@ less control, but allows rapid prototyping.
 A utility in `util/mksdk` exists so that manually copying files isn't required
 in order to create a new project. Simply build this project and run it from
 the project root to create a file named `sdk.tar`. Extract this file and
-start creating. Note that this utility won't work on Windows, at least
-not without something that makes it POSIX-compliant, such as Cygwin.
+start creating.
 
 The default project creates a blank window and spams the console every
 frame. Edit the code in `logic/src/main.c` to create your game logic. All the
