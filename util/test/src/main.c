@@ -280,13 +280,7 @@ bool lsp_while() {
 #include "platform.h"
 
 i32 main() {
-	struct dir_iter* it = new_dir_iter("core/src");
-	do {
-		printf("%s\n", dir_iter_cur(it)->name);
-	} while (dir_iter_next(it));
-	free_dir_iter(it);
-
-/*	struct test_func funcs[] = {
+	struct test_func funcs[] = {
 		make_test_func(coroutine),
 		make_test_func(lsp_add),
 		make_test_func(lsp_sub),
@@ -307,5 +301,5 @@ i32 main() {
 		make_test_func(lsp),
 	};
 
-	run_tests(funcs, sizeof(funcs) / sizeof(*funcs));*/
+	run_tests(funcs, sizeof(funcs) / sizeof(*funcs));
 }

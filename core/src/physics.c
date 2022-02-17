@@ -45,14 +45,14 @@ bool rect_overlap(struct rect a, struct rect b, v2i* normal) {
 }
 
 static i32 area(v2i a, v2i b, v2i c) {
-	return (i32)fabs((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y)) / 2.0);
+	return (i32)abs((i32)((double)((a.x * (b.y - c.y) + b.x *(c.y - a.y) + c.x *(a.y - b.y))) / 2.0));
 }
 
 bool point_vs_tri(v2i p, v2i a, v2i b, v2i c) {
-	float A  = area(a, b, c);
-	float A1 = area(p, b, c);
-	float A2 = area(p, a, c);
-	float A3 = area(p, a, b);
+	i32 A  = area(a, b, c);
+	i32 A1 = area(p, b, c);
+	i32 A2 = area(p, a, c);
+	i32 A3 = area(p, a, b);
 
 	return (A == A1 + A2 + A3);
 }

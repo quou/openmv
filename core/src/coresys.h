@@ -5,7 +5,6 @@
 #include "res.h"
 
 struct transform {
-	const char* name;
 	v2f position;
 	v2i dimentions;
 	i32 z;

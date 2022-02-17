@@ -64,7 +64,7 @@ struct texture {
 	u32 width, height;
 };
 
-API void init_texture(struct texture* texture, u8* src, u32 size);
+API void init_texture(struct texture* texture, u8* src, u64 size);
 API void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
 API void deinit_texture(struct texture* texture);
 API void bind_texture(const struct texture* texture, u32 unit);

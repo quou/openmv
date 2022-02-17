@@ -115,8 +115,8 @@ void renderer_flush(struct renderer* renderer) {
 
 	if (renderer->camera_enable) {
 		m4f view = m4f_translate(m4f_identity(), make_v3f(
-			-(renderer->camera_pos.x) + (renderer->dimentions.x / 2),
-			-(renderer->camera_pos.y) + (renderer->dimentions.y / 2),
+			-((float)renderer->camera_pos.x) + ((float)renderer->dimentions.x / 2),
+			-((float)renderer->camera_pos.y) + ((float)renderer->dimentions.y / 2),
 			0.0f));
 		shader_set_m4f(&renderer->shader, "view", view);
 	} else {
@@ -185,17 +185,17 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	const float b = (float)quad->color.b / 255.0f;
 	const float a = (float)quad->color.a / 255.0f;
 
-	const float w = quad->dimentions.x;
-	const float h = quad->dimentions.y;
-	const float x = quad->position.x;
-	const float y = quad->position.y;
+	const float w = (float)quad->dimentions.x;
+	const float h = (float)quad->dimentions.y;
+	const float x = (float)quad->position.x;
+	const float y = (float)quad->position.y;
 
 	/* I thought this was causing the lack of performance, but removing it had no effect. */
-	m4f transform = m4f_translate(m4f_identity(), make_v3f(quad->position.x, quad->position.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f(quad->origin.x, quad->origin.y, 0.0f));
-	transform = m4f_rotate(transform, (float)torad(quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
-	transform = m4f_scale(transform, make_v3f(quad->dimentions.x, quad->dimentions.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f(-quad->origin.x, -quad->origin.y, 0.0f));
+	m4f transform = m4f_translate(m4f_identity(), make_v3f((float)quad->position.x, (float)quad->position.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f((float)quad->origin.x, (float)quad->origin.y, 0.0f));
+	transform = m4f_rotate(transform, (float)torad((float)quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
+	transform = m4f_scale(transform, make_v3f((float)quad->dimentions.x, (float)quad->dimentions.y, 0.0f));
+	transform = m4f_translate(transform, make_v3f((float)-quad->origin.x, (float)-quad->origin.y, 0.0f));
 
 	float trans_id = (float)renderer->transform_count;
 
@@ -436,7 +436,7 @@ i32 render_text(struct renderer* renderer, struct font* font,
 		
 		struct textured_quad quad = {
 			.texture = &set->atlas,
-			.position = { x + g->xoff, y + g->yoff },
+			.position = { x + (i32)g->xoff, y + (i32)g->yoff },
 			.dimentions = { w, h },
 			.rect = { g->x0, g->y0, w, h },
 			.color = color,
@@ -469,7 +469,7 @@ i32 render_text_n(struct renderer* renderer, struct font* font,
 		
 		struct textured_quad quad = {
 			.texture = &set->atlas,
-			.position = { x + g->xoff, y + g->yoff },
+			.position = { x + (i32)g->xoff, y + (i32)g->yoff },
 			.dimentions = { w, h },
 			.rect = { g->x0, g->y0, w, h },
 			.color = color,
@@ -513,7 +513,7 @@ i32 render_text_fancy(struct renderer* renderer, struct font* font,
 			
 			struct textured_quad quad = {
 				.texture = &set->atlas,
-				.position = { x + g->xoff, y + g->yoff },
+				.position = { x + (i32)g->xoff, y + (i32)g->yoff },
 				.dimentions = { w, h },
 				.rect = { g->x0, g->y0, w, h },
 				.color = color

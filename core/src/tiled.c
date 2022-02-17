@@ -103,7 +103,6 @@ struct tiled_map* load_map(const char* filename) {
 
 		current->name = read_string(&file);
 
-		u32 path_len;
 		char* path = read_string(&file);
 		current->image = load_texture(path);
 		core_free(path);

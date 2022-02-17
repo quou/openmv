@@ -35,7 +35,7 @@
 	_has_component((w_), (e_), type_info(t_))
 
 #define view(w_, v_, ...) \
-	struct view v_ = new_view((w_), count_va_args(__VA_ARGS__), (struct type_info[]) { __VA_ARGS__ }); \
+	struct view v_ = new_view((w_), (sizeof((struct type_info[]){__VA_ARGS__})/sizeof(struct type_info)), (struct type_info[]) { __VA_ARGS__ }); \
 	view_valid(&(v_)); \
 	view_next(&(v_))
 

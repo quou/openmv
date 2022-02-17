@@ -1016,7 +1016,7 @@ static struct token error_token(struct parser* parser, const char* message) {
 	return (struct token) {
 		.type = tok_error,
 		.start = message,
-		.len = strlen(message),
+		.len = (u32)strlen(message),
 		.line = parser->line
 	};
 }
@@ -1549,7 +1549,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			struct local l = {
 				.start = tok.start,
 				.len = tok.len,
-				.hash = elf_hash((const u8*)tok.start, tok.len)
+				.hash = (u32)elf_hash((const u8*)tok.start, tok.len)
 			};
 
 			parser->ass_name_start = tok.start;
@@ -1681,7 +1681,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				struct local l = {
 					.start = tok.start,
 					.len = tok.len,
-					.hash = elf_hash((const u8*)tok.start, tok.len),
+					.hash = (u32)elf_hash((const u8*)tok.start, tok.len),
 					.is_arg = true
 				};
 
@@ -1939,43 +1939,43 @@ u8 lsp_get_ptr_type(struct lsp_state* ctx, const char* name) {
 
 /* Standard library */
 struct lsp_val std_get_mem(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	return lsp_make_num(core_get_memory_usage());
+	return lsp_make_num((double)core_get_memory_usage());
 }
 
 struct lsp_val std_get_stack_count(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	return lsp_make_num(lsp_get_stack_count(ctx));
+	return lsp_make_num((double)lsp_get_stack_count(ctx));
 }
 
 struct lsp_val std_bit_and(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `bit_and' must be a number.");
 	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `bit_and' must be a number.");
 
-	return lsp_make_num((u64)args[0].as.num & (u64)args[1].as.num);
+	return lsp_make_num((double)((u64)args[0].as.num & (u64)args[1].as.num));
 }
 
 struct lsp_val std_bit_or(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `bit_or' must be a number.");
 	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `bit_or' must be a number.");
 
-	return lsp_make_num((u64)args[0].as.num | (u64)args[1].as.num);
+	return lsp_make_num((double)((u64)args[0].as.num | (u64)args[1].as.num));
 }
 
 struct lsp_val std_shift_left(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `shift_left' must be a number.");
 	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `shift_left' must be a number.");
 
-	return lsp_make_num((u64)args[0].as.num << (u64)args[1].as.num);
+	return lsp_make_num((double)((u64)args[0].as.num << (u64)args[1].as.num));
 }
 
 struct lsp_val std_shift_right(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `shift_right' must be a number.");
 	lsp_arg_assert(ctx, args[1], lsp_val_num, "Argument 1 to `shift_right' must be a number.");
 
-	return lsp_make_num((u64)args[0].as.num >> (u64)args[1].as.num);
+	return lsp_make_num((double)((u64)args[0].as.num >> (u64)args[1].as.num));
 }
 
 struct lsp_val std_mod(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
-	return lsp_make_num((u64)args[0].as.num % (u64)args[1].as.num);
+	return lsp_make_num((double)((u64)args[0].as.num % (u64)args[1].as.num));
 }
 
 struct lsp_val std_fopen(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
@@ -2061,7 +2061,7 @@ struct lsp_val std_type(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
 			break;
 	}
 
-	return lsp_make_str(ctx, str, strlen(str));
+	return lsp_make_str(ctx, str, (u32)strlen(str));
 }
 
 struct lsp_val std_except(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {

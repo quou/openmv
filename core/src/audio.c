@@ -76,7 +76,7 @@ void audio_update() {
 }
 
 static u32 read_and_mix(ma_decoder* decoder, float* out, u32 frame_count) {
-	float temp[4096];
+	float* temp = core_alloc(4096 * sizeof(float));
 	u32 temp_cap = (sizeof(temp) / sizeof(float)) / channel_count;
 	u32 read = 0;
 
@@ -103,6 +103,8 @@ static u32 read_and_mix(ma_decoder* decoder, float* out, u32 frame_count) {
 			break;
 		}
 	}
+
+	core_free(temp);
 
 	return read;
 }

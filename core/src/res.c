@@ -70,7 +70,7 @@ u64 file_seek(struct file* file, u64 offset) {
 }
 
 u64 file_read(void* buf, u64 size, u64 count, struct file* file) {
-	fseek(file->handle, file->pk_offset + file->cursor, SEEK_SET);
+	fseek(file->handle, (i32)(file->pk_offset + file->cursor), SEEK_SET);
 
 	file->cursor += size * count;
 

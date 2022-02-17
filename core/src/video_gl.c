@@ -331,7 +331,7 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	glDrawElements(draw_type, count, GL_UNSIGNED_INT, 0);
 }
 
-void init_texture(struct texture* texture, u8* data, u32 size) {
+void init_texture(struct texture* texture, u8* data, u64 size) {
 	assert(size > sizeof(struct bmp_header));
 
 	if (*data != 'B' && *(data + 1) != 'M') {

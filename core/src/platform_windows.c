@@ -87,7 +87,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			if (((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
 				return 0;
 			}
-			i32 key = search_key_table(&window->keymap, wparam);
+			i32 key = search_key_table(&window->keymap, (i32)wparam);
 			window->held_keys[key] = true;
 			window->pressed_keys[key] = true;
 
@@ -97,7 +97,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 				GetKeyboardState(state);
 
 				unsigned int scan_code = (lparam >> 16) & 0xFF;
-				int i = ToUnicode(wparam, scan_code, state, buf, 16, 0);
+				int i = ToAscii((u32)wparam, scan_code, state, (LPWORD)buf, 0);
 				buf[i] = 0;
 
 				u32 len = (u32)strlen(buf);
@@ -115,7 +115,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			return 0;
 		}
 		case WM_KEYUP: {
-			i32 key = search_key_table(&window->keymap, wparam);
+			i32 key = search_key_table(&window->keymap, (i32)wparam);
 			window->held_keys[key] = false;
 			window->released_keys[key] = true;
 
@@ -158,14 +158,9 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 			window->released_btns[MOUSE_BTN_RIGHT] = true;
 			return 0;
 		}
-		case WM_CREATE: {
-		
-			return 0;
-		}
 		default: break;
 	};
 
-end:
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
@@ -421,6 +416,7 @@ void set_window_fullscreen(struct window* window, bool fullscreen) {
 
 struct dir_iter {
 	char root[1024];
+	char original[1024];
 
 	HANDLE find;
 
@@ -431,7 +427,7 @@ struct dir_iter {
 
 struct dir_iter* new_dir_iter(const char* dir_name) {
 	if (!file_is_dir(dir_name)) {
-		fprintf(stderr, "Failed to open directory: `%s'", dir_name);
+		fprintf(stderr, "Failed to open directory: `%s'.\n", dir_name);
 		return null;
 	}
 
@@ -439,6 +435,11 @@ struct dir_iter* new_dir_iter(const char* dir_name) {
 
 	u32 len = (u32)strlen(dir_name);
 	strcpy(it->root, dir_name);
+	strcpy(it->original, dir_name);
+
+	if (it->original[len - 1] != '/') {
+		strcat(it->original, "/");
+	}
 
 	for (u32 i = 0; i < len; i++) {
 		if (it->root[i] == '/') {
@@ -446,11 +447,11 @@ struct dir_iter* new_dir_iter(const char* dir_name) {
 		}
 	}
 
-	/* Documentation for FindFirstFile and FindNextFile states
-	 * that the file name should not end in a trailing backslash. */
-	if (it->root[len - 1] == '\\') {
-		it->root[len - 1] = '\0';
+	if (it->root[len - 1] != '\\') {
+		strcat(it->root, "\\");
 	}
+
+	strcat(it->root, "*");
 
 	dir_iter_next(it);
 
@@ -466,7 +467,7 @@ struct dir_entry* dir_iter_cur(struct dir_iter* it) {
 }
 
 bool dir_iter_next(struct dir_iter* it) {
-	WIN32_FIND_DATAA data;
+	WIN32_FIND_DATAA data = { 0 };
 
 	if (it->i == 0) {
 		it->find = FindFirstFileA(it->root, &data);
@@ -476,32 +477,31 @@ bool dir_iter_next(struct dir_iter* it) {
 		if (!FindNextFileA(it->find, &data)) { return false; }
 	}
 
-	if (strcmp(data.cFileName, ".")  == 0) { return dir_iter_next(it); }
+	it->i++;
+
+	if (strcmp(data.cFileName, ".") == 0)  { return dir_iter_next(it); }
 	if (strcmp(data.cFileName, "..") == 0) { return dir_iter_next(it); }
 
-	strcpy(it->entry.name, data.cFileName);
-
-	it->i++;
+	strcpy(it->entry.name, it->original);
+	strcat(it->entry.name, data.cFileName);
 
 	return true;
 }
 
 bool file_exists(const char* name) {
-	DWORD attribs = GetFileAttributes(name);
+	DWORD attribs = GetFileAttributesA(name);
 
 	return attribs != INVALID_FILE_ATTRIBUTES;
 }
 
 bool file_is_regular(const char* name) {
-	DWORD attribs = GetFileAttributes(name);
-
-	return attribs == FILE_ATTRIBUTE_NORMAL;
+	return !file_is_dir(name);
 }
 
 bool file_is_dir(const char* name) {
-	DWORD attribs = GetFileAttributes(name);
+	DWORD attribs = GetFileAttributesA(name);
 
-	return attribs == FILE_ATTRIBUTE_DIRECTORY;
+	return attribs & FILE_ATTRIBUTE_DIRECTORY;
 }
 
 u64 file_mod_time(const char* name) {

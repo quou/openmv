@@ -208,8 +208,8 @@ void free_ui_context(struct ui_context* ui) {
 void ui_text_input_event(struct ui_context* ui, const char* text) {
 	if (!ui->input_buf) { return; }
 
-	u32 len = strlen(text);
-	u32 buf_len = strlen(ui->input_buf);
+	u32 len = (u32)strlen(text);
+	u32 buf_len = (u32)strlen(ui->input_buf);
 
 	if (buf_len + len < ui->input_buf_size) {
 		for (u32 i = 0; i < len; i++) {
