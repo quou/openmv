@@ -4,7 +4,7 @@
  *    - nil
  *          Represents a value with nothing in it; A `nil' value.
  *    - number
- *          Represents a 64 bit f32ing point number.
+ *          Represents a 64 bit floating point number.
  *    - boolean
  *          Represents a true or false value.
  *    - string
