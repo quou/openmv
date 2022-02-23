@@ -155,6 +155,11 @@
  *          | collect_garbage| Run the garbage collector                      | nil              |
  *          | type           | Get the type of a value                        | string           |
  *          | except         | Throw a runtime error                          | nil              |
+ *
+ *    = Importing other script files =
+ *      `@import' can be used to load and parse other script files from a script. It will search the
+ *      directory of the current script, if the script was loaded from a file itself. Otherwise, it
+ *      will search the program's working directory.
  */
 
 #pragma once
