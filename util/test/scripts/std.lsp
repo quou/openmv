@@ -1,5 +1,20 @@
 ; Standard Library
 
+; Asserts the type of val against t, excepting err on failure
+(set type_assert (fun (val t err) (
+	(if (! (= (type t) "string")) (
+		(except "Argument 1 to `type_assert' must be a string.")
+	) ((nil)))
+
+	(if (! (= (type err) "string")) (
+		(except "Argument 2 to `type_assert' must be a string.")
+	) ((nil)))
+
+	(if (! (= (type val) t)) (
+		(except err)
+	) ((nil)))
+)))
+
 ; Function to split a string into an array by a specified delimiter
 (set split (fun (str delim) (
 	(if (! (& (= (type str) "string") (= (type delim) "string"))) (
@@ -79,6 +94,9 @@
 
 ; Returns the nth index of val in arr. Returns nil on failure.
 (set find (fun (arr n val) (
+	(type_assert arr "array"  "Argument 0 to `find' must be an array.")
+	(type_assert val "number" "Argument 1 to `find' must be a number.")
+
 	(set i 0)
 	(set c 0)
 
