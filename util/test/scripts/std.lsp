@@ -114,3 +114,38 @@
 
 	(ret nil)
 )))
+
+; Format a string based on the values in an array.
+;
+; Example:
+;     (format "Hello, {} {}!" (array ("wonderful" "world")))
+;
+; ...Will result in a string with the contents: "Hello, wonderful world!"
+(set format (fun (fmt args) (
+	(type_assert fmt "string" "Argument 0 to `format' must be a string.")
+	(type_assert args "array" "Argument 1 to `format' must be an array.")
+
+	(set i 0)
+	(set n 0)
+	(set r "")
+
+	(while (< i (# fmt)) (
+		(if (< (+ i 1) (# fmt)) (
+			(if (& (= (at fmt i) "{") (= (at fmt (+ i 1)) "}")) (
+				(set r (cat r (to_string (at args n))))
+
+				(set i (+ i 1))
+
+				(set n (+ n 1))
+			) (
+				(set r (cat r (at fmt i)))
+			))
+		) (
+			(set r (cat r (at fmt i)))
+		))
+
+		(set i (+ i 1))
+	))
+
+	(ret r)
+)))

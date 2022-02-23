@@ -2183,6 +2183,50 @@ struct lsp_val std_except(struct lsp_state* ctx, u32 argc, struct lsp_val* args)
 	return lsp_make_nil();
 }
 
+struct lsp_val std_to_string(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	struct lsp_val v = args[0];
+
+	if (lsp_is_str(v)) {
+		return v;
+	}
+
+	char* buf = core_alloc(64);
+
+	switch (v.type) {
+		case lsp_val_nil:
+			sprintf(buf, "nil");
+			break;
+		case lsp_val_num:
+			sprintf(buf, "%g", v.as.num);
+			break;
+		case lsp_val_bool:
+			sprintf(buf, v.as.boolean ? "true" : "false");
+			break;
+		case lsp_val_obj: {
+			struct lsp_obj* obj = v.as.obj;
+			switch (obj->type) {
+				case lsp_obj_fun:
+					sprintf(buf, "<function %p>", obj->as.fun.chunk);
+					break;
+				case lsp_obj_ptr:
+					sprintf(buf, "<pointer %p>", obj->as.ptr.ptr);
+					break;
+				case lsp_obj_arr:
+					sprintf(buf, "<array %p>", obj->as.arr.vals);
+					break;
+				default:
+					sprintf(buf, "<object %p>", obj);
+					break;
+			}
+		} break;
+		default:
+			sprintf(buf, "<unkown value type>");
+			break;
+	}
+
+	return lsp_make_str(ctx, buf, strlen(buf));
+}
+
 void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "memory_usage", 0, std_get_mem);
 	lsp_register(ctx, "stack_count", 0, std_get_stack_count);
@@ -2194,6 +2238,7 @@ void lsp_register_std(struct lsp_state* ctx) {
 	lsp_register(ctx, "collect_garbage", 0, std_collect_garbage);
 	lsp_register(ctx, "type", 1, std_type);
 	lsp_register(ctx, "except", 1, std_except);
+	lsp_register(ctx, "to_string", 1, std_to_string);
 
 	lsp_register_ptr(ctx, "File", null, null);
 	lsp_register(ctx, "fgood", 1, std_fgood);
