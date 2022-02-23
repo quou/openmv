@@ -17,7 +17,7 @@
 #include "savegame.h"
 #include "shop.h"
 #include "sprites.h"
-#include "ui.h"
+#include "imui.h"
 
 struct logic_store* logic_store;
 

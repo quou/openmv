@@ -6,7 +6,7 @@
 #include "lsp.h"
 #include "menu.h"
 #include "room.h"
-#include "ui.h"
+#include "imui.h"
 #include "video.h"
 
 struct logic_store {

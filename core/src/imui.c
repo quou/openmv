@@ -3,7 +3,7 @@
 
 #include "core.h"
 #include "table.h"
-#include "ui.h"
+#include "imui.h"
 
 typedef bool (*input_filter_func)(char c);
 
