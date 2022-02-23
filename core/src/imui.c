@@ -234,8 +234,7 @@ void ui_begin_frame(struct ui_context* ui) {
 
 	ui->window_count = 0;
 
-	ui->renderer->camera = m4f_orth(0.0f, (f32)w, (f32)h, 0.0f, -1.0f, 1.0f);
-	ui->renderer->dimentions = make_v2i(w, h);
+	renderer_resize(ui->renderer, make_v2i(w, h));
 }
 
 static i32 cmp_window_z(const struct ui_window* a, const struct ui_window* b) {

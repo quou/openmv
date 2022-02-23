@@ -66,6 +66,8 @@ struct texture {
 
 API void init_texture(struct texture* texture, u8* src, u64 size);
 API void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
+API void update_texture(struct texture* texture, u8* data, u64 size);
+API void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
 API void deinit_texture(struct texture* texture);
 API void bind_texture(const struct texture* texture, u32 unit);
 
@@ -144,6 +146,8 @@ API void renderer_end_frame(struct renderer* renderer);
 API void renderer_push(struct renderer* renderer, struct textured_quad* quad);
 API void renderer_push_light(struct renderer* renderer, struct light light);
 API void renderer_clip(struct renderer* renderer, struct rect clip);
+API void renderer_resize(struct renderer* renderer, v2i size);
+API void renderer_fit_to_main_window(struct renderer* renderer);
 
 struct font;
 

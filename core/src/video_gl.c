@@ -380,6 +380,49 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 	core_free(dst);
 }
 
+void update_texture(struct texture* texture, u8* data, u64 size) {
+	assert(size > sizeof(struct bmp_header));
+
+	if (*data != 'B' && *(data + 1) != 'M') {
+		fprintf(stderr, "Not a valid bitmap!\n");
+		return;
+	}
+
+	struct bmp_header* header = (struct bmp_header*)data;
+	u8* src = data + header->bmp_offset;
+
+	update_texture_no_bmp(texture, src, header->w, header->h, true);
+}
+
+void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip) {
+	glBindTexture(GL_TEXTURE_2D, texture->id);
+
+	struct color* colors = (struct color*)src;
+	struct color* dst = core_alloc(w * h * sizeof(struct color));
+	if (flip) {
+		for (u32 y = 0; y < h; y++) {
+			for (u32 x = 0; x < w; x++) {
+				dst[(h - y - 1) * w + x] = colors[y * w + x];
+			}
+		}
+	} else {
+		memcpy(dst, src, w * h * sizeof(struct color));
+	}
+
+	for (u32 i = 0; i < w * h; i++) {
+		dst[i] = (struct color) { dst[i].b, dst[i].g, dst[i].r, dst[i].a };
+	}
+
+	texture->width = w;
+	texture->height = h;
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+			w, h, 0, GL_RGBA,
+			GL_UNSIGNED_BYTE, dst);
+
+	core_free(dst);
+}
+
 void deinit_texture(struct texture* texture) {
 	glDeleteTextures(1, &texture->id);
 }

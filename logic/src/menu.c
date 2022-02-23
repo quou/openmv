@@ -107,10 +107,10 @@ void menu_update(struct menu* menu) {
 		menu->items[menu->selected_item].as.selectable.on_select(menu);
 	}
 
-	i32 win_w, win_h;
-	query_window(main_window, &win_w, &win_h);
+	renderer_fit_to_main_window(menu->renderer);
 
-	menu->renderer->camera = m4f_orth(0.0f, (f32)win_w, (f32)win_h, 0.0f, -1.0f, 1.0f);
+	u32 win_w = menu->renderer->dimentions.x;
+	u32 win_h = menu->renderer->dimentions.y;
 
 	i32 y = (win_h / 2) - (menu->item_count * text_height(menu->font) / 2);
 

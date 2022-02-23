@@ -8,7 +8,7 @@
 #include "res.h"
 #include "video.h"
 
-int main() {
+i32 main() {
 	srand((u32)time(null));
 
 	init_time();

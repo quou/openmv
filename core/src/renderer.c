@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "core.h"
+#include "platform.h"
 #include "res.h"
 #include "util/glad.h"
 #include "util/stb_rect_pack.h"
@@ -235,6 +236,18 @@ void renderer_clip(struct renderer* renderer, struct rect clip) {
 		renderer_flush(renderer);
 		renderer->clip = clip;
 	}
+}
+
+void renderer_resize(struct renderer* renderer, v2i size) {
+	renderer->dimentions = size;
+	renderer->camera = m4f_orth(0.0f, (f32)size.x, (f32)size.y, 0.0f, -1.0f, 1.0f);
+}
+
+void renderer_fit_to_main_window(struct renderer* renderer) {
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	renderer_resize(renderer, make_v2i(win_w, win_h));
 }
 
 struct glyph_set {
