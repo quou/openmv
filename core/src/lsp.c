@@ -114,11 +114,11 @@ struct lsp_state {
 	struct lsp_obj objs[max_objs];
 	u32 obj_count;
 
-	struct lsp_val funs[max_funs];
-	u32 fun_count;
-
 	struct lsp_ptr ptrs[max_ptrs];
 	u32 ptr_count;
+
+	struct lsp_val funs[max_funs];
+	u32 fun_count;
 };
 
 static u8 lsp_add_fun(struct lsp_state* ctx, struct lsp_val val) {
@@ -408,7 +408,7 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 }
 
 u32 lsp_get_stack_count(struct lsp_state* ctx) {
-	return (u32)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val);
+	return (u32)((u64)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val));
 }
 
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {
@@ -676,11 +676,12 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 
 				struct lsp_val* old_frame_start = ctx->frame_start;
 
-				ctx->frame_start = (ctx->stack_top - argc) + 1;
-
 				u8* old_ip = ctx->ip;
 				struct lsp_val* old_stack_top = ctx->stack_top;
 				struct lsp_chunk* old_chunk = ctx->chunk;
+
+				ctx->frame_start = (ctx->stack_top - argc) + 1;
+				ctx->stack_top += argc;
 
 				if (!(v.type == lsp_val_obj && v.as.obj->type == lsp_obj_fun)) {
 					lsp_exception(ctx, "Value not callable.");
@@ -688,7 +689,7 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				}
 
 				if (v.as.obj->as.fun.argc != argc) {
-					lsp_exception(ctx, "Incorrect number of arguments to function.");
+					lsp_exception(ctx, "Incorrect number of arguments to function. Expected %d, but got %d.", v.as.obj->as.fun.argc, argc);
 					return lsp_make_nil();
 				}
 
@@ -779,12 +780,12 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				struct lsp_val arr = lsp_pop(ctx);
 
 				if (!lsp_is_num(idx)) {
-					lsp_exception(ctx, "Operand 1 to `push' must be a number.");
+					lsp_exception(ctx, "Operand 1 to `seta' must be a number.");
 					return lsp_make_nil();
 				}
 
 				if (arr.type != lsp_val_obj || arr.as.obj->type != lsp_obj_arr) {	
-					lsp_exception(ctx, "Operand 0 to `push' must be an array.");
+					lsp_exception(ctx, "Operand 0 to `seta' must be an array.");
 					return lsp_make_nil();
 				}
 
@@ -962,6 +963,8 @@ struct local {
 	bool is_arg;
 };
 
+#define free_queue_max 128
+
 struct parser {
 	u32 line;
 	const char* cur;
@@ -972,7 +975,13 @@ struct parser {
 	const char* ass_name_start;
 	u32 ass_name_len;
 
-	u32 depth; 
+	u32 depth;
+
+	/* Stores the argument count of the currently parsing
+	 * function. This is so that the locals inside the function can
+	 * offset their stack positions so that they don't overwrite the
+	 * function arguments. */
+	u32 current_argc;
 
 	const char* name;
 
@@ -983,6 +992,9 @@ struct parser {
 
 	struct local locals[max_locals];
 	u32 local_count;
+
+	char* free_queue[free_queue_max];
+	u32 free_queue_count;
 };
 
 static const char* keywords[] = {
@@ -1325,9 +1337,9 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 	} while (0)
 
 #define parser_recurse() do { \
-	parser->depth++; \
-	if (!parse(ctx, parser, chunk)) { return false; } \
-	parser->depth--; \
+		parser->depth++; \
+		if (!parse(ctx, parser, chunk)) { return false; } \
+		parser->depth--; \
 	} while (0)
 
 #define resolve_variable() \
@@ -1368,6 +1380,9 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 			bool found = false; \
 			if (parser->token.type == tok_right_paren) { \
 				found = true; \
+			} \
+			if (parser->token.type == tok_end) { \
+				parse_error(ctx, parser, "Unexpected end."); \
 			} \
 			parser->cur = cur; \
 			parser->token = tok; \
@@ -1444,6 +1459,15 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 			parse_warn(ctx, parser, "Expression result unused; Potential stack overflow."); \
 		} \
 	} while (0)
+
+static void parser_queue_free(struct parser* parser, void* ptr) {
+	if (parser->free_queue_count >= free_queue_max) {
+		fprintf(stderr, "Parser free queue too big; Memory leak.\n");
+		return;
+	}
+
+	parser->free_queue[parser->free_queue_count++] = ptr;
+}
 
 static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk* chunk) {
 	struct token tok;
@@ -1564,6 +1588,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 				if (lo->len == tok.len &&
 					memcmp(lo->start, tok.start, tok.len) == 0) {
+					/* Setting the value. */
 					declare = false;
 					l = *lo;
 					break;
@@ -1571,7 +1596,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			}
 
 			if (declare) {
-				l.pos = parser->local_count;
+				l.pos = parser->local_count + parser->current_argc;
 				l.depth = parser->scope_depth;
 
 				parser->locals[parser->local_count++] = l;
@@ -1686,6 +1711,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 					.start = tok.start,
 					.len = tok.len,
 					.hash = (u32)elf_hash((const u8*)tok.start, tok.len),
+					.pos = argc,
+					.depth = parser->scope_depth,
 					.is_arg = true
 				};
 
@@ -1699,14 +1726,12 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 					}
 				}
 
-				l.pos = argc;
-				l.depth = parser->scope_depth;
-
 				parser->locals[parser->local_count++] = l;
 
 				argc++;
 			}
-			parser->locals[parser->local_count++].depth = parser->scope_depth;
+
+			parser->current_argc = argc + 1;
 
 			advance();
 			expect_tok(tok_left_paren, "Expected a block after argument list.");
@@ -1725,6 +1750,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			parser_end_scope(ctx, parser);
 
 			chunk = old_chunk;
+			parser->chunk = chunk;
 
 			advance();
 			expect_tok(tok_right_paren, "Expected `)' after block.");
@@ -1734,6 +1760,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			lsp_chunk_add_op(ctx, chunk, a, parser->line);
 
 			parser->in_fun = false;
+
+			parser->current_argc = 0;
 		} else if (tok.type == tok_array) {
 			advance();
 
@@ -1782,7 +1810,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			for (u32 i = 0; i < ctx->nat_count; i++) {
 				struct lsp_nat* nat = ctx->natives + i;
 
-				if (memcmp(nat->name, tok.start, tok.len) == 0) {
+				if ((u32)strlen(nat->name) == tok.len && memcmp(nat->name, tok.start, tok.len) == 0) {
 					u32 argc = 0;
 
 					count_args();
@@ -1810,7 +1838,11 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 					count_args();
 
-					lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
+					if (l->is_arg) {
+						lsp_chunk_add_op(ctx, chunk, op_get_arg, parser->line);
+					} else {
+						lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
+					}
 					lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
 					lsp_chunk_add_op(ctx, chunk, op_call, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)argc, parser->line);
@@ -1851,11 +1883,14 @@ resolved_l:
 		lsp_chunk_add_op(ctx, chunk, op_push_false, parser->line);
 	} else if (tok.type == tok_prep) {
 		advance();
-		expect_tok(tok_iden, "Expected a preprocessor directive.");
+		expect_tok(tok_iden, "Expected a parse directive.");
 
 		if (tok.len == 6 && memcmp(tok.start, "import", tok.len) == 0) {
 			advance();
 			expect_tok(tok_str, "Expected a string literal after `import'.");
+
+			/* Import works by reading a string literal and then loading
+			 * and parsing that file. */
 
 			char* f_name = core_alloc(tok.len + 1);
 			f_name[tok.len] = '\0';
@@ -1870,6 +1905,8 @@ resolved_l:
 				return false;
 			}
 
+			parser->token = tok;
+
 			struct parser old_parser = *parser;
 			parser->line = 1;
 			parser->start = (const char*)buf;
@@ -1877,23 +1914,37 @@ resolved_l:
 			parser->source = (const char*)buf;
 			parser->name = f_name;
 
+			bool failed = false;
 			while (parser->token.type != tok_end) {
 				if (!parse(ctx, parser, parser->chunk)) {
-					return false;
+					failed = true;
+					break;
 				}
 			}
 
-			parser->line = old_parser.line;
-			parser->start = old_parser.start;
-			parser->cur = old_parser.cur;
+			parser->chunk  = old_parser.chunk;
+			parser->line   = old_parser.line;
+			parser->start  = old_parser.start;
+			parser->cur    = old_parser.cur;
 			parser->source = old_parser.source;
-			parser->name = old_parser.name;
-			parser->token = old_parser.token;
+			parser->name   = old_parser.name;
+			parser->token  = old_parser.token;
+			parser->ass_name_start = old_parser.ass_name_start;
+			parser->ass_name_len = old_parser.ass_name_len;
 
-			core_free(buf);
+			parser_queue_free(parser, buf);
+
 			core_free(f_name);
+
+			if (failed) { return false; }
+		} else if (tok.len == 6 && memcmp(tok.start, "locals", tok.len) == 0) {
+			printf("\n");
+
+			for (u32 i = 0; i < parser->local_count; i++) {
+				printf("Local: %.*s; %d\n", parser->locals[i].len, parser->locals[i].start, parser->locals[i].pos);
+			}
 		} else {
-			parse_error(ctx, parser, "Invalid preprocessor directive.");
+			parse_error(ctx, parser, "Invalid parse directive.");
 			return false;
 		}
 	} else if (tok.type == tok_end) {
@@ -1929,6 +1980,10 @@ struct lsp_val lsp_do_string(struct lsp_state* ctx, const char* name, const char
 	}
 
 	parser_end_scope(ctx, &parser);
+
+	for (u32 i = 0; i < parser.free_queue_count; i++) {
+		core_free(parser.free_queue[i]);
+	}
 
 	lsp_chunk_add_op(ctx, &chunk, op_halt, parser.line);
 	struct lsp_val v = lsp_eval(ctx, &chunk);

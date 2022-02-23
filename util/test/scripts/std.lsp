@@ -1,7 +1,6 @@
-; Simple standard library
+; Standard Library
 
-; Function to split a string into an array by
-; a specified delimiter
+; Function to split a string into an array by a specified delimiter
 (set split (fun (str delim) (
 	(if (! (& (= (type str) "string") (= (type delim) "string"))) (
 		(except "Arguments to `split' must be strings.")
@@ -58,6 +57,7 @@
 		(set r "")
 
 		(set i start)
+
 		(while (< i end) (
 			(set r (cat r (at str i)))
 			(set i (+ i 1))
@@ -75,4 +75,24 @@
 
 		(ret r)
 	))
+)))
+
+; Returns the nth index of val in arr. Returns nil on failure.
+(set find (fun (arr n val) (
+	(set i 0)
+	(set c 0)
+
+	(while (< i (# arr)) (
+		(if (= (at arr i) val) (
+			(if (= c n) (
+				(ret i)
+			) ((nil)))
+
+			(set c (+ c 1))
+		) ((nil)))
+
+		(set i (+ i 1))
+	))
+
+	(ret nil)
 )))
