@@ -140,7 +140,7 @@
  *    = Standard Library =
  *      The function `lsp_register_std' can be called from C to register the standard library to a
  *      script engine. This is an optional step, and the language can operate without the standard
- *      library.
+ *      library. Extended standard library can be found in `util/test/scripts/std.lsp'.
  *
  *      Standard Functions:
  *          | Name           | Description                                    | Return type      |
