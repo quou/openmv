@@ -9,7 +9,7 @@
 #include "video.h"
 
 int main() {
-	srand(time(null));
+	srand((u32)time(null));
 
 	init_time();
 

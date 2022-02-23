@@ -2223,7 +2223,7 @@ struct lsp_val std_to_string(struct lsp_state* ctx, u32 argc, struct lsp_val* ar
 			break;
 	}
 
-	return lsp_make_str(ctx, buf, strlen(buf));
+	return lsp_make_str(ctx, buf, (u32)strlen(buf));
 }
 
 void lsp_register_std(struct lsp_state* ctx) {

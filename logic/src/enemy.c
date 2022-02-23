@@ -136,13 +136,13 @@ void enemy_system(struct world* world, struct room* room, f64 ts) {
 		v2f target = path->points[follow->node];
 
 		v2f dir = v2f_normalised(v2f_sub(target, transform->position));
-		transform->position = v2f_add(transform->position, v2f_mul(dir, make_v2f(follow->speed * ts, follow->speed * ts)));
+		transform->position = v2f_add(transform->position, v2f_mul(dir, make_v2f(follow->speed * (f32)ts, follow->speed * (f32)ts)));
 
 		f32 dist_sqrd = powf(target.x - transform->position.x, 2.0f) + powf(target.y - transform->position.y, 2.0f);
 		if (dist_sqrd < 10.0f) {
 			follow->node += follow->reverse ? -1 : 1;
 
-			if (!follow->reverse && follow->node >= path->count) {
+			if (!follow->reverse && follow->node >= (i32)path->count) {
 				follow->reverse = true;
 				follow->node = path->count - 1;
 			} else if (follow->reverse && follow->node < 0) {
@@ -168,7 +168,7 @@ void enemy_system(struct world* world, struct room* room, f64 ts) {
 				spider->triggered = true;
 			}
 		} else {
-			spider->velocity.y += g_gravity * ts; 
+			spider->velocity.y += g_gravity * (f32)ts; 
 
 			transform->position = v2f_add(transform->position, v2f_mul(spider->velocity, make_v2f(ts, ts)));
 
