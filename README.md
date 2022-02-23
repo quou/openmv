@@ -20,6 +20,7 @@ Created from the ground up in C99.
  - [x] Resource Packing.
  - [x] Tilemap system.
  - [x] Dialogue system for NPCs.
+ - [x] Scripting language.
  - [x] Command system for allow for easy configuration.
  - [ ] Actually make a damn game.
 
