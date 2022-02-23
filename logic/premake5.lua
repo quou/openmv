@@ -26,7 +26,8 @@ project "logic"
 
 	defines {
 		"IMPORT_SYMBOLS",
-		"LOGIC_EXPORT_SYMBOLS"
+		"LOGIC_EXPORT_SYMBOLS",
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	filter "configurations:debug"

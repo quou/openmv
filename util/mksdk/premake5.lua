@@ -24,7 +24,8 @@ project "mksdk"
 	}
 
 	defines {
-		"IMPORT_SYMBOLS"
+		"IMPORT_SYMBOLS",
+		"_CRT_SECURE_NO_WARNINGS"
 	}
 
 	filter "configurations:debug"
