@@ -1935,7 +1935,7 @@ resolved_l:
 				return false;
 			}
 
-			core_free(f_name);
+			parser_queue_free(parser, f_name);
 
 			parser->token = tok;
 
