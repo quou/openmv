@@ -27,6 +27,9 @@
 
 	(set r (array))
 
+	@locals
+	(print delim)
+
 	(set cur "")
 
 	(set i 0)

@@ -1731,7 +1731,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				argc++;
 			}
 
-			parser->current_argc = argc + 1;
+			/* Twice to allow for the increased stack top. */
+			parser->current_argc = argc + argc;
 
 			advance();
 			expect_tok(tok_left_paren, "Expected a block after argument list.");
@@ -1938,8 +1939,6 @@ resolved_l:
 
 			if (failed) { return false; }
 		} else if (tok.len == 6 && memcmp(tok.start, "locals", tok.len) == 0) {
-			printf("\n");
-
 			for (u32 i = 0; i < parser->local_count; i++) {
 				printf("Local: %.*s; %d\n", parser->locals[i].len, parser->locals[i].start, parser->locals[i].pos);
 			}
