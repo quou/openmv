@@ -1936,6 +1936,7 @@ resolved_l:
 			}
 
 			parser_queue_free(parser, f_name);
+			parser_queue_free(parser, buf);
 
 			parser->token = tok;
 
@@ -1963,8 +1964,6 @@ resolved_l:
 			parser->token  = old_parser.token;
 			parser->ass_name_start = old_parser.ass_name_start;
 			parser->ass_name_len = old_parser.ass_name_len;
-
-			parser_queue_free(parser, buf);
 
 			if (failed) { return false; }
 		} else if (tok.len == 6 && memcmp(tok.start, "locals", tok.len) == 0) {
