@@ -1,6 +1,6 @@
-/* A simple Lisp-like, dynamic programming language implementation.
+/* A simple Lisp-inspired, dynamic programming language implementation.
  *
- * The language has but six types:
+ * The language has but seven types:
  *    - nil
  *          Represents a value with nothing in it; A `nil' value.
  *    - number
@@ -11,6 +11,8 @@
  *          Represents a string of text. Strings are *not* null-terminated,
  *          meaning storing their length is required. Because of this, strings
  *          can be used to represent generic binary data, as well as just text.
+ *    - array
+            Stores an array of values.
  *    - function
  *          Represents a user-defined function.
  *    - pointer (C user data)
@@ -32,6 +34,7 @@
  *      | number    | 85      44.3               |
  *      | boolean   | true    false              |
  *      | function  | (fun (x y) ((+ x y)))      |
+ *      | array     | (array (10 3 3))           |
  *
  *    = Operators =
  *      | Symbol | Params | Description                                     | Return type |

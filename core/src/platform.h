@@ -148,3 +148,6 @@ API bool file_exists(const char* name);
 API bool file_is_regular(const char* name);
 API bool file_is_dir(const char* name);
 API u64 file_mod_time(const char* name);
+
+API const char* get_file_name(const char* path);
+API const char* get_file_extension(const char* name);

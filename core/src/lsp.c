@@ -1893,9 +1893,38 @@ resolved_l:
 			/* Import works by reading a string literal and then loading
 			 * and parsing that file. */
 
-			char* f_name = core_alloc(tok.len + 1);
-			f_name[tok.len] = '\0';
-			memcpy(f_name, tok.start, tok.len);
+			char* f_name;
+
+			if (file_is_regular(parser->name)) { 
+				/* The parser has loaded from a file. */
+				u32 len = (u32)strlen(parser->name);
+				f_name = core_alloc(len + tok.len + 1);
+				memcpy(f_name, parser->name, len);
+
+				for (i32 i = len - 1; i >= 0; i--) {
+					if (f_name[i] == '/') {
+						f_name[i + 1] = '\0';
+						break;
+					}
+				}
+
+				strncat(f_name, tok.start, tok.len);
+			} else if (file_is_dir(parser->name)) {
+				/* The parser name has been set to a working directory. */
+				u32 len = (u32)strlen(parser->name);
+				f_name = core_alloc(len + tok.len + 2);
+				memcpy(f_name, parser->name, len);
+
+				if (f_name[len] != '/') {
+					strcat(f_name, "/");
+				}
+
+				strncat(f_name, tok.start, tok.len);
+			} else {
+				f_name = core_alloc(tok.len + 1);
+				f_name[tok.len] = '\0';
+				memcpy(f_name, tok.start, tok.len);
+			}
 
 			u64 f_size;
 			u8* buf;
