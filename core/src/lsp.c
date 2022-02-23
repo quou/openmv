@@ -1935,6 +1935,8 @@ resolved_l:
 				return false;
 			}
 
+			core_free(f_name);
+
 			parser->token = tok;
 
 			struct parser old_parser = *parser;
@@ -1963,8 +1965,6 @@ resolved_l:
 			parser->ass_name_len = old_parser.ass_name_len;
 
 			parser_queue_free(parser, buf);
-
-			core_free(f_name);
 
 			if (failed) { return false; }
 		} else if (tok.len == 6 && memcmp(tok.start, "locals", tok.len) == 0) {
