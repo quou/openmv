@@ -339,6 +339,8 @@ void ui_end_frame(struct ui_context* ui) {
 				}
 			}
 		}
+	} else if (count == 0) {
+		set_window_cursor(main_window, CURSOR_POINTER);
 	}
 
 	struct ui_window** sorted_windows = core_alloc(ui->window_count * sizeof(struct ui_window*));
