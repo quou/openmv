@@ -98,6 +98,7 @@ struct ui_window {
 /* For persistent data. */
 struct window_meta {
 	v2i position;
+	v2i dimentions;
 	i32 scroll;
 	i32 z;
 };
@@ -121,6 +122,8 @@ struct ui_context {
 
 	struct ui_window* dragging;
 	v2i drag_offset;
+
+	struct ui_window* resizing;
 
 	struct window* window;
 	struct font* font;
@@ -283,6 +286,8 @@ void ui_end_frame(struct ui_context* ui) {
 
 	if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
 		ui->dragging = null;
+		ui->resizing = null;
+		set_window_cursor(main_window, CURSOR_POINTER);
 	}
 
 	ui->top_window = ui->windows;
@@ -299,22 +304,39 @@ void ui_end_frame(struct ui_context* ui) {
 	qsort(hovered, count, sizeof(struct ui_window*),
 		(int(*)(const void*, const void*))cmp_window_z);
 
-	if (count > 0 && !ui->hovered && mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
-		ui->dragging = hovered[count - 1];
-		ui->drag_offset = v2i_sub(get_mouse_position(main_window), hovered[count - 1]->position);
+	if (count > 0 && !ui->hovered) {
+		struct ui_window* window = hovered[count - 1];
 
+		v2i corner = v2i_add(window->position, window->dimentions);
+		i32 dist = v2i_magnitude(v2i_sub(get_mouse_position(main_window), corner));
 
-		ui->top_window = ui->dragging;
-		struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
-		meta->z = 0;
+		if (dist < 20) {
+			set_window_cursor(main_window, CURSOR_RESIZE);
+		} else if (!ui->dragging) {
+			set_window_cursor(main_window, CURSOR_POINTER);
+		}
 
-		for (u32 i = 0; i < ui->window_count; i++) {
-			struct ui_window* window = ui->windows + i;
-			if (window == ui->top_window) { continue; }
-			
-			struct window_meta* m = table_get(ui->window_meta, window->title);
-			if (m) {
-				m->z++;
+		if (mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+			if (dist < 20) {
+				ui->resizing = window;
+			} else {
+				set_window_cursor(main_window, CURSOR_MOVE);
+				ui->dragging = window;
+				ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
+			}
+
+			ui->top_window = window;
+			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
+			meta->z = 0;
+
+			for (u32 i = 0; i < ui->window_count; i++) {
+				struct ui_window* w = ui->windows + i;
+				if (w == ui->top_window) { continue; }
+				
+				struct window_meta* m = table_get(ui->window_meta, w->title);
+				if (m) {
+					m->z++;
+				}
 			}
 		}
 	}
@@ -501,17 +523,19 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
+	
+	window->dimentions = make_v2i(300, ui->window_max_height);
+
 	if (!meta) {
-		struct window_meta new_meta = { position, 0, 0 };
+		struct window_meta new_meta = { position, window->dimentions, 0, 0 };
 		table_set(ui->window_meta, name, &new_meta);
 
 		meta = table_get(ui->window_meta, name);
 	} else {
 		window->position = meta->position;
+		window->dimentions = meta->dimentions;
 		window->z = meta->z;
 	}
-
-	window->dimentions = make_v2i(300, ui->window_max_height);
 
 	ui->cursor_pos = make_v2i(
 		window->position.x + ui->padding,
@@ -539,6 +563,18 @@ void ui_end_window(struct ui_context* ui) {
 
 		if (window == ui->dragging) {
 			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
+		}
+
+		if (window == ui->resizing) {
+			meta->dimentions = v2i_sub(get_mouse_position(main_window), window->position);
+
+			if (meta->dimentions.x < 100) {
+				meta->dimentions.x = 100;
+			}
+
+			if (meta->dimentions.y < 50) {
+				meta->dimentions.y = 50;
+			}
 		}
 	}
 
@@ -632,6 +668,7 @@ bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 	}
 
 	if (ui->active == e && key_just_released(main_window, KEY_RETURN)) {
+		ui->active = null;
 		return true;
 	}
 

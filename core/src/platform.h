@@ -38,6 +38,9 @@ API bool mouse_btn_just_pressed(struct window* window, i32 key);
 API bool mouse_btn_just_released(struct window* window, i32 key);
 API v2i get_mouse_position(struct window* window);
 
+API u32 get_window_cursor(struct window* window);
+API u32 set_window_cursor(struct window* window, u32 id);
+
 enum {
 	KEY_UNKNOWN = 0,
 	KEY_SPACE,
@@ -129,6 +132,13 @@ enum {
 	MOUSE_BTN_RIGHT,
 
 	MOUSE_BTN_COUNT
+};
+
+enum {
+	CURSOR_POINTER = 0,
+	CURSOR_HAND,
+	CURSOR_RESIZE,
+	CURSOR_MOVE
 };
 
 /* File system */

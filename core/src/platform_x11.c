@@ -5,6 +5,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/X.h>
+#include <X11/Xcursor/Xcursor.h>
 #include <GL/glx.h>
 
 #include "common.h"
@@ -41,6 +42,8 @@ struct window {
 	bool released_btns[MOUSE_BTN_COUNT];
 
 	i32 scroll;
+
+	u32 cursor;
 
 	bool fullscreen;
 
@@ -477,4 +480,33 @@ void set_window_uptr(struct window* window, void* uptr) {
 
 void set_window_should_close(struct window* window, bool close) {
 	window->open = !close;
+}
+
+u32 get_window_cursor(struct window* window) {
+	return window->cursor;
+}
+
+u32 set_window_cursor(struct window* window, u32 id) {
+	window->cursor = id;
+
+	Cursor c;
+	
+	switch (id) {
+		case CURSOR_HAND:
+			c = XcursorLibraryLoadCursor(window->display, "hand2");
+			break;
+		case CURSOR_RESIZE:
+			c = XcursorLibraryLoadCursor(window->display, "bottom_right_corner");
+			break;
+		case CURSOR_MOVE:
+			c = XcursorLibraryLoadCursor(window->display, "fleur");
+			break;
+		case CURSOR_POINTER:
+		default:
+			c = XcursorLibraryLoadCursor(window->display, "left_ptr");
+			break;
+	}
+
+	
+	XDefineCursor (window->display, window->window, c);
 }

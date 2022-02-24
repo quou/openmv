@@ -63,6 +63,7 @@ project "core"
 	filter "system:linux"
 		links {
 			"X11",
+			"Xcursor",
 			"GL",
 			"m",
 			"dl",

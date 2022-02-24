@@ -60,6 +60,8 @@ struct window {
 	bool pressed_btns[MOUSE_BTN_COUNT];
 	bool released_btns[MOUSE_BTN_COUNT];
 
+	u32 cursor;
+
 	i32 scroll;
 
 	void* uptr;
@@ -556,4 +558,32 @@ u64 file_mod_time(const char* name) {
 	date.QuadPart -= adjust.QuadPart;
 
 	return date.QuadPart / 10000000;
+}
+
+u32 get_window_cursor(struct window* window) {
+	return window->cursor;
+}
+
+u32 set_window_cursor(struct window* window, u32 id) {
+	window->cursor = id;
+
+	HCURSOR c;
+
+	switch (id) {
+		case CURSOR_HAND:
+			c = LoadCursorA(GetModuleHandle(null), IDC_HAND);
+			break;
+		case CURSOR_MOVE:
+			c = LoadCursorA(GetModuleHandle(null), IDC_SIZEALL);
+			break;
+		case CURSOR_RESIZE:
+			c = LoadCursorA(GetModuleHandle(null), IDC_SIZENESW);
+			break;
+		case CURSOR_POINTER:
+		default:
+			c = LoadCursorA(GetModuleHandle(null), IDC_ARROW);
+			break;
+	}
+
+	SetCursor(c);
 }
