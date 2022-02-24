@@ -1,4 +1,4 @@
-project "ruitest"
+project "imuitest"
 	kind "ConsoleApp"
 	language "C"
 	cdialect "C99"

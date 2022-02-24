@@ -147,6 +147,28 @@ struct ui_context {
 	struct color style_colors[ui_col_count];
 };
 
+static u32 ui_get_hovered_windows(struct ui_context* ui, struct ui_window** windows, u32 max) {
+	u32 count = 0;
+
+	for (u32 i = 0; i < ui->window_count; i++) {
+		struct ui_window* window = ui->windows + i;
+
+		struct rect window_rect = make_rect(
+			window->position.x, window->position.y,
+			window->dimentions.x, window->dimentions.y);
+
+		if (mouse_over_rect(window_rect)) {
+			windows[count++] = window;
+		}
+
+		if (count >= max) {
+			return count;
+		}
+	}
+
+	return count;
+}
+
 static void ui_draw_rect(struct ui_context* ui, struct rect rect, u32 col_idx) {
 	struct textured_quad quad = {
 		.texture = null,
@@ -237,8 +259,8 @@ void ui_begin_frame(struct ui_context* ui) {
 	renderer_resize(ui->renderer, make_v2i(w, h));
 }
 
-static i32 cmp_window_z(const struct ui_window* a, const struct ui_window* b) {
-	return a->z < b->z;
+static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) {
+	return (*a)->z < (*b)->z;
 }
 
 void ui_end_frame(struct ui_context* ui) {
@@ -263,42 +285,42 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	}
 
-	if (ui->top_window && !mouse_over_rect(make_rect(
-			ui->top_window->position.x, ui->top_window->position.y,
-			ui->top_window->dimentions.x, ui->top_window->dimentions.y))) {
+	struct ui_window* hovered[16];
+	u32 count = ui_get_hovered_windows(ui, hovered, 16);
+
+	qsort(hovered, count, sizeof(struct ui_window*),
+		(int(*)(const void*, const void*))cmp_window_z);
+
+	if (count > 0 && !ui->hovered && mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+		ui->dragging = hovered[count - 1];
+		ui->drag_offset = v2i_sub(get_mouse_position(main_window), hovered[count - 1]->position);
+
+
+		ui->top_window = ui->dragging;
+		struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
+		meta->z = 0;
+
 		for (u32 i = 0; i < ui->window_count; i++) {
 			struct ui_window* window = ui->windows + i;
-
-			struct window_meta* meta = table_get(ui->window_meta, window->title);
-
-			if (mouse_over_rect(make_rect(window->position.x, window->position.y,
-						window->dimentions.x, window->dimentions.y)) &&
-					mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
-				meta->z = 0;
-
-				for (u32 ii = 0; ii < ui->window_count; ii++) {
-					struct ui_window* w = ui->windows + ii;
-					if (w == window) { continue; }
-
-					struct window_meta* m = table_get(ui->window_meta, w->title);
-					if (m) {
-						m->z++;
-					}
-				}
-
-				break;
+			if (window == ui->top_window) { continue; }
+			
+			struct window_meta* m = table_get(ui->window_meta, window->title);
+			if (m) {
+				m->z++;
 			}
 		}
 	}
 
-	struct ui_window* sorted_windows = core_alloc(ui->window_count * sizeof(struct ui_window));
-	memcpy(sorted_windows, ui->windows, ui->window_count * sizeof(struct ui_window));
+	struct ui_window** sorted_windows = core_alloc(ui->window_count * sizeof(struct ui_window*));
+	for (u32 i = 0; i < ui->window_count; i++) {
+		sorted_windows[i] = ui->windows + i;
+	}
 
-	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window),
+	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window*),
 		(int(*)(const void*, const void*))cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
-		struct ui_window* window = sorted_windows + i;
+		struct ui_window* window = sorted_windows[i];
 
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
@@ -495,22 +517,14 @@ void ui_end_window(struct ui_context* ui) {
 	if (meta) {
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
-			window->dimentions.x, window->dimentions.y);	
+			window->dimentions.x, window->dimentions.y);
 
 		if (mouse_over_rect(window_rect)) {
-			if (
-				!ui->hovered && 
-				mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT) &&
-				ui->top_window == window) {
-				ui->dragging = window;
-				ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
-			}
-
 			meta->scroll += get_scroll(main_window) * (text_height(ui->font) + ui->padding);
 
 			if (meta->scroll > 0) {
 				meta->scroll = 0;
-			}	
+			}
 		}
 
 		if (window == ui->dragging) {

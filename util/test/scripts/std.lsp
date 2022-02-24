@@ -151,3 +151,8 @@
 
 	(ret r)
 )))
+
+; Sorts an array of numbers in descending order
+(set sort (fun (nums) (
+
+)))

@@ -25,8 +25,6 @@ project "core"
 		"src/entity.h",
 		"src/imui.c",
 		"src/imui.h",
-		"src/rui.c",
-		"src/rui.h",
 		"src/keytable.c",
 		"src/keytable.h",
 		"src/lsp.c",
