@@ -112,7 +112,7 @@ void menu_update(struct menu* menu) {
 	u32 win_w = menu->renderer->dimentions.x;
 	u32 win_h = menu->renderer->dimentions.y;
 
-	i32 y = (win_h / 2) - (menu->item_count * text_height(menu->font) / 2);
+	i32 y = (win_h / 2) - (menu->item_count * font_height(menu->font) / 2);
 
 	struct textured_quad background_quad = {
 		.texture = null,
@@ -134,24 +134,24 @@ void menu_update(struct menu* menu) {
 			case menu_item_selectable: {
 				i32 text_w = text_width(menu->font, item->as.selectable.text);
 				item_w = text_w;
-				item_h = text_height(menu->font);
+				item_h = font_height(menu->font);
 
 				i32 x = (win_w / 2) - (text_w / 2);
 
 				render_text(menu->renderer, menu->font, item->as.selectable.text, x, y, make_color(0xffffff, 255));
 
-				y += text_height(menu->font);
+				y += font_height(menu->font);
 			} break;
 			case menu_item_label: {
 				i32 text_w = text_width(menu->font, item->as.label.text);
 				item_w = text_w;
-				item_h = text_height(menu->font);
+				item_h = font_height(menu->font);
 
 				i32 x = (win_w / 2) - (text_w / 2);
 
 				render_text(menu->renderer, menu->font, item->as.label.text, x, y, make_color(0x6cafb5, 255));
 
-				y += text_height(menu->font);
+				y += font_height(menu->font);
 			} break;
 			default: break;
 		}
@@ -339,7 +339,7 @@ void prompts_update(f64 ts) {
 			play_audio_clip(ctx->type_sound);
 		}
 
-		i32 h = text_height(ctx->font);
+		i32 h = font_height(ctx->font);
 
 		struct sprite coin_sprite = get_sprite(sprid_coin);
 		struct textured_quad coin_quad = {
@@ -359,7 +359,7 @@ void prompts_update(f64 ts) {
 			}
 		}
 
-		i32 y = win_h - h - (back.dimentions.y / 2) - ((lines * text_height(ctx->font)) / 2);
+		i32 y = win_h - h - (back.dimentions.y / 2) - ((lines * font_height(ctx->font)) / 2);
 
 		for (const char* c = ctx->message; (u32)(c - ctx->message) < ctx->current_character; c++) {
 			line_len++;
@@ -368,7 +368,7 @@ void prompts_update(f64 ts) {
 				render_text_fancy(ctx->renderer, ctx->font, line,
 					line_len, 20, y, make_color(0xffffff, 255), &coin_quad);
 
-				y += text_height(ctx->font);
+				y += font_height(ctx->font);
 
 				line_len = 0;
 				line = c + 1;

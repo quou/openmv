@@ -408,6 +408,10 @@ f32 get_font_size(struct font* font) {
 	return font->size;
 }
 
+i32 font_height(struct font* font) {
+	return font->height;
+}
+
 i32 text_width(struct font* font, const char* text) {
 	i32 x;
 	u32 codepoint;
@@ -426,8 +430,16 @@ i32 text_width(struct font* font, const char* text) {
 	return x;
 }
 
-i32 text_height(struct font* font) {
-	return font->height;
+i32 text_height(struct font* font, const char* text) {
+	i32 height = font->height;
+
+	for (const char* c = text; *c; c++) {
+		if (*c == '\n') {
+			height += font->height;
+		}
+	}
+
+	return height;
 }
 
 i32 render_text(struct renderer* renderer, struct font* font,
@@ -436,9 +448,18 @@ i32 render_text(struct renderer* renderer, struct font* font,
 	u32 codepoint;
 	struct glyph_set* set;
 	stbtt_bakedchar* g;
+	i32 ori_x = x;
 
 	p = text;
 	while (*p) {
+		if (*p == '\n') {
+			x = ori_x;
+			y += font->height;
+
+			p++;
+			continue;
+		}
+
 		p = utf8_to_codepoint(p, &codepoint);
 
 		set = get_glyph_set(font, codepoint);

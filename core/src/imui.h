@@ -20,7 +20,10 @@ API void ui_end_window(struct ui_context* ui);
 
 API void ui_text(struct ui_context* ui, const char* text);
 API bool ui_button(struct ui_context* ui, const char* text);
-API void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size);
+API bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size);
 API bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect);
 
-struct renderer* ui_get_renderer(struct ui_context* ui);
+API struct renderer* ui_get_renderer(struct ui_context* ui);
+
+API struct font* ui_get_font(struct ui_context* ui);
+API void ui_set_font(struct ui_context* ui, struct font* font);

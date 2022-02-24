@@ -695,7 +695,7 @@ void draw_room(struct room* room, struct renderer* renderer, f64 ts) {
 		query_window(main_window, &win_w, &win_h);
 
 		i32 text_w = text_width(room->name_font, room->name);
-		i32 text_h = text_height(room->name_font);
+		i32 text_h = text_height(room->name_font, room->name);
 
 		render_text(logic_store->ui_renderer, room->name_font, room->name,
 			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));

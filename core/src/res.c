@@ -8,8 +8,7 @@
 
 static const char* package_path = "res.pck";
 
-#if DEBUG
-bool read_raw(const char* path, u8** buf, u64* size, bool term) {
+bool read_raw_no_pck(const char* path, u8** buf, u64* size, bool term) {
 	*buf = null;
 	size ? *size = 0 : 0;
 
@@ -40,6 +39,11 @@ bool read_raw(const char* path, u8** buf, u64* size, bool term) {
 	fclose(file);
 
 	return true;
+}
+
+#if DEBUG
+bool read_raw(const char* path, u8** buf, u64* size, bool term) {
+	return read_raw_no_pck(path, buf, size, term);
 }
 
 struct file file_open(const char* path) {

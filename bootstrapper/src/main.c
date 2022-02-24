@@ -50,7 +50,7 @@ i32 main() {
 		const char* text = "Loading...";
 
 		i32 w = text_width(font, text);
-		i32 h = text_height(font);
+		i32 h = text_height(font, text);
 
 		renderer_push(renderer, &quad);
 		render_text(renderer, font, text, (1366 / 2) - (w / 2), (768 / 2) - (h - 2), make_color(0xffffff, 255));

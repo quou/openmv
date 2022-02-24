@@ -52,6 +52,8 @@ struct ui_element {
 
 	u32 type;
 
+	struct font* font;
+
 	union {
 		struct {
 			char* text;
@@ -88,19 +90,10 @@ struct ui_window {
 	u32 element_count;
 	u32 element_capacity;
 
+	struct font* font;
+
 	char* title;
 };
-
-static struct ui_element* ui_window_add_item(struct ui_window* w, struct ui_element el) {
-	if (w->element_count >= w->element_capacity) {
-		w->element_capacity = w->element_capacity < 8 ? 8 : w->element_capacity * 2;
-		w->elements = core_realloc(w->elements, w->element_capacity * sizeof(struct ui_element));
-	}
-
-	w->elements[w->element_count] = el;
-
-	return &w->elements[w->element_count++];
-}
 
 /* For persistent data. */
 struct window_meta {
@@ -146,6 +139,21 @@ struct ui_context {
 
 	struct color style_colors[ui_col_count];
 };
+
+static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_window* w, struct ui_element el) {
+	if (w->element_count >= w->element_capacity) {
+		w->element_capacity = w->element_capacity < 8 ? 8 : w->element_capacity * 2;
+		w->elements = core_realloc(w->elements, w->element_capacity * sizeof(struct ui_element));
+	}
+
+	w->elements[w->element_count] = el;
+
+	struct ui_element* e = &w->elements[w->element_count++];
+
+	e->font = ui->font;
+
+	return e;
+}
 
 static u32 ui_get_hovered_windows(struct ui_context* ui, struct ui_window** windows, u32 max) {
 	u32 count = 0;
@@ -331,9 +339,9 @@ void ui_end_frame(struct ui_context* ui) {
 		ui_draw_rect(ui, window_rect,
 			ui_col_window_background);
 
-		i32 title_w = text_width(ui->font, window->title);
-		i32 title_h = text_height(ui->font) + ui->padding * 2;
-		render_text(ui->renderer, ui->font, window->title,
+		i32 title_w = text_width(window->font, window->title);
+		i32 title_h = text_height(window->font, window->title) + ui->padding * 2;
+		render_text(ui->renderer, window->font, window->title,
 			window->position.x + ((window->dimentions.x / 2) - (title_w / 2)),
 			window->position.y + ui->padding, ui->style_colors[ui_col_text]);
 
@@ -351,7 +359,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 			switch (el->type) {
 				case ui_el_text:
-					render_text(ui->renderer, ui->font, el->as.text.text, el->position.x, el->position.y, ui->style_colors[ui_col_text]);
+					render_text(ui->renderer, el->font, el->as.text.text, el->position.x, el->position.y, ui->style_colors[ui_col_text]);
 
 					core_free(el->as.text.text);
 					break;
@@ -369,7 +377,7 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.x, el->position.y,
 						el->as.button.dimentions.x, el->as.button.dimentions.y
 					), c);
-					render_text(ui->renderer, ui->font, el->as.button.text,
+					render_text(ui->renderer, el->font, el->as.button.text,
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						ui->style_colors[ui_col_text]);
@@ -394,8 +402,8 @@ void ui_end_frame(struct ui_context* ui) {
 
 					i32 w = 0, h = 0;
 					if (el->as.text_input.buf) {
-						w = text_width(ui->font, el->as.text_input.buf);
-						h = text_height(ui->font);
+						w = text_width(el->font, el->as.text_input.buf);
+						h = text_height(el->font, el->as.text_input.buf);
 					}
 
 					bool want_reset = false;
@@ -414,7 +422,7 @@ void ui_end_frame(struct ui_context* ui) {
 						}
 					}
 
-					render_text(ui->renderer, ui->font, el->as.text_input.buf,
+					render_text(ui->renderer, el->font, el->as.text_input.buf,
 						(el->as.text_input.input_pos.x + ui->padding) + input_scroll,
 						el->as.text_input.input_pos.y + ui->padding,
 						ui->style_colors[ui_col_text]);	
@@ -423,7 +431,7 @@ void ui_end_frame(struct ui_context* ui) {
 						renderer_clip(ui->renderer, clip_rect);
 					}
 
-					render_text(ui->renderer, ui->font, el->as.text_input.label,
+					render_text(ui->renderer, el->font, el->as.text_input.label,
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						ui->style_colors[ui_col_text]);	
@@ -486,6 +494,8 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 
 	ui->current_window = window;
 
+	window->font = ui->font;
+
 	window->element_count = 0;
 	window->title = copy_string(name);
 
@@ -505,7 +515,7 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 
 	ui->cursor_pos = make_v2i(
 		window->position.x + ui->padding,
-		window->position.y + meta->scroll + text_height(ui->font) + ui->padding * 2);
+		window->position.y + meta->scroll + text_height(ui->font, window->title) + ui->padding * 2);
 
 	return true;
 }
@@ -520,7 +530,7 @@ void ui_end_window(struct ui_context* ui) {
 			window->dimentions.x, window->dimentions.y);
 
 		if (mouse_over_rect(window_rect)) {
-			meta->scroll += get_scroll(main_window) * (text_height(ui->font) + ui->padding);
+			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
 
 			if (meta->scroll > 0) {
 				meta->scroll = 0;
@@ -536,7 +546,7 @@ void ui_end_window(struct ui_context* ui) {
 }
 
 void ui_text(struct ui_context* ui, const char* text) {
-	ui_window_add_item(ui->current_window, (struct ui_element) {
+	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text,
 		.position = ui->cursor_pos,
 		.as.text = {
@@ -544,15 +554,15 @@ void ui_text(struct ui_context* ui, const char* text) {
 		}
 	});
 
-	ui->cursor_pos.y += text_height(ui->font) + ui->padding;
+	ui->cursor_pos.y += text_height(ui->font, text) + ui->padding;
 }
 
 bool ui_button(struct ui_context* ui, const char* text) {
 	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y,
 		text_width(ui->font, text) + ui->padding * 2,
-		text_height(ui->font) + ui->padding * 2);
+		text_height(ui->font, text) + ui->padding * 2);
 
-	struct ui_element* e = ui_window_add_item(ui->current_window, (struct ui_element) {
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_button,
 		.position = ui->cursor_pos,
 		.as.button = {
@@ -561,7 +571,7 @@ bool ui_button(struct ui_context* ui, const char* text) {
 		}
 	});
 
-	ui->cursor_pos.y += text_height(ui->font) + ui->padding * 3;
+	ui->cursor_pos.y += text_height(ui->font, text) + ui->padding * 3;
 
 	if (ui->top_window == ui->current_window &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
@@ -581,14 +591,14 @@ bool ui_button(struct ui_context* ui, const char* text) {
 	return false;
 }
 
-void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size) {
+bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size) {
 	struct rect r = make_rect(
 		ui->cursor_pos.x + ui->column_size,
 		ui->cursor_pos.y + ui->padding,
 		ui->current_window->dimentions.x - ui->column_size - ui->padding * 2,
-		text_height(ui->font) + ui->padding * 2);
+		font_height(ui->font) + ui->padding * 2);
 
-	struct ui_element* e = ui_window_add_item(ui->current_window, (struct ui_element) {
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_input,
 		.position = ui->cursor_pos,
 		.as.text_input = {
@@ -600,7 +610,7 @@ void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 		}
 	});
 
-	ui->cursor_pos.y += text_height(ui->font) + ui->padding * 4;
+	ui->cursor_pos.y += font_height(ui->font) + ui->padding * 4;
 
 	ui->input_filter = text_input_filter;
 
@@ -620,12 +630,18 @@ void ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 			}
 		}
 	}
+
+	if (ui->active == e && key_just_released(main_window, KEY_RETURN)) {
+		return true;
+	}
+
+	return false;
 }
 
 bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) {
 	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, 100, 100);
 
-	struct ui_element* e = ui_window_add_item(ui->current_window, (struct ui_element) {
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_image,
 		.position = ui->cursor_pos,
 		.as.image = {
@@ -657,4 +673,12 @@ bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 
 struct renderer* ui_get_renderer(struct ui_context* ui) {
 	return ui->renderer;
+}
+
+struct font* ui_get_font(struct ui_context* ui) {
+	return ui->font;
+}
+
+void ui_set_font(struct ui_context* ui, struct font* font) {
+	ui->font = font;
 }

@@ -174,5 +174,7 @@ API i32 get_font_tab_size(struct font* font);
 
 API f32 get_font_size(struct font* font);
 
+API i32 font_height(struct font* font);
+
 API i32 text_width(struct font* font, const char* text);
-API i32 text_height(struct font* font);
+API i32 text_height(struct font* font, const char* text);

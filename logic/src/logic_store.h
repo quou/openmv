@@ -47,6 +47,8 @@ struct logic_store {
 	char lsp_buf[256];
 
 	FILE* lsp_out;
+
+	char* command_error_log;
 };
 
 extern struct logic_store* logic_store;

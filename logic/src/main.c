@@ -383,11 +383,31 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		}
 
 		if (ui_begin_window(ui, "Commands", make_v2i(0, 300))) {
-			ui_text_input(ui, "Command", logic_store->lsp_buf, 256);
-			
-			if (ui_button(ui, "Submit")) {
+			if (ui_text_input(ui, "Command", logic_store->lsp_buf, 256) || ui_button(ui, "Submit")) {
 				lsp_do_string(logic_store->lsp, "command", logic_store->lsp_buf);
 				logic_store->lsp_buf[0] = 0;
+
+				if (logic_store->command_error_log) {
+					core_free(logic_store->command_error_log);
+				}
+
+				fclose(logic_store->lsp_out);
+				read_raw_no_pck("command.log", (u8**)&logic_store->command_error_log, null, true);
+				logic_store->lsp_out = fopen("command.log", "a");
+			}
+
+			if (ui_button(ui, "Clear")) {
+				fclose(logic_store->lsp_out);
+				logic_store->lsp_out = fopen("command.log", "w");
+				core_free(logic_store->command_error_log);
+				logic_store->command_error_log = null;
+			}
+
+			if (logic_store->command_error_log) {
+				struct font* old_font = ui_get_font(ui);
+				ui_set_font(ui, load_font("res/DejaVuSansMono.ttf", 14.0f));
+				ui_text(ui, logic_store->command_error_log);
+				ui_set_font(ui, old_font);
 			}
 
 			ui_end_window(ui);

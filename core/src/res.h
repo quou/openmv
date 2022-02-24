@@ -9,6 +9,7 @@
  * If `term' is true, a null terminator is added to the end
  * of the file. */
 API bool read_raw(const char* path, u8** buf, u64* size, bool term);
+API bool read_raw_no_pck(const char* path, u8** buf, u64* size, bool term);
 
 API void res_init();
 API void res_deinit();
