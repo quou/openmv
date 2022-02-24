@@ -486,7 +486,7 @@ u32 get_window_cursor(struct window* window) {
 	return window->cursor;
 }
 
-u32 set_window_cursor(struct window* window, u32 id) {
+void set_window_cursor(struct window* window, u32 id) {
 	window->cursor = id;
 
 	Cursor c;

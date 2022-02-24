@@ -564,24 +564,24 @@ u32 get_window_cursor(struct window* window) {
 	return window->cursor;
 }
 
-u32 set_window_cursor(struct window* window, u32 id) {
+void set_window_cursor(struct window* window, u32 id) {
 	window->cursor = id;
 
 	HCURSOR c;
 
 	switch (id) {
 		case CURSOR_HAND:
-			c = LoadCursorA(GetModuleHandle(null), IDC_HAND);
+			c = LoadCursor(null, IDC_HAND);
 			break;
 		case CURSOR_MOVE:
-			c = LoadCursorA(GetModuleHandle(null), IDC_SIZEALL);
+			c = LoadCursor(null, IDC_SIZEALL);
 			break;
 		case CURSOR_RESIZE:
-			c = LoadCursorA(GetModuleHandle(null), IDC_SIZENESW);
+			c = LoadCursor(null, IDC_SIZENESW);
 			break;
 		case CURSOR_POINTER:
 		default:
-			c = LoadCursorA(GetModuleHandle(null), IDC_ARROW);
+			c = LoadCursor(null, IDC_ARROW);
 			break;
 	}
 

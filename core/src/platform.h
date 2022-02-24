@@ -39,7 +39,7 @@ API bool mouse_btn_just_released(struct window* window, i32 key);
 API v2i get_mouse_position(struct window* window);
 
 API u32 get_window_cursor(struct window* window);
-API u32 set_window_cursor(struct window* window, u32 id);
+API void set_window_cursor(struct window* window, u32 id);
 
 enum {
 	KEY_UNKNOWN = 0,
