@@ -176,7 +176,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	window->uptr = null;
 	window->open = false;
 
-	WNDCLASSA wc = { 0 };
+	WNDCLASSW wc = { 0 };
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.hInstance = GetModuleHandle(NULL);
@@ -185,7 +185,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	wc.cbWndExtra = 0;
 	wc.lpszMenuName = NULL;
 	wc.hbrBackground = NULL;
-	wc.lpszClassName = "openmv";
+	wc.lpszClassName = L"openmv";
 	RegisterClass(&wc);
 
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
