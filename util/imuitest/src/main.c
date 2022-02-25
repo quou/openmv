@@ -34,6 +34,10 @@ i32 main() {
 		}
 
 		if (ui_begin_window(ui, "Test Window B", make_v2i(0, 300))) {
+			for (u32 i = 0; i < 25; i++) {
+				ui_button(ui, "Button");
+			}
+
 			ui_end_window(ui);
 		}
 

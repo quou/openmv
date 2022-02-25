@@ -592,6 +592,11 @@ void ui_end_window(struct ui_context* ui) {
 		if (mouse_over_rect(window_rect)) {
 			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
 
+			i32 scroll_bottom = (ui->cursor_pos.y - meta->position.y) - meta->dimentions.y;
+			if (scroll_bottom < 0) {
+				meta->scroll -= scroll_bottom;
+			}
+
 			if (meta->scroll > 0) {
 				meta->scroll = 0;
 			}
