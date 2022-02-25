@@ -522,9 +522,18 @@ i32 render_text_n(struct renderer* renderer, struct font* font,
 	u32 codepoint;
 	struct glyph_set* set;
 	stbtt_bakedchar* g;
+	i32 ori_x = x;
 
 	p = text;
 	for (u32 i = 0; i < n && *p; i++) {
+		if (*p == '\n') {
+			x = ori_x;
+			y += font->height;
+
+			p++;
+			continue;
+		}
+
 		p = utf8_to_codepoint(p, &codepoint);
 
 		set = get_glyph_set(font, codepoint);

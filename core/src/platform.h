@@ -41,6 +41,8 @@ API v2i get_mouse_position(struct window* window);
 API u32 get_window_cursor(struct window* window);
 API void set_window_cursor(struct window* window, u32 id);
 
+API void window_enable_repeat(struct window* window, bool enable);
+
 enum {
 	KEY_UNKNOWN = 0,
 	KEY_SPACE,

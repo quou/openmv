@@ -46,6 +46,7 @@ struct window {
 	u32 cursor;
 
 	bool fullscreen;
+	bool repeat;
 
 	void* uptr;
 
@@ -311,8 +312,7 @@ void update_events(struct window* window) {
 				window->pressed_keys[key] = true;
 
 				if (window->on_text_input) {
-					char buf[64];
-					buf[0] = '\0';
+					char buf[64] = "";
 					XLookupString(&e.xkey, buf, sizeof(buf), null, null);
 					
 					u32 len = (u32)strlen(buf);
@@ -341,6 +341,8 @@ void update_events(struct window* window) {
 						XNextEvent(window->display, &e);
 					}
 				}
+
+				if (window->repeat) { repeat = false; }
 
 				if (!repeat) {
 					sym = XLookupKeysym(&e.xkey, 0);
@@ -509,4 +511,8 @@ void set_window_cursor(struct window* window, u32 id) {
 
 	
 	XDefineCursor (window->display, window->window, c);
+}
+
+void window_enable_repeat(struct window* window, bool enable) {
+	window->repeat = enable;
 }

@@ -10,6 +10,8 @@
 #define sample_format ma_format_f32
 #define channel_count 2
 #define sample_rate   48000
+#define buffer_size   4096
+#define buffer_cap    buffer_size / channel_count
 
 #define max_clips 32
 
@@ -21,6 +23,8 @@ struct audio {
 
 	struct audio_clip* clips[max_clips];
 	u32 clip_count;
+
+	f32* buffer;
 } audio;
 
 struct audio_clip {
@@ -50,6 +54,8 @@ void audio_init() {
 
 	ma_device_init(null, &audio.device_config, &audio.device);
 	ma_device_start(&audio.device);
+
+	audio.buffer = core_alloc(4096 * sizeof(f32));
 }
 
 void audio_deinit() {
@@ -62,6 +68,8 @@ void audio_deinit() {
 	audio.clip_count = 0;
 
 	ma_device_uninit(&audio.device);
+
+	core_free(audio.buffer);
 }
 
 void audio_update() {
@@ -78,25 +86,24 @@ void audio_update() {
 }
 
 static u32 read_and_mix(ma_decoder* decoder, f32* out, u32 frame_count) {
-	f32* temp = core_alloc(4096 * sizeof(f32));
-	u32 temp_cap = 4096 / channel_count;
 	u32 read = 0;
 
 	while (read < frame_count) {
 		u32 remaining = frame_count - read;
-		u32 to_read = temp_cap;
+		u32 to_read = buffer_cap;
 
 		if (to_read > remaining) {
 			to_read = remaining;
 		}
 
-		u32 frames_read = (u32)ma_decoder_read_pcm_frames(decoder, temp, to_read);
-		if (frames_read == 0) {
+		u64 frames_read;
+		ma_result r = ma_decoder_read_pcm_frames(decoder, audio.buffer, to_read, (ma_uint64*)&frames_read);
+		if (r != MA_SUCCESS || frames_read == 0) {
 			break;
 		}
 
 		for (u32 i = 0; i < frames_read * channel_count; i++) {
-			out[read * channel_count + i] += temp[i] * ((struct audio_clip*)decoder->pUserData)->volume;
+			out[read * channel_count + i] += audio.buffer[i] * ((struct audio_clip*)decoder->pUserData)->volume;
 		}
 
 		read += frames_read;
@@ -105,8 +112,6 @@ static u32 read_and_mix(ma_decoder* decoder, f32* out, u32 frame_count) {
 			break;
 		}
 	}
-
-	core_free(temp);
 
 	return read;
 }

@@ -48,6 +48,8 @@ project "core"
 		"src/util/stb_rect_pack.h",
 		"src/util/stb_truetype.h",
 		"src/util/util.c",
+		"src/util/miniaudio.h",
+		"src/util/miniaudio.c",
 		"src/video.h",
 		"src/video_gl.c"
 	}

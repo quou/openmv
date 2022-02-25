@@ -289,7 +289,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		if (ui->input_cursor > 0) {
-			if (key_just_released(main_window, KEY_BACKSPACE)) {
+			if (key_just_pressed(main_window, KEY_BACKSPACE)) {
 				char after[256];
 				memcpy(after, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
 
@@ -298,7 +298,7 @@ void ui_end_frame(struct ui_context* ui) {
 				ui->input_cursor--;
 			}
 
-			if (key_just_released(main_window, KEY_LEFT)) {
+			if (key_just_pressed(main_window, KEY_LEFT)) {
 				ui->input_cursor--;
 			}
 		}

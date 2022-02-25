@@ -43,6 +43,7 @@ struct window {
 
 	bool open;
 	bool resizable;
+	bool repeat;
 
 	HWND hwnd;
 	HDC device_context;
@@ -89,7 +90,7 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 		return 0;
 	};
 	case WM_KEYDOWN: {
-		if (((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
+		if (!window->repeat && ((29llu << 30llu) & lparam) != 0) { /* Ignore repeat */
 			return 0;
 		}
 		i32 key = search_key_table(&window->keymap, (i32)wparam);
@@ -175,7 +176,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	window->uptr = null;
 	window->open = false;
 
-	WNDCLASS wc = { 0 };
+	WNDCLASSA wc = { 0 };
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.hInstance = GetModuleHandle(NULL);
@@ -184,7 +185,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	wc.cbWndExtra = 0;
 	wc.lpszMenuName = NULL;
 	wc.hbrBackground = NULL;
-	wc.lpszClassName = L"openmv";
+	wc.lpszClassName = "openmv";
 	RegisterClass(&wc);
 
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
@@ -586,4 +587,8 @@ void set_window_cursor(struct window* window, u32 id) {
 	}
 
 	SetCursor(c);
+}
+
+void window_enable_repeat(struct window* window, bool enable) {
+	window->repeat = enable;
 }
