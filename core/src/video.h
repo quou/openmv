@@ -178,3 +178,5 @@ API i32 font_height(struct font* font);
 
 API i32 text_width(struct font* font, const char* text);
 API i32 text_height(struct font* font, const char* text);
+API i32 text_width_n(struct font* font, const char* text, u32 n);
+API i32 text_height_n(struct font* font, const char* text, u32 n);

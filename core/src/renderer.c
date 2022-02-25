@@ -442,6 +442,38 @@ i32 text_height(struct font* font, const char* text) {
 	return height;
 }
 
+i32 text_width_n(struct font* font, const char* text, u32 n) {
+	i32 x;
+	u32 codepoint;
+	const char* p;
+	struct glyph_set* set;
+	stbtt_bakedchar* g;
+	
+	x = 0;
+	p = text;
+	u32 i = 0;
+	while (*p && i < n) {
+		p = utf8_to_codepoint(p, &codepoint);
+		set = get_glyph_set(font, codepoint);
+		g = &set->glyphs[codepoint & 0xff];
+		x += (i32)g->xadvance;
+		i++;
+	}
+	return x;
+}
+
+i32 text_height_n(struct font* font, const char* text, u32 n) {
+	i32 height = font->height;
+
+	for (u32 i= 0; i < n; i++) {
+		if (text[i] == '\n') {
+			height += font->height;
+		}
+	}
+
+	return height;
+}
+
 i32 render_text(struct renderer* renderer, struct font* font,
 		const char* text, i32 x, i32 y, struct color color) {
 	const char* p;

@@ -116,6 +116,7 @@ struct ui_context {
 
 	char* input_buf;
 	u32 input_buf_size;
+	u32 input_cursor;
 
 	struct ui_window* current_window;
 	struct ui_window* top_window;
@@ -247,7 +248,12 @@ void ui_text_input_event(struct ui_context* ui, const char* text) {
 	if (buf_len + len < ui->input_buf_size) {
 		for (u32 i = 0; i < len; i++) {
 			if (ui->input_filter(text[i])) {
+				char after[256];
+				memcpy(after, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
+				ui->input_buf[ui->input_cursor] = '\0';
 				strncat(ui->input_buf, text + i, 1);
+				strncat(ui->input_buf, after, buf_len - ui->input_cursor);
+				ui->input_cursor++;
 			}
 		}
 	}
@@ -275,8 +281,31 @@ static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) 
 }
 
 void ui_end_frame(struct ui_context* ui) {
-	if (ui->input_buf && key_just_released(main_window, KEY_BACKSPACE) && strlen(ui->input_buf) > 0) {
-		ui->input_buf[strlen(ui->input_buf) - 1] = '\0';
+	if (ui->input_buf) {
+		u32 buf_len = strlen(ui->input_buf);
+
+		if (ui->input_cursor > buf_len) {
+			ui->input_cursor = buf_len;
+		}
+
+		if (ui->input_cursor > 0) {
+			if (key_just_released(main_window, KEY_BACKSPACE)) {
+				char after[256];
+				memcpy(after, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
+
+				ui->input_buf[ui->input_cursor - 1] = '\0';
+				strncat(ui->input_buf, after, buf_len - ui->input_cursor);
+				ui->input_cursor--;
+			}
+
+			if (key_just_released(main_window, KEY_LEFT)) {
+				ui->input_cursor--;
+			}
+		}
+
+		if (ui->input_cursor < buf_len && key_just_released(main_window, KEY_RIGHT)) {
+			ui->input_cursor++;
+		}
 	}
 
 	if (!ui->hovered && clicked()) {
@@ -424,8 +453,9 @@ void ui_end_frame(struct ui_context* ui) {
 						el->as.text_input.input_dimentions.x, el->as.text_input.input_dimentions.y
 					), c);
 
-					i32 w = 0, h = 0;
+					i32 w = 0, h = 0, c_w = 0;
 					if (el->as.text_input.buf) {
+						c_w = text_width_n(el->font, el->as.text_input.buf, ui->input_cursor);
 						w = text_width(el->font, el->as.text_input.buf);
 						h = text_height(el->font, el->as.text_input.buf);
 					}
@@ -442,7 +472,11 @@ void ui_end_frame(struct ui_context* ui) {
 						want_reset = true;
 
 						if (ui->active == el) {
-							input_scroll = el->as.text_input.input_dimentions.x - w - ui->padding - h;
+							input_scroll = el->as.text_input.input_dimentions.x - c_w - ui->padding - h;
+
+							if (input_scroll > 0) {
+								input_scroll = 0;
+							}
 						}
 					}
 
@@ -461,7 +495,7 @@ void ui_end_frame(struct ui_context* ui) {
 						ui->style_colors[ui_col_text]);	
 					if (ui->active == el) {
 						ui_draw_rect(ui, make_rect(
-							el->as.text_input.input_pos.x + w + ui->padding + input_scroll,
+							el->as.text_input.input_pos.x + c_w + ui->padding + input_scroll,
 							el->as.text_input.input_pos.y + ui->padding,
 							1, h
 						), ui_col_text);
