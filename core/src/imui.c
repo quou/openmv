@@ -704,6 +704,7 @@ bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 				ui->active = e;
 				ui->input_buf = buf;
 				ui->input_buf_size = buf_size;
+				ui->input_cursor = 0;
 			}
 		}
 	}
