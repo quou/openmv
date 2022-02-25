@@ -152,6 +152,12 @@ static void lsp_chunk_reserve(struct lsp_chunk* chunk, u32 count) {
 	}
 }
 
+static void lsp_chunk_add_u32(struct lsp_state* ctx, struct lsp_chunk* chunk, u32 i, u32 line) {
+	lsp_chunk_reserve(chunk, 4);
+	*((u32*)(chunk->code + chunk->count)) = i;
+	for (u32 i = 0; i < 4; i++) { chunk->lines[chunk->count++] = line; }
+}
+
 static u8 lsp_chunk_add_const(struct lsp_state* ctx, struct lsp_chunk* chunk, struct lsp_val val) {
 	if (chunk->const_count >= chunk_max_constants) {
 		fprintf(ctx->error, "Too many constants in one chunk. Maximum %d.\n", chunk_max_constants);
@@ -611,22 +617,30 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 			case op_put:
 				print_val(ctx->info, lsp_pop(ctx));
 				break;
-			case op_set:
+			case op_set: {
 				ctx->ip++;
-				ctx->stack[*ctx->ip] = lsp_peek(ctx);
-				break;
-			case op_get:
+				u32 idx = *(u32*)ctx->ip;
+				ctx->ip += 3;
+				ctx->stack[idx] = lsp_peek(ctx);
+			} break;
+			case op_get: {
 				ctx->ip++;
-				lsp_push(ctx, ctx->stack[*ctx->ip]);
-				break;
-			case op_set_arg:
+				u32 idx = *(u32*)ctx->ip;
+				ctx->ip += 3;
+				lsp_push(ctx, ctx->stack[idx]);
+			} break;
+			case op_set_arg: {
 				ctx->ip++;
-				ctx->frame_start[*ctx->ip] = lsp_peek(ctx);
-				break;
-			case op_get_arg:
+				u32 idx = *(u32*)ctx->ip;
+				ctx->ip += 3;
+				ctx->frame_start[idx] = lsp_peek(ctx);
+			} break;
+			case op_get_arg: {
 				ctx->ip++;
-				lsp_push(ctx, ctx->frame_start[*ctx->ip]);
-				break;
+				u32 idx = *(u32*)ctx->ip;
+				ctx->ip += 3;
+				lsp_push(ctx, ctx->frame_start[idx]);
+			} break;
 			case op_jump_if_false: {
 				ctx->ip++;
 				u16 offset = *((u16*)ctx->ip);
@@ -681,7 +695,6 @@ static struct lsp_val lsp_eval(struct lsp_state* ctx, struct lsp_chunk* chunk) {
 				struct lsp_chunk* old_chunk = ctx->chunk;
 
 				ctx->frame_start = (ctx->stack_top - argc) + 1;
-				ctx->stack_top += argc;
 
 				if (!(v.type == lsp_val_obj && v.as.obj->type == lsp_obj_fun)) {
 					lsp_exception(ctx, "Value not callable.");
@@ -977,11 +990,9 @@ struct parser {
 
 	u32 depth;
 
-	/* Stores the argument count of the currently parsing
-	 * function. This is so that the locals inside the function can
-	 * offset their stack positions so that they don't overwrite the
-	 * function arguments. */
-	u32 current_argc;
+	/* Offsets the locals in functions so that they
+	 * won't interfere with each other. */
+	u32 local_offset;
 
 	const char* name;
 
@@ -1354,7 +1365,7 @@ static void patch_jump(struct lsp_state* ctx, struct parser* parser, struct lsp_
 				} else { \
 					lsp_chunk_add_op(ctx, chunk, op_get, parser->line); \
 				} \
-				lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line); \
+				lsp_chunk_add_u32(ctx, chunk, l->pos, parser->line); \
 				resolved = true; \
 				break; \
 			} \
@@ -1596,7 +1607,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			}
 
 			if (declare) {
-				l.pos = parser->local_count + parser->current_argc;
+				l.pos = parser->local_count + parser->local_offset;
 				l.depth = parser->scope_depth;
 
 				parser->locals[parser->local_count++] = l;
@@ -1609,7 +1620,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 			} else {
 				lsp_chunk_add_op(ctx, chunk, op_set, parser->line);
 			}
-			lsp_chunk_add_op(ctx, chunk, (u8)l.pos, parser->line);
+			lsp_chunk_add_u32(ctx, chunk, l.pos, parser->line);
 
 			if (!declare) {
 				lsp_chunk_add_op(ctx, chunk, op_pop, parser->line);
@@ -1731,8 +1742,8 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 				argc++;
 			}
 
-			/* Twice to allow for the increased stack top. */
-			parser->current_argc = argc + argc;
+			u32 old_local_offset = parser->local_offset;
+			parser->local_offset += 256;
 
 			advance();
 			expect_tok(tok_left_paren, "Expected a block after argument list.");
@@ -1762,7 +1773,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 
 			parser->in_fun = false;
 
-			parser->current_argc = 0;
+			parser->local_offset = old_local_offset;
 		} else if (tok.type == tok_array) {
 			advance();
 
@@ -1844,7 +1855,7 @@ static bool parse(struct lsp_state* ctx, struct parser* parser, struct lsp_chunk
 					} else {
 						lsp_chunk_add_op(ctx, chunk, op_get, parser->line);
 					}
-					lsp_chunk_add_op(ctx, chunk, (u8)l->pos, parser->line);
+					lsp_chunk_add_u32(ctx, chunk, l->pos, parser->line);
 					lsp_chunk_add_op(ctx, chunk, op_call, parser->line);
 					lsp_chunk_add_op(ctx, chunk, (u8)argc, parser->line);
 
