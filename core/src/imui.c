@@ -110,6 +110,7 @@ struct ui_context {
 	u32 window_capacity;
 
 	struct table* window_meta;
+	struct table* strings;
 
 	struct ui_element* hovered;
 	struct ui_element* hot;
@@ -150,6 +151,20 @@ struct ui_context {
 	struct color color_override;
 	bool override_color;
 };
+
+static char* ui_copy_string(struct ui_context* ui, const char* text) {
+	void* str_ptr = table_get(ui->strings, text);
+	char* str = null;
+
+	if (!str_ptr) {
+		char* new_str = copy_string(text);
+		str = *(char**)table_set(ui->strings, text, (void*)&new_str);
+	} else {
+		str = *(char**)str_ptr;
+	}
+
+	return str;
+}
 
 static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_window* w, struct ui_element el) {
 	if (w->element_count >= w->element_capacity) {
@@ -230,6 +245,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->window_max_height = 300;
 
 	ui->window_meta = new_table(sizeof(struct window_meta));
+	ui->strings = new_table(sizeof(char*));
 
 	return ui;
 }
@@ -248,6 +264,11 @@ void free_ui_context(struct ui_context* ui) {
 	free_renderer(ui->renderer);
 
 	free_table(ui->window_meta);
+
+	for (table_iter(ui->strings, iter)) {
+		core_free(*(char**)iter.value);
+	}
+	free_table(ui->strings);
 
 	core_free(ui);
 }
@@ -426,8 +447,6 @@ void ui_end_frame(struct ui_context* ui) {
 			switch (el->type) {
 				case ui_el_text:
 					render_text(ui->renderer, el->font, el->as.text.text, el->position.x, el->position.y, el->color);
-
-					core_free(el->as.text.text);
 					break;
 				case ui_el_button: {
 					u32 c = ui_col_background;
@@ -447,8 +466,6 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						el->color);
-
-					core_free(el->as.button.text);
 					break;
 				}
 				case ui_el_text_input: {
@@ -535,8 +552,6 @@ void ui_end_frame(struct ui_context* ui) {
 				}
 			}
 		}
-
-		core_free(window->title);
 	}
 
 	core_free(sorted_windows);
@@ -562,7 +577,7 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	window->font = ui->font;
 
 	window->element_count = 0;
-	window->title = copy_string(name);
+	window->title = ui_copy_string(ui, name);
 
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
@@ -662,7 +677,7 @@ void ui_text(struct ui_context* ui, const char* text) {
 		.type = ui_el_text,
 		.position = ui->cursor_pos,
 		.as.text = {
-			.text = copy_string(text)
+			.text = ui_copy_string(ui, text)
 		}
 	});
 
@@ -678,7 +693,7 @@ bool ui_button(struct ui_context* ui, const char* text) {
 		.type = ui_el_button,
 		.position = ui->cursor_pos,
 		.as.button = {
-			.text = copy_string(text),
+			.text = ui_copy_string(ui, text),
 			.dimentions = make_v2i(r.w, r.h)
 		}
 	});
