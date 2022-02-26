@@ -363,7 +363,7 @@ void lsp_set_warnings(struct lsp_state* state, bool warnings) {
 void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 	u32 instruction = (u32)(ctx->ip - ctx->chunk->code - 1);
 
-	bool colors = !ctx->simple_errors && !(ctx->error == stderr && ctx->error == stdout);
+	bool colors = !ctx->simple_errors && (ctx->error == stderr && ctx->error == stdout);
 
 	if (colors) {
 		fprintf(ctx->error, "\033[1;31m");
