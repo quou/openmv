@@ -410,7 +410,9 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 			if (logic_store->command_error_log) {
 				struct font* old_font = ui_get_font(ui);
 				ui_set_font(ui, load_font("res/DejaVuSansMono.ttf", 14.0f));
+				ui_color(ui, make_color(0xff0000, 255));
 				ui_text(ui, logic_store->command_error_log);
+				ui_reset_color(ui);
 				ui_set_font(ui, old_font);
 			}
 

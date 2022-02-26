@@ -25,6 +25,8 @@ API void ui_image(struct ui_context* ui, struct texture* texture, struct rect re
 API bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect);
 
 API void ui_columns(struct ui_context* ui, u32 count, i32 width);
+API void ui_color(struct ui_context* ui, struct color color);
+API void ui_reset_color(struct ui_context* ui);
 
 API struct renderer* ui_get_renderer(struct ui_context* ui);
 

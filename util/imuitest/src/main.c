@@ -56,6 +56,16 @@ i32 main() {
 
 			ui_columns(ui, 1, 0);
 
+			ui_color(ui, make_color(0xff0000, 255));
+			ui_text(ui, "Red Text!");
+			ui_color(ui, make_color(0x00ff00, 255));
+			ui_text(ui, "Green Text!");
+			ui_color(ui, make_color(0xffff00, 255));
+			ui_text(ui, "Yellow Text!");
+			ui_color(ui, make_color(0xff00ff, 255));
+			ui_text(ui, "Pink Text!");
+			ui_reset_color(ui);
+
 			for (u32 i = 0; i < text_count; i++) {
 				ui_text(ui, texts[i]);
 			}

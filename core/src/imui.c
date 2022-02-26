@@ -53,6 +53,8 @@ struct ui_element {
 	u32 type;
 
 	struct font* font;
+	struct color color;
+	bool override_color;
 
 	union {
 		struct {
@@ -144,6 +146,9 @@ struct ui_context {
 	input_filter_func input_filter;
 
 	struct color style_colors[ui_col_count];
+
+	struct color color_override;
+	bool override_color;
 };
 
 static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_window* w, struct ui_element el) {
@@ -157,6 +162,12 @@ static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_wi
 	struct ui_element* e = &w->elements[w->element_count++];
 
 	e->font = ui->font;
+	e->override_color = ui->override_color;
+	if (e->override_color) {
+		e->color = ui->color_override;
+	} else {
+		e->color = ui->style_colors[ui_col_text];
+	}
 
 	return e;
 }
@@ -414,7 +425,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 			switch (el->type) {
 				case ui_el_text:
-					render_text(ui->renderer, el->font, el->as.text.text, el->position.x, el->position.y, ui->style_colors[ui_col_text]);
+					render_text(ui->renderer, el->font, el->as.text.text, el->position.x, el->position.y, el->color);
 
 					core_free(el->as.text.text);
 					break;
@@ -435,7 +446,7 @@ void ui_end_frame(struct ui_context* ui) {
 					render_text(ui->renderer, el->font, el->as.button.text,
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
-						ui->style_colors[ui_col_text]);
+						el->color);
 
 					core_free(el->as.button.text);
 					break;
@@ -485,7 +496,7 @@ void ui_end_frame(struct ui_context* ui) {
 					render_text(ui->renderer, el->font, el->as.text_input.buf,
 						(el->as.text_input.input_pos.x + ui->padding) + input_scroll,
 						el->as.text_input.input_pos.y + ui->padding,
-						ui->style_colors[ui_col_text]);	
+						el->color);	
 
 					if (want_reset) {
 						renderer_clip(ui->renderer, clip_rect);
@@ -623,6 +634,15 @@ void ui_columns(struct ui_context* ui, u32 count, i32 width) {
 
 	ui->columns = count;
 	ui->column_size = width;
+}
+
+void ui_color(struct ui_context* ui, struct color color) {
+	ui->override_color = true;
+	ui->color_override = color;
+}
+
+void ui_reset_color(struct ui_context* ui) {
+	ui->override_color = false;
 }
 
 static void ui_advance(struct ui_context* ui, i32 el_height) {
