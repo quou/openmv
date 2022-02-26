@@ -20,7 +20,8 @@ project "imuitest"
 	}
 
 	links {
-		"core"
+		"core",
+		"m"
 	}
 
 	defines {

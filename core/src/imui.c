@@ -152,18 +152,26 @@ struct ui_context {
 	bool override_color;
 };
 
-static char* ui_copy_string(struct ui_context* ui, const char* text) {
-	void* str_ptr = table_get(ui->strings, text);
-	char* str = null;
+struct text_entry {
+	i32 life;
+	char* ptr;
+};
 
-	if (!str_ptr) {
-		char* new_str = copy_string(text);
-		str = *(char**)table_set(ui->strings, text, (void*)&new_str);
+static char* ui_copy_string(struct ui_context* ui, const char* text) {
+	struct text_entry* entry = table_get(ui->strings, text);
+
+	if (!entry) {
+		struct text_entry new_entry = {
+			.life = 1,
+			.ptr = copy_string(text)
+		};
+
+		entry = table_set(ui->strings, text, &new_entry);
 	} else {
-		str = *(char**)str_ptr;
+		entry->life++;
 	}
 
-	return str;
+	return entry->ptr;
 }
 
 static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_window* w, struct ui_element el) {
@@ -245,7 +253,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->window_max_height = 300;
 
 	ui->window_meta = new_table(sizeof(struct window_meta));
-	ui->strings = new_table(sizeof(char*));
+	ui->strings = new_table(sizeof(struct text_entry));
 
 	return ui;
 }
@@ -266,7 +274,7 @@ void free_ui_context(struct ui_context* ui) {
 	free_table(ui->window_meta);
 
 	for (table_iter(ui->strings, iter)) {
-		core_free(*(char**)iter.value);
+		core_free(((struct text_entry*)iter.value)->ptr);
 	}
 	free_table(ui->strings);
 
@@ -555,6 +563,17 @@ void ui_end_frame(struct ui_context* ui) {
 	}
 
 	core_free(sorted_windows);
+
+	for (table_iter(ui->strings, iter)) {
+		struct text_entry* entry = iter.value;
+		entry->life--;
+
+		if (entry->life < 0) {
+			char* ptr = entry->ptr;
+			table_delete(ui->strings, entry->ptr);
+			core_free(ptr);
+		}
+	}
 
 	renderer_flush(ui->renderer);
 	renderer_end_frame(ui->renderer);
