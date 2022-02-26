@@ -27,6 +27,8 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
+	//ui_set_color(ui, ui_col_window_background, make_color(0x1a1a1a, 255));
+
 	struct texture* player_texture = load_texture("res/bmp/char.bmp");
 
 	u64 now = get_time(), last = now; 

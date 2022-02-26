@@ -9,8 +9,22 @@
 
 struct ui_context;
 
+enum {
+	ui_col_window_background = 0,
+	ui_col_window_border,
+	ui_col_background,
+	ui_col_hovered,
+	ui_col_text,
+	ui_col_hot,
+	ui_col_image,
+	ui_col_image_hovered,
+	ui_col_image_hot,
+	ui_col_count
+};
+
 API struct ui_context* new_ui_context(struct shader shader, struct window* window, struct font* font);
 API void free_ui_context(struct ui_context* ui);
+API void ui_set_color(struct ui_context* ui, u32 id, struct color color);
 API void ui_text_input_event(struct ui_context* ui, const char* text);
 API void ui_begin_frame(struct ui_context* ui);
 API void ui_end_frame(struct ui_context* ui);

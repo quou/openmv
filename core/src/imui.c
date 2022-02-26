@@ -35,18 +35,6 @@ enum {
 	ui_el_image
 };
 
-enum {
-	ui_col_window_background = 0,
-	ui_col_background,
-	ui_col_hovered,
-	ui_col_text,
-	ui_col_hot,
-	ui_col_image,
-	ui_col_image_hovered,
-	ui_col_image_hot,
-	ui_col_count
-};
-
 struct ui_element {
 	v2i position;
 
@@ -240,13 +228,14 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->renderer->clip_enable = true;
 
 	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 150);
-	ui->style_colors[ui_col_background] = make_color(0x212121, 255);
-	ui->style_colors[ui_col_hovered] = make_color(0x242533, 255);
-	ui->style_colors[ui_col_hot] = make_color(0x393d5b, 255);
-	ui->style_colors[ui_col_text] = make_color(0xffffff, 255);
-	ui->style_colors[ui_col_image_hovered] = make_color(0xaaaeeb, 255);
-	ui->style_colors[ui_col_image_hot] = make_color(0x7686ff, 255);
-	ui->style_colors[ui_col_image] = make_color(0xffffff, 255);
+	ui->style_colors[ui_col_window_border]     = make_color(0x0f0f0f, 200);
+	ui->style_colors[ui_col_background]        = make_color(0x212121, 255);
+	ui->style_colors[ui_col_hovered]           = make_color(0x242533, 255);
+	ui->style_colors[ui_col_hot]               = make_color(0x393d5b, 255);
+	ui->style_colors[ui_col_text]              = make_color(0xffffff, 255);
+	ui->style_colors[ui_col_image_hovered]     = make_color(0xaaaeeb, 255);
+	ui->style_colors[ui_col_image_hot]         = make_color(0x7686ff, 255);
+	ui->style_colors[ui_col_image]             = make_color(0xffffff, 255);
 
 	ui->padding = 3;
 	ui->column_size = 150;
@@ -279,6 +268,10 @@ void free_ui_context(struct ui_context* ui) {
 	free_table(ui->strings);
 
 	core_free(ui);
+}
+
+void ui_set_color(struct ui_context* ui, u32 id, struct color color) {
+	ui->style_colors[id] = color;
 }
 
 void ui_text_input_event(struct ui_context* ui, const char* text) {
@@ -429,8 +422,14 @@ void ui_end_frame(struct ui_context* ui) {
 			window->position.x, window->position.y,
 			window->dimentions.x, window->dimentions.y);
 
-		renderer_clip(ui->renderer, window_rect);
+		struct rect window_border_rect = make_rect(
+			window->position.x - 1, window->position.y - 1,
+			window->dimentions.x + 2, window->dimentions.y + 2);
 
+		renderer_clip(ui->renderer, window_border_rect);
+
+		ui_draw_rect(ui, window_border_rect,
+			ui_col_window_border);
 		ui_draw_rect(ui, window_rect,
 			ui_col_window_background);
 
