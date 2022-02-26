@@ -65,7 +65,6 @@ struct ui_element {
 		} button;
 
 		struct {
-			char* label;
 			char* buf;
 			u32 buf_size;
 			v2i input_dimentions;
@@ -131,6 +130,9 @@ struct ui_context {
 	struct renderer* renderer;
 
 	i32 input_scroll;
+
+	u32 columns;
+	u32 item;
 
 	i32 padding;
 	i32 column_size;
@@ -489,10 +491,6 @@ void ui_end_frame(struct ui_context* ui) {
 						renderer_clip(ui->renderer, clip_rect);
 					}
 
-					render_text(ui->renderer, el->font, el->as.text_input.label,
-						el->position.x + ui->padding,
-						el->position.y + ui->padding,
-						ui->style_colors[ui_col_text]);	
 					if (ui->active == el) {
 						ui_draw_rect(ui, make_rect(
 							el->as.text_input.input_pos.x + c_w + ui->padding + input_scroll,
@@ -500,8 +498,6 @@ void ui_end_frame(struct ui_context* ui) {
 							1, h
 						), ui_col_text);
 					}
-
-					core_free(el->as.text_input.label);
 
 					break;
 				}
@@ -622,6 +618,25 @@ void ui_end_window(struct ui_context* ui) {
 	ui->current_window = null;
 }
 
+void ui_columns(struct ui_context* ui, u32 count, i32 width) {
+	if (count == 0) { count = 1; }
+
+	ui->columns = count;
+	ui->column_size = width;
+}
+
+static void ui_advance(struct ui_context* ui, i32 el_height) {
+	ui->item++;
+
+	if (ui->item >= ui->columns) {
+		ui->cursor_pos.x = ui->current_window->position.x + ui->padding;
+		ui->cursor_pos.y += el_height;
+		ui->item = 0;
+	} else {
+		ui->cursor_pos.x += ui->column_size;
+	}
+}
+
 void ui_text(struct ui_context* ui, const char* text) {
 	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text,
@@ -631,7 +646,7 @@ void ui_text(struct ui_context* ui, const char* text) {
 		}
 	});
 
-	ui->cursor_pos.y += text_height(ui->font, text) + ui->padding;
+	ui_advance(ui, text_height(ui->font, text) + ui->padding);
 }
 
 bool ui_button(struct ui_context* ui, const char* text) {
@@ -648,7 +663,7 @@ bool ui_button(struct ui_context* ui, const char* text) {
 		}
 	});
 
-	ui->cursor_pos.y += text_height(ui->font, text) + ui->padding * 3;
+	ui_advance(ui, text_height(ui->font, text) + ui->padding * 3);
 
 	if (ui->top_window == ui->current_window &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
@@ -668,18 +683,17 @@ bool ui_button(struct ui_context* ui, const char* text) {
 	return false;
 }
 
-bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size) {
+bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 	struct rect r = make_rect(
-		ui->cursor_pos.x + ui->column_size,
-		ui->cursor_pos.y + ui->padding,
-		ui->current_window->dimentions.x - ui->column_size - ui->padding * 2,
+		ui->cursor_pos.x,
+		ui->cursor_pos.y,
+		ui->column_size - ui->padding * 2,
 		font_height(ui->font) + ui->padding * 2);
 
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_input,
 		.position = ui->cursor_pos,
 		.as.text_input = {
-			.label = copy_string(label),
 			.buf = buf,
 			.buf_size = buf_size,
 			.input_dimentions = make_v2i(r.w, r.h),
@@ -687,7 +701,7 @@ bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 		}
 	});
 
-	ui->cursor_pos.y += font_height(ui->font) + ui->padding * 4;
+	ui_advance(ui, font_height(ui->font) + ui->padding * 4);
 
 	ui->input_filter = text_input_filter;
 
@@ -711,13 +725,14 @@ bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_
 
 	if (ui->active == e && key_just_released(main_window, KEY_RETURN)) {
 		ui->active = null;
+		ui->input_buf = null;
 		return true;
 	}
 
 	return false;
 }
 
-bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) {
+void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) {
 	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, 100, 100);
 
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
@@ -730,7 +745,23 @@ bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 		}
 	});
 
-	ui->cursor_pos.y += e->as.image.dimentions.y + ui->padding;
+	ui_advance(ui, e->as.image.dimentions.y + ui->padding);
+}
+
+bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect) {
+	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, 100, 100);
+
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_image,
+		.position = ui->cursor_pos,
+		.as.image = {
+			.texture = texture,
+			.dimentions = make_v2i(100, 100),
+			.rect = rect
+		}
+	});
+
+	ui_advance(ui, e->as.image.dimentions.y + ui->padding);
 
 	if (ui->top_window == ui->current_window &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {

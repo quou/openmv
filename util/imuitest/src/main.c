@@ -43,7 +43,9 @@ i32 main() {
 		ui_begin_frame(ui);
 
 		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
-			if (ui_text_input(ui, "Text Input", buffer, sizeof(buffer))) {
+			ui_columns(ui, 4, 80);
+			ui_text(ui, "Input");
+			if (ui_text_input(ui, buffer, sizeof(buffer)) || ui_button(ui, "Submit")) {
 				strcpy(texts[text_count++], buffer);
 				buffer[0] = '\0';
 			}
@@ -51,6 +53,8 @@ i32 main() {
 			if (ui_button(ui, "Clear")) {
 				text_count = 0;
 			}
+
+			ui_columns(ui, 1, 0);
 
 			for (u32 i = 0; i < text_count; i++) {
 				ui_text(ui, texts[i]);
@@ -60,7 +64,10 @@ i32 main() {
 		}
 
 		if (ui_begin_window(ui, "Test Window B", make_v2i(0, 300))) {
+			ui_columns(ui, 2, 80);
 			ui_image(ui, player_texture, make_rect(0, 0, 16, 16));
+			ui_image_button(ui, player_texture, make_rect(0, 16, 16, 16));
+			ui_columns(ui, 1, 0);
 
 			for (u32 i = 0; i < 25; i++) {
 				ui_button(ui, "Button");

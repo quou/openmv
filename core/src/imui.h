@@ -20,8 +20,11 @@ API void ui_end_window(struct ui_context* ui);
 
 API void ui_text(struct ui_context* ui, const char* text);
 API bool ui_button(struct ui_context* ui, const char* text);
-API bool ui_text_input(struct ui_context* ui, const char* label, char* buf, u32 buf_size);
-API bool ui_image(struct ui_context* ui, struct texture* texture, struct rect rect);
+API bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size);
+API void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect);
+API bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect);
+
+API void ui_columns(struct ui_context* ui, u32 count, i32 width);
 
 API struct renderer* ui_get_renderer(struct ui_context* ui);
 

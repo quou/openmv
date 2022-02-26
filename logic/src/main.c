@@ -371,6 +371,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 				core_free(path);
 			}
 
+			ui_columns(ui, 2, 100);
 			if (ui_button(ui, "Save Game")) {
 				savegame();
 			}
@@ -378,12 +379,14 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 			if (ui_button(ui, "Load Game")) {
 				loadgame();
 			}
+			ui_columns(ui, 1, 0);
 
 			ui_end_window(ui);
 		}
 
 		if (ui_begin_window(ui, "Commands", make_v2i(0, 300))) {
-			if (ui_text_input(ui, "Command", logic_store->lsp_buf, 256) || ui_button(ui, "Submit")) {
+			ui_columns(ui, 3, 80);
+			if (ui_text_input(ui, logic_store->lsp_buf, 256) || ui_button(ui, "Submit")) {
 				lsp_do_string(logic_store->lsp, "command", logic_store->lsp_buf);
 				logic_store->lsp_buf[0] = 0;
 
@@ -395,6 +398,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 				read_raw_no_pck("command.log", (u8**)&logic_store->command_error_log, null, true);
 				logic_store->lsp_out = fopen("command.log", "a");
 			}
+			ui_columns(ui, 1, 0);
 
 			if (ui_button(ui, "Clear")) {
 				fclose(logic_store->lsp_out);
