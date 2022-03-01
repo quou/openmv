@@ -113,6 +113,8 @@ struct ui_dockspace {
 	struct ui_dockspace* parent;
 	u32 parent_dir;
 
+	bool occupied;
+
 	struct float_rect rect;
 };
 
@@ -393,32 +395,36 @@ static i32 cmp_side_distance(const void* a, const void* b) {
 static void ui_window_change_dock(struct ui_context* ui, struct window_meta* meta, struct ui_dockspace* dock) {
 	if (!meta) { return; }
 
-	if (meta->dock && meta->dock->parent) {
-		switch (meta->dock->parent_dir) {
-			case ui_dock_dir_left:
-				meta->dock->parent->rect.w += meta->dock->rect.w;
-				break;
-			case ui_dock_dir_right:
-				meta->dock->parent->rect.x -= meta->dock->rect.w;
-				meta->dock->parent->rect.w += meta->dock->rect.w;
-				break;
-			case ui_dock_dir_up:
-				meta->dock->parent->rect.h += meta->dock->rect.h;
-				break;
-			case ui_dock_dir_down:
-				meta->dock->parent->rect.y -= meta->dock->rect.h;
-				meta->dock->parent->rect.h += meta->dock->rect.h;
-				break;
-			default: break;
+	if (meta->dock) {
+		meta->dock->occupied = false;
+
+		if (meta->dock->parent) {
+			switch (meta->dock->parent_dir) {
+				case ui_dock_dir_left:
+					meta->dock->parent->rect.w += meta->dock->rect.w;
+					break;
+				case ui_dock_dir_right:
+					meta->dock->parent->rect.x -= meta->dock->rect.w;
+					meta->dock->parent->rect.w += meta->dock->rect.w;
+					break;
+				case ui_dock_dir_up:
+					meta->dock->parent->rect.h += meta->dock->rect.h;
+					break;
+				case ui_dock_dir_down:
+					meta->dock->parent->rect.y -= meta->dock->rect.h;
+					meta->dock->parent->rect.h += meta->dock->rect.h;
+					break;
+				default: break;
+			}
+
+			u32 idx = (u32)((u64)(meta->dock - ui->dockspaces));
+
+			if (ui->dockspace_count > 1) {
+				ui->dockspaces[idx] = ui->dockspaces[ui->dockspace_count - 1];
+			}
+
+			ui->dockspace_count--;
 		}
-
-		u32 idx = (u32)((u64)(meta->dock - ui->dockspaces));
-
-		if (ui->dockspace_count > 1) {
-			ui->dockspaces[idx] = ui->dockspaces[ui->dockspace_count - 1];
-		}
-
-		ui->dockspace_count--;
 	}
 
 	meta->dock = dock;
@@ -753,6 +759,7 @@ void ui_end_frame(struct ui_context* ui) {
 				ui->current_dockspace->rect.w /= 2;
 				new_dock->rect = ui->current_dockspace->rect;
 				new_dock->parent = ui->current_dockspace;
+				new_dock->occupied = true;
 
 				new_dock->parent_dir = ui_dock_dir_right;
 
@@ -775,6 +782,7 @@ void ui_end_frame(struct ui_context* ui) {
 				new_dock->rect = ui->current_dockspace->rect;
 				new_dock->rect.x += ui->current_dockspace->rect.w;
 				new_dock->parent = ui->current_dockspace;
+				new_dock->occupied = true;
 
 				new_dock->parent_dir = ui_dock_dir_left;
 
@@ -794,6 +802,7 @@ void ui_end_frame(struct ui_context* ui) {
 				ui->current_dockspace->rect.h /= 2;
 				new_dock->rect = ui->current_dockspace->rect;
 				new_dock->parent = ui->current_dockspace;
+				new_dock->occupied = true;
 
 				new_dock->parent_dir = ui_dock_dir_down;
 
@@ -816,13 +825,14 @@ void ui_end_frame(struct ui_context* ui) {
 				new_dock->rect = ui->current_dockspace->rect;
 				new_dock->rect.y += ui->current_dockspace->rect.h;
 				new_dock->parent = ui->current_dockspace;
+				new_dock->occupied = true;
 
 				new_dock->parent_dir = ui_dock_dir_up;
 
 				ui_window_change_dock(ui, meta, new_dock);
 			}
-		} else if (mouse_over_rect(middle)) {
-			split_preview = get_dock_rect_screen(ui->current_dockspace->rect);
+		} else if (mouse_over_rect(middle) && !ui->current_dockspace->occupied) {
+			split_preview = current_dockspace_rect;
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
 				ui_window_change_dock(ui, meta, ui->current_dockspace);
