@@ -101,12 +101,46 @@ enum {
 	ui_dock_dir_down
 };
 
+struct float_rect {
+	f32 x, y, w, h;
+};
+
+static inline struct float_rect make_float_rect(f32 x, f32 y, f32 w, f32 h) {
+	return (struct float_rect) { x, y, w, h };
+}
+
 struct ui_dockspace {
 	struct ui_dockspace* parent;
 	u32 parent_dir;
 
-	struct rect rect;
+	struct float_rect rect;
 };
+
+static v2i get_dockspace_position(struct ui_dockspace* dock) {
+	i32 w, h;
+	query_window(main_window, &w, &h);
+
+	return make_v2i((i32)(dock->rect.x * (f32)w), (i32)(dock->rect.y * (f32)h));
+}
+
+static v2i get_dockspace_dimentions(struct ui_dockspace* dock) {
+	i32 w, h;
+	query_window(main_window, &w, &h);
+
+	return make_v2i((i32)(dock->rect.w * (f32)w), (i32)(dock->rect.h * (f32)h));
+}
+
+static struct rect get_dock_rect_screen(struct float_rect rect) {
+	i32 w, h;
+	query_window(main_window, &w, &h);
+
+	return (struct rect) {
+		(i32)(rect.x * (f32)w),
+		(i32)(rect.y * (f32)h),
+		(i32)(rect.w * (f32)w),
+		(i32)(rect.h * (f32)h),
+	};
+}
 
 /* For persistent data. */
 struct window_meta {
@@ -277,7 +311,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->strings = new_table(sizeof(struct text_entry));
 
 	struct ui_dockspace* root_dockspace = &ui->dockspaces[ui->dockspace_count++];
-	root_dockspace->rect = make_rect(0, 0, 1366, 768); /* FIXME: This shouldn't be hardcoded. */
+	root_dockspace->rect = make_float_rect(0.0f, 0.0f, 1.0f, 1.0f);
 
 	return ui;
 }
@@ -634,12 +668,15 @@ void ui_end_frame(struct ui_context* ui) {
 	/* Draw & update the window dock */
 	bool docking = true;
 	if (ui->current_dockspace) {
-		renderer_clip(ui->renderer, ui->current_dockspace->rect);
+		v2i dock_pos = get_dockspace_position(ui->current_dockspace);
+		v2i dock_dim = get_dockspace_dimentions(ui->current_dockspace);
+		renderer_clip(ui->renderer, make_rect(dock_pos.x, dock_pos.y, dock_dim.x, dock_dim.y));
 
 		i32 dock_handle_size = 80;
+		struct rect current_dockspace_rect = get_dock_rect_screen(ui->current_dockspace->rect);
 		v2i dock_centre = {
-			ui->current_dockspace->rect.x + ui->current_dockspace->rect.w / 2,
-			ui->current_dockspace->rect.y + ui->current_dockspace->rect.h / 2,
+			current_dockspace_rect.x + current_dockspace_rect.w / 2,
+			current_dockspace_rect.y + current_dockspace_rect.h / 2,
 		};
 
 		struct rect left = {
@@ -683,10 +720,10 @@ void ui_end_frame(struct ui_context* ui) {
 		struct rect split_preview = { 0 };
 		if (mouse_over_rect(left)) {
 			split_preview = (struct rect) {
-				.x = ui->current_dockspace->rect.x,
-				.y = ui->current_dockspace->rect.y,
-				.w = ui->current_dockspace->rect.w / 2,
-				.h = ui->current_dockspace->rect.h
+				.x = current_dockspace_rect.x,
+				.y = current_dockspace_rect.y,
+				.w = current_dockspace_rect.w / 2,
+				.h = current_dockspace_rect.h
 			};
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
@@ -704,10 +741,10 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		} else if (mouse_over_rect(right)) {
 			split_preview = (struct rect) {
-				.x = ui->current_dockspace->rect.x + ui->current_dockspace->rect.w / 2,
-				.y = ui->current_dockspace->rect.y,
-				.w = ui->current_dockspace->rect.w / 2,
-				.h = ui->current_dockspace->rect.h
+				.x = current_dockspace_rect.x + current_dockspace_rect.w / 2.0f,
+				.y = current_dockspace_rect.y,
+				.w = current_dockspace_rect.w / 2.0f,
+				.h = current_dockspace_rect.h
 			};
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
@@ -724,10 +761,10 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		} else if (mouse_over_rect(top)) {
 			split_preview = (struct rect) {
-				.x = ui->current_dockspace->rect.x,
-				.y = ui->current_dockspace->rect.y,
-				.w = ui->current_dockspace->rect.w,
-				.h = ui->current_dockspace->rect.h / 2,
+				.x = current_dockspace_rect.x,
+				.y = current_dockspace_rect.y,
+				.w = current_dockspace_rect.w,
+				.h = current_dockspace_rect.h / 2,
 			};
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
@@ -745,10 +782,10 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		} else if (mouse_over_rect(bottom)) {
 			split_preview = (struct rect) {
-				.x = ui->current_dockspace->rect.x,
-				.y = ui->current_dockspace->rect.y + ui->current_dockspace->rect.h / 2,
-				.w = ui->current_dockspace->rect.w,
-				.h = ui->current_dockspace->rect.h / 2,
+				.x = current_dockspace_rect.x,
+				.y = current_dockspace_rect.y + ui->current_dockspace->rect.h / 2,
+				.w = current_dockspace_rect.w,
+				.h = current_dockspace_rect.h / 2,
 			};
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
@@ -764,7 +801,7 @@ void ui_end_frame(struct ui_context* ui) {
 				ui_window_change_dock(ui, meta, new_dock);
 			}
 		} else if (mouse_over_rect(middle)) {
-			split_preview = ui->current_dockspace->rect;
+			split_preview = get_dock_rect_screen(ui->current_dockspace->rect);
 
 			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
 				ui_window_change_dock(ui, meta, ui->current_dockspace);
@@ -835,8 +872,8 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 		meta = table_get(ui->window_meta, name);
 	} else {
 		if (ui->dragging != window && meta->dock) {
-			window->position = make_v2i(meta->dock->rect.x, meta->dock->rect.y);
-			window->dimentions = make_v2i(meta->dock->rect.w, meta->dock->rect.h);
+			window->position = get_dockspace_position(meta->dock);
+			window->dimentions = get_dockspace_dimentions(meta->dock);
 		} else {
 			window->position = meta->position;
 			window->dimentions = meta->dimentions;
@@ -856,8 +893,8 @@ void ui_end_window(struct ui_context* ui) {
 
 	struct window_meta* meta = table_get(ui->window_meta, window->title);
 	if (ui->dragging != window && meta->dock) {
-		window->position = make_v2i(meta->dock->rect.x, meta->dock->rect.y);
-		window->dimentions = make_v2i(meta->dock->rect.w, meta->dock->rect.h);
+		window->position = get_dockspace_position(meta->dock);
+		window->dimentions = get_dockspace_dimentions(meta->dock);
 	} else {
 		window->position = meta->position;
 		window->dimentions = meta->dimentions;
@@ -885,7 +922,7 @@ void ui_end_window(struct ui_context* ui) {
 
 			ui->current_dockspace = null;
 			for (u32 i = 0; i < ui->dockspace_count; i++) {
-				if (mouse_over_rect(ui->dockspaces[i].rect)) {
+				if (mouse_over_rect(get_dock_rect_screen(ui->dockspaces[i].rect))) {
 					ui->current_dockspace = ui->dockspaces + i;
 					break;
 				}
