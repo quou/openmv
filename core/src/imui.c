@@ -511,6 +511,22 @@ void ui_end_frame(struct ui_context* ui) {
 		if (dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 			set_window_cursor(main_window, CURSOR_MOVE);
 			ui->dragging = window;
+
+			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
+
+			ui->top_window = window;
+			meta->z = 0;
+
+			for (u32 i = 0; i < ui->window_count; i++) {
+				struct ui_window* w = ui->windows + i;
+				if (w == ui->top_window) { continue; }
+				
+				struct window_meta* m = table_get(ui->window_meta, w->title);
+				if (m) {
+					m->z++;
+				}
+			}
+
 		}
 	} else if (count == 0) {
 		set_window_cursor(main_window, CURSOR_POINTER);
@@ -788,7 +804,7 @@ void ui_end_frame(struct ui_context* ui) {
 		} else if (mouse_over_rect(bottom)) {
 			split_preview = (struct rect) {
 				.x = current_dockspace_rect.x,
-				.y = current_dockspace_rect.y + ui->current_dockspace->rect.h / 2,
+				.y = current_dockspace_rect.y + current_dockspace_rect.h / 2,
 				.w = current_dockspace_rect.w,
 				.h = current_dockspace_rect.h / 2,
 			};
