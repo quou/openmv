@@ -383,7 +383,11 @@ void ui_begin_frame(struct ui_context* ui) {
 }
 
 static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) {
-	return (*a)->z < (*b)->z;
+	return (*b)->z - (*a)->z;
+}
+
+static i32 cmp_side_distance(const void* a, const void* b) {
+	return *(i32*)a - *(i32*)b;
 }
 
 static void ui_window_change_dock(struct ui_context* ui, struct window_meta* meta, struct ui_dockspace* dock) {
@@ -483,12 +487,13 @@ void ui_end_frame(struct ui_context* ui) {
 			ui->drag_start = get_mouse_position(main_window);
 			ui->drag_offset = v2i_sub(ui->drag_start, window->position);
 
-			if (dist < 20) {
+			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
+
+			if (!meta->dock && dist < 20) {
 				ui->resizing = window;
 			}
 
 			ui->top_window = window;
-			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
 			meta->z = 0;
 
 			for (u32 i = 0; i < ui->window_count; i++) {
