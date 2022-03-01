@@ -414,7 +414,7 @@ void lsp_exception(struct lsp_state* ctx, const char* message, ...) {
 }
 
 u32 lsp_get_stack_count(struct lsp_state* ctx) {
-	return (u32)((u64)(ctx->stack_top - ctx->stack) / sizeof(struct lsp_val));
+	return (u32)(ctx->stack_top - ctx->stack);
 }
 
 void lsp_push(struct lsp_state* ctx, struct lsp_val val) {

@@ -5,6 +5,8 @@
 #include "table.h"
 #include "imui.h"
 
+#define max_dockspaces 32
+
 typedef bool (*input_filter_func)(char c);
 
 bool text_input_filter(char c) {
@@ -18,6 +20,14 @@ static bool mouse_over_rect(struct rect r) {
 			mouse_pos.y > r.y &&
 			mouse_pos.x < r.x + r.w &&
 			mouse_pos.y < r.y + r.h);
+}
+
+static bool rect_over_rect(struct rect a, struct rect b) {
+	return
+		a.x + a.w > b.x &&
+		a.y + a.h > b.y &&
+		a.x < b.x + b.w &&
+		a.y < b.y + b.h;
 }
 
 static bool clicked() {
@@ -84,18 +94,37 @@ struct ui_window {
 	char* title;
 };
 
+enum {
+	ui_dock_dir_left = 0,
+	ui_dock_dir_right,
+	ui_dock_dir_up,
+	ui_dock_dir_down
+};
+
+struct ui_dockspace {
+	struct ui_dockspace* parent;
+	u32 parent_dir;
+
+	struct rect rect;
+};
+
 /* For persistent data. */
 struct window_meta {
 	v2i position;
 	v2i dimentions;
 	i32 scroll;
 	i32 z;
+	struct ui_dockspace* dock;
 };
 
 struct ui_context {
 	struct ui_window* windows;
 	u32 window_count;
 	u32 window_capacity;
+
+	struct ui_dockspace dockspaces[max_dockspaces];
+	u32 dockspace_count;
+	struct ui_dockspace* current_dockspace;
 
 	struct table* window_meta;
 	struct table* strings;
@@ -119,6 +148,8 @@ struct ui_context {
 	struct window* window;
 	struct font* font;
 	struct renderer* renderer;
+
+	v2i drag_start;
 
 	i32 input_scroll;
 
@@ -236,6 +267,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->style_colors[ui_col_image_hovered]     = make_color(0xaaaeeb, 255);
 	ui->style_colors[ui_col_image_hot]         = make_color(0x7686ff, 255);
 	ui->style_colors[ui_col_image]             = make_color(0xffffff, 255);
+	ui->style_colors[ui_col_dock]              = make_color(0xdb3d40, 150);
 
 	ui->padding = 3;
 	ui->column_size = 150;
@@ -243,6 +275,9 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 
 	ui->window_meta = new_table(sizeof(struct window_meta));
 	ui->strings = new_table(sizeof(struct text_entry));
+
+	struct ui_dockspace* root_dockspace = &ui->dockspaces[ui->dockspace_count++];
+	root_dockspace->rect = make_rect(0, 0, 1366, 768); /* FIXME: This shouldn't be hardcoded. */
 
 	return ui;
 }
@@ -308,11 +343,47 @@ void ui_begin_frame(struct ui_context* ui) {
 
 	ui->window_count = 0;
 
+	ui->current_dockspace = null;
+
 	renderer_resize(ui->renderer, make_v2i(w, h));
 }
 
 static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) {
 	return (*a)->z < (*b)->z;
+}
+
+static void ui_window_change_dock(struct ui_context* ui, struct window_meta* meta, struct ui_dockspace* dock) {
+	if (!meta) { return; }
+
+	if (meta->dock && meta->dock->parent) {
+		switch (meta->dock->parent_dir) {
+			case ui_dock_dir_left:
+				meta->dock->parent->rect.w += meta->dock->rect.w;
+				break;
+			case ui_dock_dir_right:
+				meta->dock->parent->rect.x -= meta->dock->rect.w;
+				meta->dock->parent->rect.w += meta->dock->rect.w;
+				break;
+			case ui_dock_dir_up:
+				meta->dock->parent->rect.h += meta->dock->rect.h;
+				break;
+			case ui_dock_dir_down:
+				meta->dock->parent->rect.y -= meta->dock->rect.h;
+				meta->dock->parent->rect.h += meta->dock->rect.h;
+				break;
+			default: break;
+		}
+
+		u32 idx = (u32)((u64)(meta->dock - ui->dockspaces));
+
+		if (ui->dockspace_count > 1) {
+			ui->dockspaces[idx] = ui->dockspaces[ui->dockspace_count - 1];
+		}
+
+		ui->dockspace_count--;
+	}
+
+	meta->dock = dock;
 }
 
 void ui_end_frame(struct ui_context* ui) {
@@ -348,12 +419,6 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->active = null;
 	}
 
-	if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
-		ui->dragging = null;
-		ui->resizing = null;
-		set_window_cursor(main_window, CURSOR_POINTER);
-	}
-
 	ui->top_window = ui->windows;
 	for (u32 i = 0; i < ui->window_count; i++) {
 		if (ui->windows[i].z == 0) {
@@ -381,12 +446,11 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		if (mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+			ui->drag_start = get_mouse_position(main_window);
+			ui->drag_offset = v2i_sub(ui->drag_start, window->position);
+
 			if (dist < 20) {
 				ui->resizing = window;
-			} else {
-				set_window_cursor(main_window, CURSOR_MOVE);
-				ui->dragging = window;
-				ui->drag_offset = v2i_sub(get_mouse_position(main_window), window->position);
 			}
 
 			ui->top_window = window;
@@ -402,6 +466,12 @@ void ui_end_frame(struct ui_context* ui) {
 					m->z++;
 				}
 			}
+		}
+
+		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(main_window)));
+		if (dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+			set_window_cursor(main_window, CURSOR_MOVE);
+			ui->dragging = window;
 		}
 	} else if (count == 0) {
 		set_window_cursor(main_window, CURSOR_POINTER);
@@ -561,6 +631,162 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	}
 
+	/* Draw & update the window dock */
+	bool docking = true;
+	if (ui->current_dockspace) {
+		renderer_clip(ui->renderer, ui->current_dockspace->rect);
+
+		i32 dock_handle_size = 80;
+		v2i dock_centre = {
+			ui->current_dockspace->rect.x + ui->current_dockspace->rect.w / 2,
+			ui->current_dockspace->rect.y + ui->current_dockspace->rect.h / 2,
+		};
+
+		struct rect left = {
+			.x = dock_centre.x - (dock_handle_size + dock_handle_size / 2) - 3,
+			.y = dock_centre.y - dock_handle_size / 2,
+			.w = dock_handle_size, .h = dock_handle_size
+		};
+		struct rect right = {
+			.x = dock_centre.x + dock_handle_size / 2 + 3,
+			.y = dock_centre.y - dock_handle_size / 2,
+			.w = dock_handle_size, .h = dock_handle_size
+		};
+		struct rect top = {
+			.x = dock_centre.x - dock_handle_size / 2,
+			.y = dock_centre.y - dock_handle_size - dock_handle_size / 2 - 3,
+			.w = dock_handle_size, .h = dock_handle_size
+		};
+		struct rect bottom = {
+			.x = dock_centre.x - dock_handle_size / 2,
+			.y = dock_centre.y + dock_handle_size / 2 + 3,
+			.w = dock_handle_size, .h = dock_handle_size
+		};
+		struct rect middle = {
+			.x = dock_centre.x - dock_handle_size / 2,
+			.y = dock_centre.y - dock_handle_size / 2,
+			.w = dock_handle_size, .h = dock_handle_size
+		};
+		ui_draw_rect(ui, left, ui_col_dock);
+		ui_draw_rect(ui, right, ui_col_dock);
+		ui_draw_rect(ui, top, ui_col_dock);
+		ui_draw_rect(ui, bottom, ui_col_dock);
+		ui_draw_rect(ui, middle, ui_col_dock);
+
+		struct window_meta* meta = table_get(ui->window_meta, ui->dragging->title);
+
+		if (!meta) {
+			struct window_meta new_meta = { ui->dragging->position, ui->dragging->dimentions, 0, 0 };
+			meta = table_set(ui->window_meta, ui->dragging->title, &new_meta);
+		}
+
+		struct rect split_preview = { 0 };
+		if (mouse_over_rect(left)) {
+			split_preview = (struct rect) {
+				.x = ui->current_dockspace->rect.x,
+				.y = ui->current_dockspace->rect.y,
+				.w = ui->current_dockspace->rect.w / 2,
+				.h = ui->current_dockspace->rect.h
+			};
+
+			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
+
+				ui->current_dockspace->rect.w /= 2;
+				new_dock->rect = ui->current_dockspace->rect;
+				new_dock->parent = ui->current_dockspace;
+
+				new_dock->parent_dir = ui_dock_dir_right;
+
+				ui->current_dockspace->rect.x += ui->current_dockspace->rect.w;
+
+				ui_window_change_dock(ui, meta, new_dock);
+			}
+		} else if (mouse_over_rect(right)) {
+			split_preview = (struct rect) {
+				.x = ui->current_dockspace->rect.x + ui->current_dockspace->rect.w / 2,
+				.y = ui->current_dockspace->rect.y,
+				.w = ui->current_dockspace->rect.w / 2,
+				.h = ui->current_dockspace->rect.h
+			};
+
+			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
+
+				ui->current_dockspace->rect.w /= 2;
+				new_dock->rect = ui->current_dockspace->rect;
+				new_dock->rect.x += ui->current_dockspace->rect.w;
+				new_dock->parent = ui->current_dockspace;
+
+				new_dock->parent_dir = ui_dock_dir_left;
+
+				ui_window_change_dock(ui, meta, new_dock);
+			}
+		} else if (mouse_over_rect(top)) {
+			split_preview = (struct rect) {
+				.x = ui->current_dockspace->rect.x,
+				.y = ui->current_dockspace->rect.y,
+				.w = ui->current_dockspace->rect.w,
+				.h = ui->current_dockspace->rect.h / 2,
+			};
+
+			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
+
+				ui->current_dockspace->rect.h /= 2;
+				new_dock->rect = ui->current_dockspace->rect;
+				new_dock->parent = ui->current_dockspace;
+
+				new_dock->parent_dir = ui_dock_dir_down;
+
+				ui->current_dockspace->rect.y += ui->current_dockspace->rect.h;
+
+				ui_window_change_dock(ui, meta, new_dock);
+			}
+		} else if (mouse_over_rect(bottom)) {
+			split_preview = (struct rect) {
+				.x = ui->current_dockspace->rect.x,
+				.y = ui->current_dockspace->rect.y + ui->current_dockspace->rect.h / 2,
+				.w = ui->current_dockspace->rect.w,
+				.h = ui->current_dockspace->rect.h / 2,
+			};
+
+			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
+
+				ui->current_dockspace->rect.h /= 2;
+				new_dock->rect = ui->current_dockspace->rect;
+				new_dock->rect.y += ui->current_dockspace->rect.h;
+				new_dock->parent = ui->current_dockspace;
+
+				new_dock->parent_dir = ui_dock_dir_up;
+
+				ui_window_change_dock(ui, meta, new_dock);
+			}
+		} else if (mouse_over_rect(middle)) {
+			split_preview = ui->current_dockspace->rect;
+
+			if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+				ui_window_change_dock(ui, meta, ui->current_dockspace);
+			}
+		} else {
+			docking = false;
+		}
+
+		ui_draw_rect(ui, split_preview, ui_col_dock);
+	}
+
+	if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+		if (ui->dragging && !docking) {
+			struct window_meta* meta = table_get(ui->window_meta, ui->dragging->title);
+			ui_window_change_dock(ui, meta, null);
+		}
+
+		ui->dragging = null;
+		ui->resizing = null;
+		set_window_cursor(main_window, CURSOR_POINTER);
+	}
+
 	core_free(sorted_windows);
 
 	for (table_iter(ui->strings, iter)) {
@@ -608,8 +834,13 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 
 		meta = table_get(ui->window_meta, name);
 	} else {
-		window->position = meta->position;
-		window->dimentions = meta->dimentions;
+		if (ui->dragging != window && meta->dock) {
+			window->position = make_v2i(meta->dock->rect.x, meta->dock->rect.y);
+			window->dimentions = make_v2i(meta->dock->rect.w, meta->dock->rect.h);
+		} else {
+			window->position = meta->position;
+			window->dimentions = meta->dimentions;
+		}
 		window->z = meta->z;
 	}
 
@@ -624,6 +855,13 @@ void ui_end_window(struct ui_context* ui) {
 	struct ui_window* window = ui->current_window;
 
 	struct window_meta* meta = table_get(ui->window_meta, window->title);
+	if (ui->dragging != window && meta->dock) {
+		window->position = make_v2i(meta->dock->rect.x, meta->dock->rect.y);
+		window->dimentions = make_v2i(meta->dock->rect.w, meta->dock->rect.h);
+	} else {
+		window->position = meta->position;
+		window->dimentions = meta->dimentions;
+	}
 	if (meta) {
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
@@ -632,7 +870,7 @@ void ui_end_window(struct ui_context* ui) {
 		if (mouse_over_rect(window_rect)) {
 			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
 
-			i32 scroll_bottom = (ui->cursor_pos.y - meta->position.y) - meta->dimentions.y;
+			i32 scroll_bottom = (ui->cursor_pos.y - window->position.y) - window->dimentions.y;
 			if (scroll_bottom < 0) {
 				meta->scroll -= scroll_bottom;
 			}
@@ -644,6 +882,14 @@ void ui_end_window(struct ui_context* ui) {
 
 		if (window == ui->dragging) {
 			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
+
+			ui->current_dockspace = null;
+			for (u32 i = 0; i < ui->dockspace_count; i++) {
+				if (mouse_over_rect(ui->dockspaces[i].rect)) {
+					ui->current_dockspace = ui->dockspaces + i;
+					break;
+				}
+			}
 		}
 
 		if (window == ui->resizing) {

@@ -19,6 +19,7 @@ enum {
 	ui_col_image,
 	ui_col_image_hovered,
 	ui_col_image_hot,
+	ui_col_dock,
 	ui_col_count
 };
 
