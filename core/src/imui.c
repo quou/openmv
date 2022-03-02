@@ -388,10 +388,6 @@ static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) 
 	return (*b)->z - (*a)->z;
 }
 
-static i32 cmp_side_distance(const void* a, const void* b) {
-	return *(i32*)a - *(i32*)b;
-}
-
 static void ui_window_change_dock(struct ui_context* ui, struct window_meta* meta, struct ui_dockspace* dock) {
 	if (!meta) { return; }
 
@@ -463,22 +459,14 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->active = null;
 	}
 
-	ui->top_window = ui->windows;
-	for (u32 i = 0; i < ui->window_count; i++) {
-		if (ui->windows[i].z == 0) {
-			ui->top_window = ui->windows + i;
-			break;
-		}
-	}
-
 	struct ui_window* hovered[16];
-	u32 count = ui_get_hovered_windows(ui, hovered, 16);
+	u32 hovered_count = ui_get_hovered_windows(ui, hovered, 16);
 
-	qsort(hovered, count, sizeof(struct ui_window*),
+	qsort(hovered, hovered_count, sizeof(struct ui_window*),
 		(int(*)(const void*, const void*))cmp_window_z);
 
-	if (count > 0 && !ui->hovered) {
-		struct ui_window* window = hovered[count - 1];
+	if (hovered_count > 0 && !ui->hovered) {
+		struct ui_window* window = hovered[hovered_count - 1];
 
 		v2i corner = v2i_add(window->position, window->dimentions);
 		i32 dist = v2i_magnitude(v2i_sub(get_mouse_position(main_window), corner));
@@ -493,14 +481,13 @@ void ui_end_frame(struct ui_context* ui) {
 			ui->drag_start = get_mouse_position(main_window);
 			ui->drag_offset = v2i_sub(ui->drag_start, window->position);
 
+			ui->top_window = window;
 			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
+			meta->z = 0;
 
 			if (!meta->dock && dist < 20) {
 				ui->resizing = window;
 			}
-
-			ui->top_window = window;
-			meta->z = 0;
 
 			for (u32 i = 0; i < ui->window_count; i++) {
 				struct ui_window* w = ui->windows + i;
@@ -517,24 +504,8 @@ void ui_end_frame(struct ui_context* ui) {
 		if (dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 			set_window_cursor(main_window, CURSOR_MOVE);
 			ui->dragging = window;
-
-			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
-
-			ui->top_window = window;
-			meta->z = 0;
-
-			for (u32 i = 0; i < ui->window_count; i++) {
-				struct ui_window* w = ui->windows + i;
-				if (w == ui->top_window) { continue; }
-				
-				struct window_meta* m = table_get(ui->window_meta, w->title);
-				if (m) {
-					m->z++;
-				}
-			}
-
 		}
-	} else if (count == 0) {
+	} else if (hovered_count == 0) {
 		set_window_cursor(main_window, CURSOR_POINTER);
 	}
 
@@ -544,7 +515,7 @@ void ui_end_frame(struct ui_context* ui) {
 	}
 
 	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window*),
-		(int(*)(const void*, const void*))cmp_window_z);
+		(i32(*)(const void*, const void*))cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = sorted_windows[i];
