@@ -22,7 +22,7 @@ Created from the ground up in C99.
  - [x] Tilemap system.
  - [x] Dialogue system for NPCs.
  - [x] Scripting language.
- - [x] Command system for allow for easy configuration.
+ - [x] Command system to allow for easy configuration.
  - [ ] Actually make a damn game.
 
 ## Building
