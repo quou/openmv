@@ -47,3 +47,6 @@ API struct renderer* ui_get_renderer(struct ui_context* ui);
 
 API struct font* ui_get_font(struct ui_context* ui);
 API void ui_set_font(struct ui_context* ui, struct font* font);
+
+API void ui_save_layout(struct ui_context* ui, const char* path);
+API void ui_load_layout(struct ui_context* ui, const char* path);

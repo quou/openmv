@@ -81,7 +81,15 @@ i32 main() {
 		}
 
 		if (ui_begin_window(ui, "Test Window B", make_v2i(0, 300))) {
-			ui_columns(ui, 2, 80);
+			ui_columns(ui, 2, 100);
+			if (ui_button(ui, "Save Layout")) {
+				ui_save_layout(ui, "util/imuitest/lay.out");
+			}
+
+			if (ui_button(ui, "Load Layout")) {
+				ui_load_layout(ui, "util/imuitest/lay.out");
+			}
+
 			ui_image(ui, player_texture, make_rect(0, 0, 16, 16));
 			ui_image_button(ui, player_texture, make_rect(0, 16, 16, 16));
 			ui_columns(ui, 1, 0);

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1129,4 +1130,128 @@ struct font* ui_get_font(struct ui_context* ui) {
 
 void ui_set_font(struct ui_context* ui, struct font* font) {
 	ui->font = font;
+}
+
+void ui_save_layout(struct ui_context* ui, const char* path) {
+	FILE* file = fopen(path, "wb");
+	if (!file) {
+		fprintf(stderr, "Failed to fopen `%s' for writing.\n", path);
+		return;
+	}
+
+	u32 meta_count = get_table_count(ui->window_meta);
+	fwrite(&meta_count, sizeof(meta_count), 1, file);
+
+	for (table_iter(ui->window_meta, iter)) {
+		const char* title = iter.key;
+		struct window_meta* meta = iter.value;
+
+		u32 title_len = strlen(title);
+		fwrite(&title_len, sizeof(title_len), 1, file);
+		fwrite(title, 1, title_len, file);
+
+		fwrite(&meta->position.x, sizeof(meta->position.x), 1, file);
+		fwrite(&meta->position.y, sizeof(meta->position.y), 1, file);
+		fwrite(&meta->dimentions.x, sizeof(meta->dimentions.x), 1, file);
+		fwrite(&meta->dimentions.y, sizeof(meta->dimentions.y), 1, file);
+		fwrite(&meta->scroll, sizeof(meta->scroll), 1, file);
+		fwrite(&meta->z, sizeof(meta->z), 1, file);
+
+		meta->dock - ui->dockspaces;
+		i32 dock_idx;
+		if (!meta->dock) {
+			dock_idx = -1;
+		} else {
+			dock_idx = meta->dock - ui->dockspaces;
+		}
+		fwrite(&dock_idx, sizeof(dock_idx), 1, file);
+	}
+
+	fwrite(&ui->dockspace_count, sizeof(ui->dockspace_count), 1, file);
+
+	for (u32 i = 0; i < ui->dockspace_count; i++) {
+		struct ui_dockspace* dock = ui->dockspaces + i;
+
+		i32 parent_idx = dock->parent - ui->dockspaces;
+		if (dock->parent) {	
+			parent_idx = dock->parent - ui->dockspaces;		
+		} else {
+			parent_idx = -1;
+		}
+
+		fwrite(&parent_idx, sizeof(parent_idx), 1, file);
+		fwrite(&dock->parent_dir, sizeof(dock->parent_dir), 1, file);
+		fwrite(&dock->occupied, sizeof(dock->occupied), 1, file);
+
+		fwrite(&dock->rect.x, sizeof(dock->rect.x), 1, file);
+		fwrite(&dock->rect.y, sizeof(dock->rect.y), 1, file);
+		fwrite(&dock->rect.w, sizeof(dock->rect.w), 1, file);
+		fwrite(&dock->rect.h, sizeof(dock->rect.h), 1, file);
+	}
+
+	fclose(file);
+}
+
+void ui_load_layout(struct ui_context* ui, const char* path) {
+	FILE* file = fopen(path, "rb");
+	if (!file) {
+		fprintf(stderr, "Failed to fopen `%s' for reading.\n", path);
+		return;
+	}
+
+	u32 meta_count;
+	fread(&meta_count, sizeof(meta_count), 1, file);
+
+	for (u32 i = 0; i < meta_count; i++) {
+		struct window_meta meta = { 0 };
+
+		u32 title_len;
+		fread(&title_len, sizeof(title_len), 1, file);
+
+		char* title = core_alloc(title_len + 1);
+		title[title_len] = '\0';
+		fread(title, 1, title_len, file);
+
+		fread(&meta.position.x, sizeof(meta.position.x), 1, file);
+		fread(&meta.position.y, sizeof(meta.position.y), 1, file);
+		fread(&meta.dimentions.x, sizeof(meta.dimentions.x), 1, file);
+		fread(&meta.dimentions.y, sizeof(meta.dimentions.y), 1, file);
+		fread(&meta.scroll, sizeof(meta.scroll), 1, file);
+		fread(&meta.z, sizeof(meta.z), 1, file);
+
+		i32 dock_idx;
+		fread(&dock_idx, sizeof(dock_idx), 1, file);
+
+		if (dock_idx >= 0) {
+			meta.dock = ui->dockspaces + dock_idx;
+		}
+
+		table_set(ui->window_meta, title, &meta);
+
+		core_free(title);
+	}
+
+	fread(&ui->dockspace_count, sizeof(ui->dockspace_count), 1, file);
+	memset(ui->dockspaces, 0, ui->dockspace_count * sizeof(struct ui_dockspace));
+
+	for (u32 i = 0; i < ui->dockspace_count; i++) {
+		struct ui_dockspace* dock = ui->dockspaces + i;
+
+		i32 parent_idx;
+
+		fread(&parent_idx, sizeof(parent_idx), 1, file);
+		fread(&dock->parent_dir, sizeof(dock->parent_dir), 1, file);
+		fread(&dock->occupied, sizeof(dock->occupied), 1, file);
+
+		fread(&dock->rect.x, sizeof(dock->rect.x), 1, file);
+		fread(&dock->rect.y, sizeof(dock->rect.y), 1, file);
+		fread(&dock->rect.w, sizeof(dock->rect.w), 1, file);
+		fread(&dock->rect.h, sizeof(dock->rect.h), 1, file);
+
+		if (parent_idx >= 0) {
+			dock->parent = ui->dockspaces + parent_idx;
+		}
+	}
+
+	fclose(file);
 }
