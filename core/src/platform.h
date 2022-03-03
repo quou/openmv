@@ -163,3 +163,19 @@ API u64 file_mod_time(const char* name);
 
 API const char* get_file_name(const char* path);
 API const char* get_file_extension(const char* name);
+
+/* Multi-threading */
+
+/* TODO: mutex */
+
+struct thread;
+
+typedef void (*thread_worker)(struct thread* thread);
+
+API struct thread* new_thread(thread_worker worker);
+API void free_thread(struct thread* thread);
+API void thread_execute(struct thread* thread);
+API void thread_join(struct thread* thread);
+API bool thread_active(struct thread* thread);
+API void* get_thread_uptr(struct thread* thread);
+API void  set_thread_uptr(struct thread* thread, void* ptr);

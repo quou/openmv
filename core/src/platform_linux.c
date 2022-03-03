@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <dirent.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -122,4 +123,59 @@ u64 file_mod_time(const char* name) {
 	}
 
 	return 0;
+}
+
+struct thread {
+	pthread_t handle;
+	void* uptr;
+	bool working;
+	thread_worker worker;
+};
+
+void* _thread_worker(void* ptr) {
+	((struct thread*)ptr)->working = true;
+
+	((struct thread*)ptr)->worker(ptr);
+
+	((struct thread*)ptr)->working = false;
+
+	return null;
+}
+
+struct thread* new_thread(thread_worker worker) {
+	struct thread* thread = core_calloc(1, sizeof(struct thread));
+
+	thread->worker = worker;
+
+	return thread;
+}
+
+void free_thread(struct thread* thread) {
+	thread_join(thread);
+
+	core_free(thread);
+}
+
+void thread_execute(struct thread* thread) {
+	if (thread->working) {
+		fprintf(stderr, "Warning: Thread already active!\n");
+	}
+
+	pthread_create(&thread->handle, null, _thread_worker, thread);
+}
+
+void thread_join(struct thread* thread) {
+	pthread_join(thread->handle, null);
+}
+
+bool thread_active(struct thread* thread) {
+	return thread->working;
+}
+
+void* get_thread_uptr(struct thread* thread) {
+	return thread->uptr;
+}
+
+void set_thread_uptr(struct thread* thread, void* ptr) {
+	thread->uptr = ptr;
 }

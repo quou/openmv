@@ -13,6 +13,10 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 	ui_text_input_event(udata, text);
 }
 
+void worker(struct thread* thread) {
+	sleep(2);
+}
+
 i32 main() {
 	srand((u32)time(null));
 
@@ -27,8 +31,6 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
-	//ui_set_color(ui, ui_col_window_background, make_color(0x1a1a1a, 255));
-
 	struct texture* player_texture = load_texture("res/bmp/char.bmp");
 
 	u64 now = get_time(), last = now; 
@@ -37,6 +39,9 @@ i32 main() {
 	char texts[256][256];
 	u32 text_count = 0;
 	char buffer[256] = "";
+
+	struct thread* test_thread = new_thread(worker);
+	thread_execute(test_thread);
 
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
@@ -105,6 +110,8 @@ i32 main() {
 
 		swap_window(main_window);
 	}
+
+	free_thread(test_thread);
 
 	free_ui_context(ui);
 

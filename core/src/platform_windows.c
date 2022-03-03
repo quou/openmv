@@ -186,7 +186,7 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	wc.lpszMenuName = NULL;
 	wc.hbrBackground = NULL;
 	wc.lpszClassName = L"openmv";
-	RegisterClass(&wc);
+	RegisterClassW(&wc);
 
 	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 	DWORD dw_style = WS_CAPTION | WS_SYSMENU |
@@ -591,4 +591,63 @@ void set_window_cursor(struct window* window, u32 id) {
 
 void window_enable_repeat(struct window* window, bool enable) {
 	window->repeat = enable;
+}
+
+struct thread {
+	HANDLE handle;
+	DWORD id;
+	void* uptr;
+	bool working;
+	thread_worker worker;
+};
+
+DWORD WINAPI _thread_worker(LPVOID lparam) {
+	struct thread* thread = (struct thread*)lparam;
+
+	thread->working = true;
+
+	thread->worker(thread);
+
+	thread->working = false;
+
+	return 0;
+}
+
+struct thread* new_thread(thread_worker worker) {
+	struct thread* thread = core_calloc(1, sizeof(struct thread));
+
+	thread->worker = worker;
+
+	return thread;
+}
+
+void free_thread(struct thread* thread) {
+	thread_join(thread);
+
+	core_free(thread);
+}
+
+void thread_execute(struct thread* thread) {
+	if (thread->working) {
+		fprintf(stderr, "Warning: Thread already active!\n");
+	}
+
+	thread->handle = CreateThread(null, 0, _thread_worker, thread, 0, &thread->id);
+}
+
+void thread_join(struct thread* thread) {
+	WaitForSingleObject(thread->handle, INFINITE);
+	CloseHandle(thread->handle);
+}
+
+bool thread_active(struct thread* thread) {
+	return thread->working;
+}
+
+void* get_thread_uptr(struct thread* thread) {
+	return thread->uptr;
+}
+
+void set_thread_uptr(struct thread* thread, void* ptr) {
+	thread->uptr = ptr;
 }
