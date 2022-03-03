@@ -13,8 +13,10 @@ static const char* files[] = {
 	"bootstrapper/premake5.lua",
 	"logic/premake5.lua",
 	"res/CourierPrime.ttf",
+	"res/DejaVuSans.ttf",
 	"res/shaders/sprite.glsl",
 	"util/packer/premake5.lua",
+	"util/packer/lay.out",
 	"util/mksdk/premake5.lua",
 	"util/test/premake5.lua",
 	null
