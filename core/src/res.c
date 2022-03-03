@@ -201,7 +201,7 @@ struct res {
 
 struct table* res_table;
 
-static struct res* res_load(const char* path, u32 type, void* udata) {
+static struct res* _res_load(const char* path, u32 type, void* udata, u8* raw, u32 raw_size) {
 	char cache_name[256];
 	strcpy(cache_name, path);
 
@@ -213,10 +213,6 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	if (got) {
 		return got;
 	}
-
-	u8* raw;
-	u64 raw_size;
-	read_raw(path, &raw, &raw_size, type == res_shader);
 
 	struct res new_res = { 0 };
 
@@ -244,6 +240,22 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 	table_set(res_table, cache_name, &new_res);
 
 	return table_get(res_table, cache_name);
+}
+
+static struct res* res_load(const char* path, u32 type, void* udata) {
+	u8* raw;
+	u64 raw_size;
+	read_raw(path, &raw, &raw_size, type == res_shader);
+	
+	return _res_load(path, type, udata, raw, raw_size);
+}
+
+static struct res* res_load_no_pck(const char* path, u32 type, void* udata) {
+	u8* raw;
+	u64 raw_size;
+	read_raw_no_pck(path, &raw, &raw_size, type == res_shader);
+	
+	return _res_load(path, type, udata, raw, raw_size);
 }
 
 static void res_free(struct res* res) {
@@ -302,4 +314,20 @@ struct font* load_font(const char* path, f32 size) {
 
 struct audio_clip* load_audio_clip(const char* path) {
 	return res_load(path, res_audio_clip, null)->as.audio_clip;
+}
+
+struct shader load_shader_no_pck(const char* path) {
+	return res_load_no_pck(path, res_shader, null)->as.shader;
+}
+
+struct texture* load_texture_no_pck(const char* path) {
+	return res_load_no_pck(path, res_texture, null)->as.texture;
+}
+
+struct font* load_font_no_pck(const char* path, f32 size) {
+	return res_load_no_pck(path, res_font, &size)->as.font;
+}
+
+struct audio_clip* load_audio_clip_no_pck(const char* path) {
+	return res_load_no_pck(path, res_audio_clip, null)->as.audio_clip;
 }

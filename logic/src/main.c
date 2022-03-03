@@ -134,7 +134,11 @@ EXPORT_SYM void C_DECL on_init() {
 	FILE* autoexec_file = fopen("autoexec.lsp", "rb");
 	if (autoexec_file) {
 		fclose(autoexec_file);
-		lsp_do_file(logic_store->lsp, "autoexec.lsp");
+
+		char* buf;
+		read_raw_no_pck("autoexec.lsp", (u8**)&buf, null, true);
+		lsp_do_string(logic_store->lsp, "autoexec.lsp", buf);
+		core_free(buf);
 	}
 
 	init_dialogue();

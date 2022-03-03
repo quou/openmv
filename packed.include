@@ -1,4 +1,4 @@
-res/CourierPrime.ttf
+res/shaders/sprite.glsl
 res/DejaVuSans.ttf
 res/aud/decline.wav
 res/aud/explosion.wav
@@ -28,4 +28,5 @@ res/maps/a1/incinerator.dat
 res/maps/a1/mine_top.dat
 res/maps/a1/mineshaft.dat
 res/maps/a2/mine_entrance.dat
-res/shaders/sprite.glsl
+res/DejaVuSansMono.ttf
+res/CourierPrime.ttf
