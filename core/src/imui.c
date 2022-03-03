@@ -161,6 +161,8 @@ struct ui_context {
 	u32 window_count;
 	u32 window_capacity;
 
+	struct ui_window** sorted_windows;
+
 	struct ui_dockspace dockspaces[max_dockspaces];
 	u32 dockspace_count;
 	struct ui_dockspace* current_dockspace;
@@ -335,7 +337,8 @@ void free_ui_context(struct ui_context* ui) {
 			}
 		}
 
-		core_free(ui->windows);
+		core_free(ui->windows);	
+		core_free(ui->sorted_windows);
 	}
 
 	free_renderer(ui->renderer);
@@ -534,16 +537,15 @@ void ui_end_frame(struct ui_context* ui) {
 		set_window_cursor(main_window, CURSOR_POINTER);
 	}
 
-	struct ui_window** sorted_windows = core_alloc(ui->window_count * sizeof(struct ui_window*));
 	for (u32 i = 0; i < ui->window_count; i++) {
-		sorted_windows[i] = ui->windows + i;
+		ui->sorted_windows[i] = ui->windows + i;
 	}
 
-	qsort(sorted_windows, ui->window_count, sizeof(struct ui_window*),
+	qsort(ui->sorted_windows, ui->window_count, sizeof(struct ui_window*),
 		(i32(*)(const void*, const void*))cmp_window_z);
 
 	for (u32 i = 0; i < ui->window_count; i++) {
-		struct ui_window* window = sorted_windows[i];
+		struct ui_window* window = ui->sorted_windows[i];
 
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
@@ -851,8 +853,6 @@ void ui_end_frame(struct ui_context* ui) {
 		set_window_cursor(main_window, CURSOR_POINTER);
 	}
 
-	core_free(sorted_windows);
-
 	if (ui->loading) {
 		i32 win_w, win_h;
 		query_window(main_window, &win_w, &win_h);
@@ -919,7 +919,8 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	if (ui->window_count >= ui->window_capacity) {
 		ui->window_capacity = ui->window_capacity < 8 ? 8 : ui->window_capacity * 2;
 		ui->windows = core_realloc(ui->windows, ui->window_capacity * sizeof(struct ui_window));
-		
+		ui->sorted_windows = core_realloc(ui->sorted_windows, ui->window_capacity * sizeof(struct ui_window*));
+
 		for (u32 i = ui->window_count; i < ui->window_capacity; i++) {
 			ui->windows[i] = (struct ui_window) { 0 };
 		}
