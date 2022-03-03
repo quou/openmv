@@ -26,6 +26,8 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 }
 
 void pack_files_worker(struct thread* thread) {
+	*(i32*)get_thread_uptr(thread) = 0;
+
 	FILE* out = fopen(pack_file_buffer, "wb");
 	if (!out) {
 		fprintf(stderr, "Failed to open `res.pck' for writing.\n");
