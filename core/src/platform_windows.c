@@ -629,6 +629,7 @@ void free_thread(struct thread* thread) {
 void thread_execute(struct thread* thread) {
 	if (thread->working) {
 		fprintf(stderr, "Warning: Thread already active!\n");
+		return;
 	}
 
 	thread->handle = CreateThread(null, 0, _thread_worker, thread, 0, &thread->id);
