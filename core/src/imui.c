@@ -174,6 +174,10 @@ struct ui_context {
 	u32 input_buf_size;
 	u32 input_cursor;
 
+	char* loading;
+	i32 loading_p;
+	struct font* loading_f;
+
 	struct ui_window* current_window;
 	struct ui_window* top_window;
 
@@ -368,6 +372,8 @@ void ui_text_input_event(struct ui_context* ui, const char* text) {
 
 void ui_begin_frame(struct ui_context* ui) {
 	ui->window_count = 0;
+
+	ui->loading = null;
 
 	i32 w, h;
 
@@ -829,6 +835,53 @@ void ui_end_frame(struct ui_context* ui) {
 
 	core_free(sorted_windows);
 
+	if (ui->loading) {
+		i32 win_w, win_h;
+		query_window(main_window, &win_w, &win_h);
+
+		i32 text_h = text_height(ui->loading_f, ui->loading);
+
+		i32 bar_w = 300;
+		i32 bar_h = 16;
+
+		struct rect container = {
+			.x = (win_w / 2) - (bar_w / 2) - ui->padding,
+			.y = (win_h / 2) - ((bar_h + text_h + ui->padding) / 2) - ui->padding, 
+			.w = bar_w + ui->padding * 2,
+			.h = bar_h + text_h + ui->padding * 3
+		};
+
+		struct rect outline = {
+			.x = container.x - 1,
+			.y = container.y - 1,
+			.w = container.w + 2,
+			.h = container.h + 2
+		};
+
+		renderer_clip(ui->renderer, outline);
+
+		struct rect bar_rect = {
+			.x = container.x + ui->padding,
+			.y = container.y + text_h + ui->padding * 2,
+			.w = container.w - ui->padding * 2,
+			.h = container.h - (text_h + ui->padding * 3),
+		};
+
+		f32 p = (f32)ui->loading_p / 100.0f;
+		if (p < 0.0f) { p = 0.0f; }
+		if (p > 1.0f) { p = 1.0f; }
+
+		struct rect bar = bar_rect;
+		bar.w = (i32)(p * (f32)bar_rect.w);
+
+		ui_draw_rect(ui, outline, ui_col_window_border);
+		ui_draw_rect(ui, container, ui_col_window_background);
+		ui_draw_rect(ui, bar_rect, ui_col_background);
+		ui_draw_rect(ui, bar, ui_col_hot);
+		render_text(ui->renderer, ui->loading_f, ui->loading, container.x + ui->padding,
+			container.y + ui->padding, ui->style_colors[ui_col_text]);
+	}
+
 	for (table_iter(ui->strings, iter)) {
 		struct text_entry* entry = iter.value;
 		entry->life--;
@@ -1120,6 +1173,12 @@ bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect
 	return false;
 }
 
+void ui_loading_bar(struct ui_context* ui, const char* text, i32 percentage) {
+	ui->loading = ui_copy_string(ui, text);
+	ui->loading_p = percentage;
+	ui->loading_f = ui->font;
+}
+
 struct renderer* ui_get_renderer(struct ui_context* ui) {
 	return ui->renderer;
 }
@@ -1157,7 +1216,6 @@ void ui_save_layout(struct ui_context* ui, const char* path) {
 		fwrite(&meta->scroll, sizeof(meta->scroll), 1, file);
 		fwrite(&meta->z, sizeof(meta->z), 1, file);
 
-		meta->dock - ui->dockspaces;
 		i32 dock_idx;
 		if (!meta->dock) {
 			dock_idx = -1;
