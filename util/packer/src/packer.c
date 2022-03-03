@@ -85,6 +85,10 @@ void pack_files_worker(struct thread* thread) {
 
 }
 
+i32 file_name_cmp(const void* a, const void* b) {
+	return strcmp(*(char**)a, *(char**)b);
+}
+
 void init_file_list() {
 	for (u32 i = 0; i < file_count; i++) {
 		core_free(files[i]);
@@ -196,6 +200,10 @@ i32 main() {
 				}
 			}
 			ui_columns(ui, 1, 0);
+
+			if (ui_button(ui, "Order Entries")) {
+				qsort(files, file_count, sizeof(char*), file_name_cmp);
+			}
 
 			if (ui_button(ui, "Save to packed.include") && !thread_active(worker)) {
 				FILE* f = fopen("packed.include", "w");
