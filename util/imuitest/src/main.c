@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "core.h"
 #include "platform.h"
@@ -12,15 +11,6 @@
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	ui_text_input_event(udata, text);
-}
-
-void worker(struct thread* thread) {
-	i32* load_progress = get_thread_uptr(thread);
-
-	while (*load_progress < 100) {
-		sleep(1);
-		*load_progress += 30;
-	}
 }
 
 i32 main() {
@@ -46,10 +36,6 @@ i32 main() {
 	u32 text_count = 0;
 	char buffer[256] = "";
 
-	i32* load_progress = core_calloc(1, sizeof(i32));
-	struct thread* test_thread = new_thread(worker);
-	set_thread_uptr(test_thread, load_progress);
-
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
 
@@ -61,15 +47,6 @@ i32 main() {
 			char buf[256];
 			sprintf(buf, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_text(ui, buf);
-
-			if (!thread_active(test_thread)) {
-				if (ui_button(ui, "Do Some Loading")) {
-					thread_join(test_thread);
-					thread_execute(test_thread);
-				}
-			} else {
-				ui_loading_bar(ui, "Loading...", *load_progress);
-			}
 
 			ui_columns(ui, 4, 80);
 			ui_text(ui, "Input");
@@ -126,9 +103,6 @@ i32 main() {
 
 		swap_window(main_window);
 	}
-
-	free_thread(test_thread);
-	core_free(load_progress);
 
 	free_ui_context(ui);
 
