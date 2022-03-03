@@ -623,7 +623,6 @@ struct thread* new_thread(thread_worker worker) {
 
 void free_thread(struct thread* thread) {
 	thread_join(thread);
-
 	core_free(thread);
 }
 
@@ -636,8 +635,11 @@ void thread_execute(struct thread* thread) {
 }
 
 void thread_join(struct thread* thread) {
+	if (!thread->handle) { return; }
+
 	WaitForSingleObject(thread->handle, INFINITE);
 	CloseHandle(thread->handle);
+	thread->handle = 0;
 }
 
 bool thread_active(struct thread* thread) {

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "core.h"
 #include "platform.h"
@@ -41,7 +42,6 @@ i32 main() {
 	char buffer[256] = "";
 
 	struct thread* test_thread = new_thread(worker);
-	thread_execute(test_thread);
 
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
@@ -54,6 +54,15 @@ i32 main() {
 			char buf[256];
 			sprintf(buf, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_text(ui, buf);
+
+			if (!thread_active(test_thread)) {
+				if (ui_button(ui, "Do Some Loading")) {
+					thread_join(test_thread);
+					thread_execute(test_thread);
+				}
+			} else {
+				ui_text(ui, "Loading...");
+			}
 
 			ui_columns(ui, 4, 80);
 			ui_text(ui, "Input");
