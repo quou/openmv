@@ -44,9 +44,7 @@ i32 main() {
 		ui_begin_frame(ui);
 
 		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
-			char buf[256];
-			sprintf(buf, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
-			ui_text(ui, buf);
+			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 
 			ui_columns(ui, 4, 80);
 			ui_text(ui, "Input");

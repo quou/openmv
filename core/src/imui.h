@@ -34,6 +34,7 @@ API bool ui_begin_window(struct ui_context* ui, const char* name, v2i position);
 API void ui_end_window(struct ui_context* ui);
 
 API void ui_text(struct ui_context* ui, const char* text);
+API void ui_textf(struct ui_context* ui, const char* fmt, ...);
 API bool ui_button(struct ui_context* ui, const char* text);
 API bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size);
 API void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect);

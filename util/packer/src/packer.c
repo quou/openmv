@@ -21,6 +21,8 @@ bool pack_file_ok;
 
 char add_file_buffer[256];
 
+char current_file[256];
+
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	ui_text_input_event(udata, text);
 }
@@ -43,6 +45,7 @@ void pack_files_worker(struct thread* thread) {
 		u64 hash = elf_hash((const u8*)files[i], (u32)strlen(files[i]));
 
 		FILE* file = fopen(files[i], "rb");
+		if (!file) { continue; }
 
 		fseek(file, 0, SEEK_END);
 
@@ -58,7 +61,11 @@ void pack_files_worker(struct thread* thread) {
 	}
 
 	for (u32 i = 0; i < file_count; i++) {
+		*(i32*)get_thread_uptr(thread) = (i32)(((f32)i / (f32)file_count) * 100.0f);
+		strcpy(current_file, files[i]);
+
 		FILE* file = fopen(files[i], "rb");
+		if (!file) { continue; }
 
 		fseek(file, 0, SEEK_END);
 		u64 file_size = ftell(file);
@@ -70,8 +77,6 @@ void pack_files_worker(struct thread* thread) {
 		}
 
 		fclose(file);
-
-		*(i32*)get_thread_uptr(thread) = (i32)(((f32)i / (f32)file_count) * 100.0f);
 	}
 
 	fclose(out);
@@ -211,7 +216,7 @@ i32 main() {
 				}
 			} else {
 				ui_text(ui, "Packing...");
-				ui_loading_bar(ui, "Packing...", *pack_progress);
+				ui_loading_bar(ui, current_file, *pack_progress);
 			}
 
 			ui_text(ui, "Files:");

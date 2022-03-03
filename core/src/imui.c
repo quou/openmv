@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,7 @@
 #include "imui.h"
 
 #define max_dockspaces 32
+#define text_buffer_size 2048
 
 typedef bool (*input_filter_func)(char c);
 
@@ -189,6 +191,8 @@ struct ui_context {
 	struct window* window;
 	struct font* font;
 	struct renderer* renderer;
+
+	char text_buffer[text_buffer_size];
 
 	v2i drag_start;
 
@@ -474,6 +478,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 	if (hovered_count > 0 && !ui->hovered) {
 		struct ui_window* window = hovered[hovered_count - 1];
+		struct window_meta* meta = table_get(ui->window_meta, window->title);
 
 		v2i corner = v2i_add(window->position, window->dimentions);
 		i32 dist = v2i_magnitude(v2i_sub(get_mouse_position(main_window), corner));
@@ -484,12 +489,25 @@ void ui_end_frame(struct ui_context* ui) {
 			set_window_cursor(main_window, CURSOR_POINTER);
 		}
 
+		if (meta) {
+			i32 content_size = ((ui->cursor_pos.y - meta->scroll) - window->position.y);
+			i32 max_scroll = content_size - window->dimentions.y;
+			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
+
+			if (meta->scroll < -max_scroll) {
+				meta->scroll = -max_scroll;
+			}
+
+			if (meta->scroll > 0) {
+				meta->scroll = 0;
+			}
+		}
+
 		if (mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
 			ui->drag_start = get_mouse_position(main_window);
 			ui->drag_offset = v2i_sub(ui->drag_start, window->position);
 
 			ui->top_window = window;
-			struct window_meta* meta = table_get(ui->window_meta, ui->top_window->title);
 			meta->z = 0;
 
 			if (!meta->dock && dist < 20) {
@@ -960,19 +978,6 @@ void ui_end_window(struct ui_context* ui) {
 			window->position.x, window->position.y,
 			window->dimentions.x, window->dimentions.y);
 
-		if (mouse_over_rect(window_rect)) {
-			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
-
-			i32 scroll_bottom = (ui->cursor_pos.y - window->position.y) - window->dimentions.y;
-			if (scroll_bottom < 0) {
-				meta->scroll -= scroll_bottom;
-			}
-
-			if (meta->scroll > 0) {
-				meta->scroll = 0;
-			}
-		}
-
 		if (window == ui->dragging) {
 			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
 
@@ -1039,6 +1044,25 @@ void ui_text(struct ui_context* ui, const char* text) {
 	});
 
 	ui_advance(ui, text_height(ui->font, text) + ui->padding);
+}
+
+void ui_textf(struct ui_context* ui, const char* fmt, ...) {
+	va_list list;
+	va_start(list, fmt);
+	
+	vsnprintf(ui->text_buffer, text_buffer_size, fmt, list);
+
+	va_end(list);
+
+	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_text,
+		.position = ui->cursor_pos,
+		.as.text = {
+			.text = ui_copy_string(ui, ui->text_buffer)
+		}
+	});
+
+	ui_advance(ui, text_height(ui->font, ui->text_buffer) + ui->padding);
 }
 
 bool ui_button(struct ui_context* ui, const char* text) {
