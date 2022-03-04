@@ -30,4 +30,5 @@ res/maps/a1/mine_top.dat
 res/maps/a1/mineshaft.dat
 res/maps/a2/mine_entrance.dat
 res/shaders/crt.glsl
+res/shaders/invert.glsl
 res/shaders/sprite.glsl

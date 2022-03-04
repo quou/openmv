@@ -15,6 +15,8 @@ static const char* files[] = {
 	"res/CourierPrime.ttf",
 	"res/DejaVuSans.ttf",
 	"res/shaders/sprite.glsl",
+	"res/shaders/crt.glsl",
+	"res/shaders/invert.glsl",
 	"util/packer/premake5.lua",
 	"util/packer/lay.out",
 	"util/mksdk/premake5.lua",
