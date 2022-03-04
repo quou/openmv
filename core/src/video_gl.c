@@ -370,12 +370,12 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 		dst[i] = (struct color) { dst[i].b, dst[i].g, dst[i].r, dst[i].a };
 	}
 
-	texture->width = w;
-	texture->height = h;
-
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 			w, h, 0, GL_RGBA,
 			GL_UNSIGNED_BYTE, dst);
+
+	texture->width = w;
+	texture->height = h;
 
 	core_free(dst);
 }
@@ -416,9 +416,15 @@ void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool 
 	texture->width = w;
 	texture->height = h;
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-			w, h, 0, GL_RGBA,
-			GL_UNSIGNED_BYTE, dst);
+	if (texture->width == w && texture->height == h) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				w, h, 0, GL_RGBA,
+				GL_UNSIGNED_BYTE, dst);
+	} else {
+		glTexSubImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				w, h, 0, GL_RGBA,
+				GL_UNSIGNED_BYTE, dst);
+	}
 
 	core_free(dst);
 }

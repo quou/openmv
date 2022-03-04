@@ -215,6 +215,7 @@ struct ui_context {
 	i32 window_max_height;
 
 	v2i cursor_pos;
+	i32 current_item_height;
 
 	input_filter_func input_filter;
 
@@ -942,6 +943,10 @@ void ui_end_frame(struct ui_context* ui) {
 	renderer_end_frame(ui->renderer);
 }
 
+v2i ui_get_cursor_pos(struct ui_context* ui) {
+	return ui->cursor_pos;
+}
+
 bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	if (ui->window_count >= ui->window_capacity) {
 		ui->window_capacity = ui->window_capacity < 8 ? 8 : ui->window_capacity * 2;
@@ -1053,9 +1058,14 @@ void ui_reset_color(struct ui_context* ui) {
 static void ui_advance(struct ui_context* ui, i32 el_height) {
 	ui->item++;
 
+	if (el_height > ui->current_item_height) {
+		ui->current_item_height = el_height;
+	}
+
 	if (ui->item >= ui->columns) {
 		ui->cursor_pos.x = ui->current_window->position.x + ui->padding;
-		ui->cursor_pos.y += el_height;
+		ui->cursor_pos.y += ui->current_item_height;
+		ui->current_item_height = 0;
 		ui->item = 0;
 	} else {
 		ui->cursor_pos.x += ui->column_size;
@@ -1176,15 +1186,15 @@ bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 	return false;
 }
 
-void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) {
-	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, 100, 100);
+void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions) {
+	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, dimentions.x, dimentions.y);
 
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_image,
 		.position = ui->cursor_pos,
 		.as.image = {
 			.texture = texture,
-			.dimentions = make_v2i(100, 100),
+			.dimentions = make_v2i(r.w, r.h),
 			.rect = rect
 		}
 	});
@@ -1192,15 +1202,15 @@ void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect) 
 	ui_advance(ui, e->as.image.dimentions.y + ui->padding);
 }
 
-bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect) {
-	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, 100, 100);
+bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions) {
+	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, dimentions.x, dimentions.y);
 
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_image,
 		.position = ui->cursor_pos,
 		.as.image = {
 			.texture = texture,
-			.dimentions = make_v2i(100, 100),
+			.dimentions = make_v2i(r.w, r.h),
 			.rect = rect
 		}
 	});

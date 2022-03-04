@@ -90,8 +90,8 @@ i32 main() {
 				ui_load_layout(ui, "util/imuitest/lay.out");
 			}
 
-			ui_image(ui, player_texture, make_rect(0, 0, 16, 16));
-			ui_image_button(ui, player_texture, make_rect(0, 16, 16, 16));
+			ui_image(ui, player_texture, make_rect(0, 0, 16, 16), make_v2i(100, 100));
+			ui_image_button(ui, player_texture, make_rect(0, 16, 16, 16), make_v2i(100, 100));
 			ui_columns(ui, 1, 0);
 
 			for (u32 i = 0; i < 25; i++) {
