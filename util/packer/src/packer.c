@@ -28,7 +28,12 @@ static void on_text_input(struct window* window, const char* text, void* udata) 
 }
 
 void pack_files_worker(struct thread* thread) {
-	*(i32*)get_thread_uptr(thread) = 0;
+	lock_mutex(get_thread_uptr(thread));
+	i32* pack_progress = mutex_get_ptr(get_thread_uptr(thread));
+
+	*pack_progress = 0;
+
+	unlock_mutex(get_thread_uptr(thread));
 
 	FILE* out = fopen(pack_file_buffer, "wb");
 	if (!out) {
@@ -60,8 +65,10 @@ void pack_files_worker(struct thread* thread) {
 		fclose(file);
 	}
 
+	lock_mutex(get_thread_uptr(thread));
+
 	for (u32 i = 0; i < file_count; i++) {
-		*(i32*)get_thread_uptr(thread) = (i32)(((f32)i / (f32)file_count) * 100.0f);
+		*pack_progress = (i32)(((f32)i / (f32)file_count) * 100.0f);
 		strcpy(current_file, files[i]);
 
 		FILE* file = fopen(files[i], "rb");
@@ -78,6 +85,8 @@ void pack_files_worker(struct thread* thread) {
 
 		fclose(file);
 	}
+
+	unlock_mutex(get_thread_uptr(thread));
 
 	fclose(out);
 
@@ -156,9 +165,9 @@ i32 main() {
 	u64 now = get_time(), last = now; 
 	f64 timestep = 0.0;
 
-	i32* pack_progress = core_calloc(1, sizeof(i32));
+	struct mutex* pack_progress_mutex = new_mutex(sizeof(i32));
 	struct thread* worker = new_thread(pack_files_worker);
-	set_thread_uptr(worker, pack_progress);
+	set_thread_uptr(worker, pack_progress_mutex);
 
 	init_file_list();
 
@@ -224,7 +233,7 @@ i32 main() {
 				}
 			} else {
 				ui_text(ui, "Packing...");
-				ui_loading_bar(ui, current_file, *pack_progress);
+				ui_loading_bar(ui, current_file, *(i32*)mutex_get_ptr(get_thread_uptr(worker)));
 			}
 
 			ui_text(ui, "Files:");
@@ -251,8 +260,8 @@ i32 main() {
 		swap_window(main_window);
 	}
 
-	core_free(pack_progress);
 	free_thread(worker);
+	free_mutex(pack_progress_mutex);
 
 	core_free(buffer);
 	core_free(files);

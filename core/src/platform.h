@@ -166,8 +166,6 @@ API const char* get_file_extension(const char* name);
 
 /* Multi-threading */
 
-/* TODO: mutex */
-
 struct thread;
 
 typedef void (*thread_worker)(struct thread* thread);
@@ -179,3 +177,11 @@ API void thread_join(struct thread* thread);
 API bool thread_active(struct thread* thread);
 API void* get_thread_uptr(struct thread* thread);
 API void  set_thread_uptr(struct thread* thread, void* ptr);
+
+struct mutex;
+
+API struct mutex* new_mutex(u64 size);
+API void free_mutex(struct mutex* mutex);
+API void lock_mutex(struct mutex* mutex);
+API void unlock_mutex(struct mutex* mutex);
+API void* mutex_get_ptr(struct mutex* mutex);

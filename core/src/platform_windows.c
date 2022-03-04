@@ -654,3 +654,39 @@ void* get_thread_uptr(struct thread* thread) {
 void set_thread_uptr(struct thread* thread, void* ptr) {
 	thread->uptr = ptr;
 }
+
+struct mutex {
+	HANDLE handle;
+
+	void* data;
+};
+
+struct mutex* new_mutex(u64 size) {
+	struct mutex* mutex = core_calloc(1, sizeof(struct mutex));
+
+	mutex->handle = CreateMutex(null, false, null);
+
+	mutex->data = core_calloc(1, size);
+
+	return mutex;
+}
+
+void free_mutex(struct mutex* mutex) {
+	CloseHandle(mutex->handle);
+
+	core_free(mutex->data);
+
+	core_free(mutex);
+}
+
+void lock_mutex(struct mutex* mutex) {
+	WaitForSingleObject(mutex->handle, INFINITE);
+}
+
+void unlock_mutex(struct mutex* mutex) {
+	ReleaseMutex(mutex->handle);
+}
+
+void* mutex_get_ptr(struct mutex* mutex) {
+	return mutex->data;
+}

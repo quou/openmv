@@ -182,3 +182,39 @@ void* get_thread_uptr(struct thread* thread) {
 void set_thread_uptr(struct thread* thread, void* ptr) {
 	thread->uptr = ptr;
 }
+
+struct mutex {
+	pthread_mutex_t m;
+
+	void* data;
+};
+
+struct mutex* new_mutex(u64 size) {
+	struct mutex* mutex = core_calloc(1, sizeof(struct mutex));
+
+	pthread_mutex_init(&mutex->m, null);
+
+	mutex->data = core_calloc(1, size);
+
+	return mutex;
+}
+
+void free_mutex(struct mutex* mutex) {
+	pthread_mutex_destroy(&mutex->m);
+
+	core_free(mutex->data);
+
+	core_free(mutex);
+}
+
+void lock_mutex(struct mutex* mutex) {
+	pthread_mutex_lock(&mutex->m);
+}
+
+void unlock_mutex(struct mutex* mutex) {
+	pthread_mutex_unlock(&mutex->m);
+}
+
+void* mutex_get_ptr(struct mutex* mutex) {
+	return mutex->data;
+}
