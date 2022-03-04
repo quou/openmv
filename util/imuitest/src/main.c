@@ -36,6 +36,8 @@ i32 main() {
 	u32 text_count = 0;
 	char buffer[256] = "";
 
+	bool toggle = false;
+
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
 
@@ -45,6 +47,8 @@ i32 main() {
 
 		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
 			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
+
+			ui_toggle(ui, &toggle);
 
 			ui_columns(ui, 4, 80);
 			ui_text(ui, "Input");

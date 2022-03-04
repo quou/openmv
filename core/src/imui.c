@@ -45,7 +45,8 @@ enum {
 	ui_el_text = 0,
 	ui_el_button,
 	ui_el_text_input,
-	ui_el_image
+	ui_el_image,
+	ui_el_toggle
 };
 
 struct ui_element {
@@ -66,6 +67,11 @@ struct ui_element {
 			char* text;
 			v2i dimentions;
 		} button;
+
+		struct {
+			bool* value;
+			v2i dimentions;
+		} toggle;
 
 		struct {
 			char* buf;
@@ -602,8 +608,29 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						el->color);
-					break;
-				}
+				} break;
+				case ui_el_toggle: {
+					u32 c = ui_col_background;
+					if (ui->hovered == el) {
+						c = ui_col_hovered;
+					}
+
+					if (ui->hot == el) {
+						c = ui_col_hot;
+					}
+
+					ui_draw_rect(ui, make_rect(
+						el->position.x, el->position.y,
+						el->as.toggle.dimentions.x, el->as.toggle.dimentions.y
+					), c);
+
+					if (*el->as.toggle.value) {
+						render_text(ui->renderer, el->font, "x",
+							el->position.x + ((el->as.toggle.dimentions.x / 2) - (text_width(el->font, "x") / 2)),
+							el->position.y + ui->padding,
+							el->color);
+					}
+				} break;
 				case ui_el_text_input: {
 					u32 c = ui_col_background;
 					if (ui->hovered == el) {
@@ -1202,6 +1229,38 @@ void ui_loading_bar(struct ui_context* ui, const char* text, i32 percentage) {
 	ui->loading = ui_copy_string(ui, text);
 	ui->loading_p = percentage;
 	ui->loading_f = ui->font;
+}
+
+bool ui_toggle(struct ui_context* ui, bool* value) {
+	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y,
+		font_height(ui->font) + ui->padding * 2, font_height(ui->font) + ui->padding * 2);
+
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_toggle,
+		.position = ui->cursor_pos,
+		.as.toggle = {
+			.value = value,
+			.dimentions = make_v2i(r.w, r.h),
+		}
+	});
+
+	ui_advance(ui, e->as.toggle.dimentions.y + ui->padding);
+
+	if (ui->top_window == ui->current_window &&
+			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
+		if (mouse_over_rect(r)) {
+			ui->hovered = e;
+
+			if (held()) {
+				ui->hot = e;
+			}
+
+			if (clicked()) {
+				*value = !(*value);
+				return true;
+			}
+		}
+	}
 }
 
 struct renderer* ui_get_renderer(struct ui_context* ui) {
