@@ -1,5 +1,6 @@
 # OpenMV
 
+![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/004.png)
 ![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/001.png)
 ![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/002.png)
 ![screenshot](https://raw.githubusercontent.com/veridisquot/openmv/master/media/003.png)
@@ -24,6 +25,7 @@ Created from the ground up in C99.
  - [x] Dialogue system for NPCs.
  - [x] Scripting language.
  - [x] Command system to allow for easy configuration.
+ - [x] Post processing.
  - [ ] Actually make a damn game.
 
 ## Building

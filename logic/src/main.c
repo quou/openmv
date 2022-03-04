@@ -38,7 +38,7 @@ EXPORT_SYM void C_DECL on_reload(void* instance) {
 }
 
 EXPORT_SYM struct window* C_DECL create_window() {
-	return new_window(make_v2i(1366, 768), "OpenMV", false);
+	return new_window(make_v2i(1366, 768), "OpenMV", true);
 }
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
@@ -166,6 +166,8 @@ EXPORT_SYM void C_DECL on_init() {
 	menu_add_selectable(logic_store->pause_menu, "Tutorial", on_tutorial);
 	menu_add_selectable(logic_store->pause_menu, "Quit", on_quit);
 
+	logic_store->crt = new_post_processor(load_shader("res/shaders/crt.glsl"));
+
 	prompts_init(load_font("res/CourierPrime.ttf", 25.0f));
 	shops_init();
 
@@ -224,12 +226,15 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 
 	i32 win_w, win_h;
 	query_window(main_window, &win_w, &win_h);
-	logic_store->ui_renderer->dimentions = make_v2i(win_w, win_h);
-	logic_store->ui_renderer->camera = m4f_orth(0.0f, (f32)win_w, (f32)win_h, 0.0f, -1.0f, 1.0f);
+
+	renderer_resize(logic_store->ui_renderer, make_v2i(win_w, win_h));
 
 	if (!logic_store->frozen && !logic_store->paused) {
 		player_system(world, renderer, &logic_store->room, timestep);
 	}
+
+	post_processor_fit_to_main_window(logic_store->crt);
+	use_post_processor(logic_store->crt);
 
 	apply_lights(world, renderer);
 	update_room_light(logic_store->room, renderer);
@@ -250,13 +255,9 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 
 	hud_system(world, logic_store->hud_renderer);
 
-	renderer_end_frame(renderer);
-
 	if (!logic_store->show_ui) {
 		renderer_flush(renderer);
 	}
-
-	renderer_end_frame(logic_store->hud_renderer);
 
 	if (logic_store->paused) {
 		menu_update(logic_store->pause_menu);
@@ -264,6 +265,11 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		prompts_update(ts);
 		shops_update(ts);
 	}
+
+	renderer_end_frame(logic_store->hud_renderer);
+	renderer_end_frame(renderer);
+
+	flush_post_processor(logic_store->crt);
 
 	renderer_flush(logic_store->ui_renderer);
 	renderer_end_frame(logic_store->ui_renderer);
@@ -436,6 +442,7 @@ EXPORT_SYM void C_DECL on_deinit() {
 
 	free_room(logic_store->room);
 
+	free_post_processor(logic_store->crt);
 	free_renderer(logic_store->renderer);
 	free_renderer(logic_store->hud_renderer);
 	free_renderer(logic_store->ui_renderer);

@@ -250,6 +250,85 @@ void renderer_fit_to_main_window(struct renderer* renderer) {
 	renderer_resize(renderer, make_v2i(win_w, win_h));
 }
 
+struct post_processor* new_post_processor(struct shader shader) {
+	struct post_processor* p = core_calloc(1, sizeof(struct post_processor));
+
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	init_render_target(&p->target, win_w, win_h);
+
+	p->dimentions = make_v2i(win_w, win_h);
+
+	p->shader = shader;
+
+	f32 verts[] = {
+		-1.0f, -1.0f, 0.0f, 0.0f,
+		 1.0f, -1.0f, 1.0f, 0.0f,
+		 1.0f,  1.0f, 1.0f, 1.0f,
+		-1.0f,  1.0f, 0.0f, 1.0f
+	};
+
+	u32 indices[] = {
+		3, 2, 1,
+		3, 1, 0
+	};
+
+	init_vb(&p->vb, VB_STATIC | VB_TRIS);
+	bind_vb_for_edit(&p->vb);
+	push_vertices(&p->vb, verts, 4 * 4);
+	push_indices(&p->vb, indices, 6);
+	configure_vb(&p->vb, 0, 2, 4, 0);
+	configure_vb(&p->vb, 1, 2, 4, 2);
+	bind_vb_for_edit(null);
+
+	return p;
+}
+
+void free_post_processor(struct post_processor* p) {
+	deinit_render_target(&p->target);
+	deinit_vb(&p->vb);
+
+	core_free(p);
+}
+
+void use_post_processor(struct post_processor* p) {
+	if (!p) {
+		bind_render_target(null);
+	}
+
+	bind_render_target(&p->target);
+}
+
+void resize_post_processor(struct post_processor* p, v2i dimentions) {
+	p->dimentions = dimentions;
+	resize_render_target(&p->target, dimentions.x, dimentions.y);
+}
+
+void post_processor_fit_to_main_window(struct post_processor* p) {
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	resize_post_processor(p, make_v2i(win_w, win_h));
+}
+
+void flush_post_processor(struct post_processor* p) {	
+	bind_shader(&p->shader);
+	shader_set_i(&p->shader, "input", 0);
+	shader_set_v2f(&p->shader, "screen_size", make_v2f(p->dimentions.x, p->dimentions.y));
+
+	bind_render_target(null);
+	bind_render_target_output(&p->target, 0);
+
+	bind_vb_for_draw(&p->vb);
+	draw_vb(&p->vb);
+	bind_vb_for_draw(null);
+
+	bind_shader(null);
+
+	bind_render_target(null);
+}
+
 struct glyph_set {
 	struct texture atlas;
 	stbtt_bakedchar glyphs[256];

@@ -71,6 +71,19 @@ API void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, b
 API void deinit_texture(struct texture* texture);
 API void bind_texture(const struct texture* texture, u32 unit);
 
+struct render_target {
+	u32 id;
+	u32 width, height;
+
+	u32 output;
+};
+
+API void init_render_target(struct render_target* target, u32 width, u32 height);
+API void deinit_render_target(struct render_target* target);
+API void resize_render_target(struct render_target* target, u32 width, u32 height);
+API void bind_render_target(struct render_target* target);
+API void bind_render_target_output(struct render_target* target, u32 unit);
+
 struct rect {
 	i32 x, y, w, h;
 };
@@ -148,6 +161,22 @@ API void renderer_push_light(struct renderer* renderer, struct light light);
 API void renderer_clip(struct renderer* renderer, struct rect clip);
 API void renderer_resize(struct renderer* renderer, v2i size);
 API void renderer_fit_to_main_window(struct renderer* renderer);
+
+struct post_processor {
+	struct render_target target;
+
+	struct shader shader;
+	struct vertex_buffer vb;
+
+	v2i dimentions;
+};
+
+API struct post_processor* new_post_processor(struct shader shader);
+API void free_post_processor(struct post_processor* p);
+API void use_post_processor(struct post_processor* p);
+API void resize_post_processor(struct post_processor* p, v2i dimentions);
+API void post_processor_fit_to_main_window(struct post_processor* p);
+API void flush_post_processor(struct post_processor* p);
 
 struct font;
 

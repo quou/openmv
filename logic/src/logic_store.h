@@ -49,6 +49,8 @@ struct logic_store {
 	FILE* lsp_out;
 
 	char* command_error_log;
+
+	struct post_processor* crt;
 };
 
 extern struct logic_store* logic_store;

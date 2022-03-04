@@ -428,8 +428,77 @@ void deinit_texture(struct texture* texture) {
 }
 
 void bind_texture(const struct texture* texture, u32 unit) {
-	if (!texture) { return; }
+	if (!texture) {
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
 
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, texture->id);
+}
+
+void init_render_target(struct render_target* target, u32 width, u32 height) {
+	glGenFramebuffers(1, &target->id);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, target->id);
+
+	/* Attach a texture */
+	glGenTextures(1, &target->output);
+	glBindTexture(GL_TEXTURE_2D, target->output);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	/* Allow multiple attachments? I don't think it's necessary for the time being;
+	 * A 2-D game won't need *that* much post-processing. */
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, target->output, 0);
+	
+	target->width = width;
+	target->height = height;
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		fprintf(stderr, "Failed to create render target.\n");
+	}
+
+	bind_render_target(null);
+}
+
+void deinit_render_target(struct render_target* target) {
+	glDeleteFramebuffers(1, &target->id);
+	glDeleteTextures(1, &target->output);
+}
+
+void resize_render_target(struct render_target* target, u32 width, u32 height) {
+	if (target->width == width && target->height == height) { return; }
+
+	target->width = width;
+	target->height = height;
+
+	glBindTexture(GL_TEXTURE_2D, target->output);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, null);
+	glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void bind_render_target(struct render_target* target) {
+	if (!target) {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, target->id);
+}
+
+void bind_render_target_output(struct render_target* target, u32 unit) {
+	if (!target) {
+		glBindTexture(GL_TEXTURE_2D, 0);
+		return;
+	}
+
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, target->output);
 }
