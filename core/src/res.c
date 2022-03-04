@@ -230,10 +230,11 @@ static struct res _res_load(const char* path, u32 type, void* udata, u8* raw, u3
 
 static struct res* res_load(const char* path, u32 type, void* udata) {
 	char cache_name[256];
-	strcpy(cache_name, path);
 
 	if (type == res_font) {
 		sprintf(cache_name, "%s%g", path, *(f32*)udata);
+	} else {
+		strcpy(cache_name, path);
 	}
 
 	struct res* got = table_get(res_table, cache_name);
@@ -254,10 +255,11 @@ static struct res* res_load(const char* path, u32 type, void* udata) {
 
 static struct res* res_load_no_pck(const char* path, u32 type, void* udata) {
 	char cache_name[256];
-	strcpy(cache_name, path);
 
 	if (type == res_font) {
 		sprintf(cache_name, "%s%g", path, *(f32*)udata);
+	} else {
+		strcpy(cache_name, path);
 	}
 
 	struct res* got = table_get(res_table, cache_name);
