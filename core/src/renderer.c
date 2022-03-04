@@ -314,12 +314,15 @@ void post_processor_fit_to_main_window(struct post_processor* p) {
 	resize_post_processor(p, make_v2i(win_w, win_h));
 }
 
-void flush_post_processor(struct post_processor* p) {	
+void flush_post_processor(struct post_processor* p, bool default_rt) {	
+	if (default_rt) {
+		bind_render_target(null);
+	}
+
 	bind_shader(&p->shader);
 	shader_set_i(&p->shader, "input", 0);
 	shader_set_v2f(&p->shader, "screen_size", make_v2f(p->dimentions.x, p->dimentions.y));
 
-	bind_render_target(null);
 	bind_render_target_output(&p->target, 0);
 
 	bind_vb_for_draw(&p->vb);
@@ -327,8 +330,6 @@ void flush_post_processor(struct post_processor* p) {
 	bind_vb_for_draw(null);
 
 	bind_shader(null);
-
-	bind_render_target(null);
 }
 
 struct glyph_set {

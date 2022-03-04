@@ -176,7 +176,7 @@ API void free_post_processor(struct post_processor* p);
 API void use_post_processor(struct post_processor* p);
 API void resize_post_processor(struct post_processor* p, v2i dimentions);
 API void post_processor_fit_to_main_window(struct post_processor* p);
-API void flush_post_processor(struct post_processor* p);
+API void flush_post_processor(struct post_processor* p, bool default_rt);
 
 struct font;
 

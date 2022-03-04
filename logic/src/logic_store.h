@@ -51,6 +51,7 @@ struct logic_store {
 	char* command_error_log;
 
 	struct post_processor* crt;
+	struct post_processor* invert;
 };
 
 extern struct logic_store* logic_store;

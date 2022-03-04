@@ -434,7 +434,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 
 		ui_end_frame(ui);
 	} else {
-		flush_post_processor(logic_store->crt);
+		flush_post_processor(logic_store->crt, true);
 	}
 }
 
