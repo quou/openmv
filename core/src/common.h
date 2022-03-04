@@ -34,10 +34,14 @@ typedef double f64;
 	#define IMPORT_SYM
 #endif
 
-#if defined(EXPORT_SYMBOLS)
-	#define API EXPORT_SYM
-#elif defined(IMPORT_SYMBOLS)
-	#define API IMPORT_SYM
+#if !defined(STATIC_LIB)
+	#if defined(EXPORT_SYMBOLS)
+		#define API EXPORT_SYM
+	#elif defined(IMPORT_SYMBOLS)
+		#define API IMPORT_SYM
+	#endif
+#else
+	#define API
 #endif
 
 #if defined(_MSC_VER)
