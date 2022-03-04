@@ -200,7 +200,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		logic_store->paused = !logic_store->paused;
 	}
 
-	if (key_just_pressed(main_window, KEY_F12)) {
+	if (key_just_pressed(main_window, KEY_F1)) {
 		if (logic_store->ui) {
 			logic_store->show_ui = !logic_store->show_ui;
 		} else {
@@ -209,7 +209,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		}
 	}
 
-	if (logic_store->show_ui && key_just_pressed(main_window, KEY_F11)) {
+	if (logic_store->show_ui && key_just_pressed(main_window, KEY_F2)) {
 		logic_store->show_components = !logic_store->show_components;
 	}
 

@@ -945,7 +945,9 @@ bool handle_body_collisions(struct room* room, struct rect collider, v2f* positi
 	 * The collisons are checked for by checking the bottom-centre point of the collider
 	 * against the right-angle triangle created by the two points that define the slope.
 	 *
-	 * Slope-intersection is then used to position the player on the `y' access accordingly. */
+	 * Slope-intersection is then used to position the player on the `y' axis accordingly.
+	 *
+	 * NOTE: Slopes are buggy at low framerate, for unknown reasons. */
  	v2i check_point = make_v2i(body_rect.x + (body_rect.w / 2), body_rect.y + body_rect.h);
 	for (u32 i = 0; i < room->slope_collider_count; i++) {
 		v2i start = make_v2i(room->slope_colliders[i].x, room->slope_colliders[i].y);

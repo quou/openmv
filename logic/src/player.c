@@ -258,6 +258,11 @@ void player_system(struct world* world, struct renderer* renderer, struct room**
 			} else if (player->velocity.x < -1.0f) {
 				player->velocity.x += player_constants.friction * ts;
 			}
+
+			if ((player->velocity.x > 0.0f && player->velocity.x < 10.0f) ||
+				(player->velocity.x < 0.0f && player->velocity.x > -10.0f)) {
+				player->velocity.x = 0.0f;
+			}
 		}
 
 		player->dash_cooldown_timer += ts;
