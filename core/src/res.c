@@ -201,19 +201,7 @@ struct res {
 
 struct table* res_table;
 
-static struct res* _res_load(const char* path, u32 type, void* udata, u8* raw, u32 raw_size) {
-	char cache_name[256];
-	strcpy(cache_name, path);
-
-	if (type == res_font) {
-		sprintf(cache_name, "%s%g", path, *(f32*)udata);
-	}
-
-	struct res* got = table_get(res_table, cache_name);
-	if (got) {
-		return got;
-	}
-
+static struct res _res_load(const char* path, u32 type, void* udata, u8* raw, u32 raw_size) {
 	struct res new_res = { 0 };
 
 	new_res.type = type;
@@ -237,25 +225,56 @@ static struct res* _res_load(const char* path, u32 type, void* udata, u8* raw, u
 		default: break;
 	}
 
-	table_set(res_table, cache_name, &new_res);
+	return new_res;
+}
+
+static struct res* res_load(const char* path, u32 type, void* udata) {
+	char cache_name[256];
+	strcpy(cache_name, path);
+
+	if (type == res_font) {
+		sprintf(cache_name, "%s%g", path, *(f32*)udata);
+	}
+
+	struct res* got = table_get(res_table, cache_name);
+	if (got) {
+		return got;
+	}
+
+	u8* raw;
+	u64 raw_size;
+	read_raw(path, &raw, &raw_size, type == res_shader);
+
+	struct res res = _res_load(path, type, udata, raw, raw_size);
+
+	table_set(res_table, cache_name, &res);
 
 	return table_get(res_table, cache_name);
 }
 
-static struct res* res_load(const char* path, u32 type, void* udata) {
-	u8* raw;
-	u64 raw_size;
-	read_raw(path, &raw, &raw_size, type == res_shader);
-	
-	return _res_load(path, type, udata, raw, raw_size);
-}
-
 static struct res* res_load_no_pck(const char* path, u32 type, void* udata) {
+	char cache_name[256];
+	strcpy(cache_name, path);
+
+	if (type == res_font) {
+		sprintf(cache_name, "%s%g", path, *(f32*)udata);
+	}
+
+	struct res* got = table_get(res_table, cache_name);
+	if (got) {
+		return got;
+	}
+
 	u8* raw;
 	u64 raw_size;
 	read_raw_no_pck(path, &raw, &raw_size, type == res_shader);
-	
-	return _res_load(path, type, udata, raw, raw_size);
+
+	struct res res = _res_load(path, type, udata, raw, raw_size);
+
+	table_set(res_table, cache_name, &res);
+
+	return table_get(res_table, cache_name);
+
 }
 
 static void res_free(struct res* res) {
