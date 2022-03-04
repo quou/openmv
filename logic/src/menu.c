@@ -45,7 +45,7 @@ struct menu* new_menu(struct font* font) {
 	struct menu* menu = core_calloc(1, sizeof(struct menu));
 
 	menu->font = font;
-	menu->renderer = logic_store->hud_renderer;
+	menu->renderer = logic_store->ui_renderer;
 
 	menu->select_sound = load_audio_clip("res/aud/select.wav");
 

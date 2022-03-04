@@ -689,16 +689,13 @@ static void draw_tile_layer(struct room* room, struct renderer* renderer, struct
 
 void draw_room(struct room* room, struct renderer* renderer, f64 ts) {
 	if (room->name && room->name_timer >= 0.0) {
-		room->name_timer -= ts;
-	
-		i32 win_w, win_h;
-		query_window(main_window, &win_w, &win_h);
+		room->name_timer -= ts;	
 
 		i32 text_w = text_width(room->name_font, room->name);
 		i32 text_h = text_height(room->name_font, room->name);
 
-		render_text(logic_store->hud_renderer, room->name_font, room->name,
-			(win_w / 2) - (text_w / 2), (win_h / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
+		render_text(logic_store->ui_renderer, room->name_font, room->name,
+			(logic_store->ui_renderer->dimentions.x / 2) - (text_w / 2), (logic_store->ui_renderer->dimentions.y / 2) - (text_h / 2) - 40, make_color(0xffffff, 255));
 	}
 
 	for (u32 i = 0; i < room->layer_count; i++) {

@@ -132,6 +132,8 @@ void renderer_flush(struct renderer* renderer) {
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
 	renderer->transform_count = 0;
+
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void renderer_end_frame(struct renderer* renderer) {

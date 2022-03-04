@@ -234,7 +234,12 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 	}
 
 	post_processor_fit_to_main_window(logic_store->crt);
-	use_post_processor(logic_store->crt);
+
+	if (!logic_store->show_ui) {
+		use_post_processor(logic_store->crt);
+	} else {
+		use_post_processor(null);
+	}
 
 	apply_lights(world, renderer);
 	update_room_light(logic_store->room, renderer);
@@ -268,8 +273,6 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 
 	renderer_end_frame(logic_store->hud_renderer);
 	renderer_end_frame(renderer);
-
-	flush_post_processor(logic_store->crt);
 
 	renderer_flush(logic_store->ui_renderer);
 	renderer_end_frame(logic_store->ui_renderer);
@@ -430,6 +433,8 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		}
 
 		ui_end_frame(ui);
+	} else {
+		flush_post_processor(logic_store->crt);
 	}
 }
 
