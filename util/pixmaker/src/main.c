@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <time.h>
 
 #include "core.h"
@@ -31,6 +32,16 @@ i32 main() {
 
 	i32 texture_scale = 8;
 	v2i mouse_pos = { 0 };
+	v2i pan_offset = { 0 };
+	v2i pan_drag_offset = { 0 };
+
+	struct color colors[32];
+
+	char r_buf[32] = "255";
+	char g_buf[32] = "255";
+	char b_buf[32] = "255";
+	char a_buf[32] = "255";
+	struct color cur_color = { 255, 255, 255, 255 };
 
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
@@ -45,8 +56,8 @@ i32 main() {
 
 		struct textured_quad quad = {
 			.position = {
-				(win_w / 2) - (tex_w / 2),
-				(win_h / 2) - (tex_h / 2)
+				pan_offset.x + ((win_w / 2) - (tex_w / 2)),
+				pan_offset.y + ((win_h / 2) - (tex_h / 2)) 
 			},
 			.dimentions = { tex_w, tex_h },
 			.texture = &texture,
@@ -68,21 +79,64 @@ i32 main() {
 		if (mouse_pos.x >= 0 && mouse_pos.x < texture.width &&
 			mouse_pos.y >= 0 && mouse_pos.y < texture.height) {
 
-			if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
-				bitmap[mouse_pos.x + mouse_pos.y * texture.width] = make_color(0x0000ff, 255);
-			}
-			
-			if (mouse_btn_pressed(main_window, MOUSE_BTN_RIGHT)) {
-				bitmap[mouse_pos.x + mouse_pos.y * texture.width] = make_color(0x000000, 0);
+			if (key_pressed(main_window, KEY_CONTROL)) {	
+				if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+					cur_color = bitmap[mouse_pos.x + mouse_pos.y * texture.width];
+
+					sprintf(r_buf, "%d", cur_color.b);
+					sprintf(g_buf, "%d", cur_color.g);
+					sprintf(b_buf, "%d", cur_color.r);
+					sprintf(a_buf, "%d", cur_color.a);
+				}
+			} else {
+				if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+					bitmap[mouse_pos.x + mouse_pos.y * texture.width] = cur_color;
+				}
+				
+				if (mouse_btn_pressed(main_window, MOUSE_BTN_RIGHT)) {
+					bitmap[mouse_pos.x + mouse_pos.y * texture.width] = make_color(0x000000, 0);
+				}
 			}
 		}
 
+		if (mouse_btn_just_pressed(main_window, MOUSE_BTN_MIDDLE)) {
+			pan_drag_offset = v2i_sub(get_mouse_position(main_window), pan_offset);
+		}
+
+		if (mouse_btn_pressed(main_window, MOUSE_BTN_MIDDLE)) {
+			pan_offset = v2i_sub(get_mouse_position(main_window), pan_drag_offset);
+		}
+
+		texture_scale += get_scroll(main_window);
+		if (texture_scale < 1) { texture_scale = 1; }
+
 		ui_begin_frame(ui);
 
+		struct textured_quad preview_quad = { 0 };
 		if (ui_begin_window(ui, "Toolbox", make_v2i(0, 0))) {
 			ui_textf(ui, "%d, %d",
 				mouse_pos.x < 0 ? 0 : mouse_pos.x >= texture.width ? texture.width - 1 : mouse_pos.x,
 				mouse_pos.y < 0 ? 0 : mouse_pos.y >= texture.height ? texture.height - 1 : mouse_pos.y);
+		
+			ui_columns(ui, 5, 55);
+			ui_rect(ui, make_v2i(50, 50), (struct color) { cur_color.b, cur_color.g, cur_color.r, cur_color.a } );
+
+			if (ui_text_input(ui, r_buf, sizeof(r_buf))) {
+				cur_color.b = (u8)strtod(r_buf, null);
+			}
+
+			if (ui_text_input(ui, g_buf, sizeof(g_buf))) {
+				cur_color.g = (u8)strtod(g_buf, null);
+			}
+
+			if (ui_text_input(ui, b_buf, sizeof(b_buf))) {
+				cur_color.r = (u8)strtod(b_buf, null);
+			}
+
+			if (ui_text_input(ui, a_buf, sizeof(a_buf))) {
+				cur_color.a = (u8)strtod(a_buf, null);
+			}
+			ui_columns(ui, 1, 100);
 
 			ui_end_window(ui);
 		}

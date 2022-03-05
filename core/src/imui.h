@@ -42,6 +42,7 @@ API bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size);
 API void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions);
 API bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions);
 API bool ui_toggle(struct ui_context* ui, bool* value);
+API void ui_rect(struct ui_context* ui, v2i dimentions, struct color color);
 API void ui_loading_bar(struct ui_context* ui, const char* text, i32 percentage);
 
 API void ui_columns(struct ui_context* ui, u32 count, i32 width);

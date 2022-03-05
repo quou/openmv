@@ -46,7 +46,8 @@ enum {
 	ui_el_button,
 	ui_el_text_input,
 	ui_el_image,
-	ui_el_toggle
+	ui_el_toggle,
+	ui_el_rect
 };
 
 struct ui_element {
@@ -62,6 +63,11 @@ struct ui_element {
 		struct {
 			char* text;
 		} text;
+
+		struct {
+			v2i dimentions;
+			struct color color;
+		} rect;
 
 		struct {
 			char* text;
@@ -279,7 +285,10 @@ static u32 ui_get_hovered_windows(struct ui_context* ui, struct ui_window** wind
 			window->dimentions.x, window->dimentions.y);
 
 		if (mouse_over_rect(window_rect)) {
-			windows[count++] = window;
+			if (windows) {
+				windows[count] = window;
+			}
+			count++;
 		}
 
 		if (count >= max) {
@@ -690,9 +699,7 @@ void ui_end_frame(struct ui_context* ui) {
 							1, h
 						), ui_col_text);
 					}
-
-					break;
-				}
+				} break;
 				case ui_el_image: {
 					u32 c = ui_col_image;
 					if (ui->hovered == el) {
@@ -712,8 +719,17 @@ void ui_end_frame(struct ui_context* ui) {
 					};
 
 					renderer_push(ui->renderer, &quad);
-					break;
-				}
+				} break;
+				case ui_el_rect: {	
+					struct textured_quad quad = {
+						.position = el->position,
+						.dimentions = el->as.rect.dimentions,
+						.rect = el->as.image.rect,
+						.color = el->as.rect.color,
+					};
+
+					renderer_push(ui->renderer, &quad);
+				} break;
 			}
 		}
 	}
@@ -1271,6 +1287,21 @@ bool ui_toggle(struct ui_context* ui, bool* value) {
 			}
 		}
 	}
+}
+
+void ui_rect(struct ui_context* ui, v2i dimentions, struct color color) {
+	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, dimentions.x, dimentions.y);
+
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_rect,
+		.position = ui->cursor_pos,
+		.as.rect = {
+			.color = color,
+			.dimentions = make_v2i(r.w, r.h),
+		}
+	});
+
+	ui_advance(ui, e->as.rect.dimentions.y + ui->padding);
 }
 
 struct renderer* ui_get_renderer(struct ui_context* ui) {
