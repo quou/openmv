@@ -1,7 +1,7 @@
 project "pixmaker"
 	kind "ConsoleApp"
 	language "C"
-	cdialect "C99"
+	cdialect "gnu99"
 
 	targetdir "../../bin"
 	objdir "obj"

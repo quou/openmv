@@ -1,5 +1,9 @@
+#include <stdarg.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+
+#include "tinyfiledialogs.h"
 
 #include "core.h"
 #include "platform.h"
@@ -9,6 +13,49 @@
 
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	ui_text_input_event(udata, text);
+}
+
+#pragma pack(push, 1)
+struct bitmap {
+	u8 signature[2];
+	u32 file_size;
+	u32 reserved;
+	u32 pixel_offset;
+	u32 header_size;
+	u32 width, height;
+	u16 planes;
+	u16 bits_per_pixel;
+	u32 compression;
+	u32 image_size;
+	u32 y_pixel_per_metre;
+	u32 x_pixel_per_metre;
+	u32 color_pallatte;
+	u32 most_imp_color;
+	u32 red_mask;
+	u32 green_mask;
+	u32 blue_mask;
+	u32 alpha_mask;
+};
+#pragma pack(pop)
+
+static char* print_error(char** error, const char* fmt, ...) {
+	if (*error) { core_free(*error); }
+
+	va_list list;
+	va_start(list, fmt);
+
+	u32 len = vsnprintf(null, 0, fmt, list);
+
+	va_end(list);
+
+	va_start(list, fmt);
+	char* str = core_alloc(len + 1);
+	vsprintf(str, fmt, list);
+	va_end(list);
+
+	*error = str;
+	
+	return str;
 }
 
 i32 main() {
@@ -25,10 +72,11 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
-	struct color* bitmap = core_calloc(1, 64 * 64 * sizeof(struct color));
+	u32 bitmap_width = 64, bitmap_height = 64;
+	struct color* bitmap = core_calloc(1, bitmap_width * bitmap_height * sizeof(struct color));
 
 	struct texture texture;
-	init_texture_no_bmp(&texture, (u8*)bitmap, 64, 64, false);
+	init_texture_no_bmp(&texture, (u8*)bitmap, bitmap_width, bitmap_height, false);
 
 	i32 texture_scale = 8;
 	v2i mouse_pos = { 0 };
@@ -42,6 +90,9 @@ i32 main() {
 	char b_buf[32] = "255";
 	char a_buf[32] = "255";
 	struct color cur_color = { 255, 255, 255, 255 };
+
+	char* cur_save_path = null;
+	char* error = null;
 
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
@@ -114,6 +165,12 @@ i32 main() {
 
 		struct textured_quad preview_quad = { 0 };
 		if (ui_begin_window(ui, "Toolbox", make_v2i(0, 0))) {
+			if (error) {
+				ui_color(ui, make_color(0xff0000, 255));
+				ui_text(ui, error);
+				ui_reset_color(ui);
+			}
+
 			ui_textf(ui, "%d, %d",
 				mouse_pos.x < 0 ? 0 : mouse_pos.x >= texture.width ? texture.width - 1 : mouse_pos.x,
 				mouse_pos.y < 0 ? 0 : mouse_pos.y >= texture.height ? texture.height - 1 : mouse_pos.y);
@@ -138,10 +195,124 @@ i32 main() {
 			}
 			ui_columns(ui, 1, 100);
 
+			if (ui_button(ui, "Write") || key_just_pressed(main_window, KEY_W)) {
+				if (!cur_save_path || key_pressed(main_window, KEY_SHIFT)) {
+					const char* filters[] = {
+						"*.bmp"
+					};	
+
+					const char* path = tinyfd_saveFileDialog("Write",
+						cur_save_path ? cur_save_path : "", 1, filters, "Bitmap Files");
+
+					if (path) {
+						if (cur_save_path) {
+							core_free(cur_save_path);
+						}
+
+						cur_save_path = copy_string(path);
+					}
+				}
+				if (cur_save_path) {
+					FILE* file = fopen(cur_save_path, "wb");
+					if (file) {
+						struct bitmap header = {
+							.signature = "BM",
+							.file_size = sizeof(struct bitmap) + texture.width * texture.height * sizeof(struct color),
+							.pixel_offset = sizeof(struct bitmap),
+							.header_size = 56,
+							.width = texture.width,
+							.height = texture.height,
+							.planes = 1,
+							.bits_per_pixel = 32,
+							.image_size = texture.width * texture.height * sizeof(struct color),
+							.y_pixel_per_metre = 0x130B,
+							.x_pixel_per_metre = 0x130B,
+							.most_imp_color = 0,
+							.red_mask = 0x00ff0000,
+							.green_mask = 0x0000ff00,
+							.blue_mask = 0x000000ff,
+							.alpha_mask = 0xff000000
+						};
+
+						struct color* dst = core_alloc(header.image_size);
+
+						for (u32 y = 0; y < header.height; y++) {
+							for (u32 x = 0; x < header.width; x++) {
+								dst[(header.height - y - 1) * header.width + x] = bitmap[y * header.width + x];
+							}
+						}
+
+						fwrite(&header, sizeof(header), 1, file);
+						fwrite(dst, header.image_size, 1, file);
+
+						fclose(file);
+
+						core_free(dst);
+					} else {
+						print_error(&error, "Failed to fopen file: `%s'.", cur_save_path);
+					}
+				}
+			}
+
+			if (ui_button(ui, "Load") || key_just_pressed(main_window, KEY_Q)) {
+				const char* filters[] = {
+					"*.bmp"
+				};
+
+				const char* path = tinyfd_openFileDialog("Load", cur_save_path ? cur_save_path : "", 1, filters, "Bitmap Files", false);
+
+				if (path) {
+					if (cur_save_path) {
+						core_free(cur_save_path);
+						cur_save_path = copy_string(path);
+					}
+
+					FILE* file = fopen(path, "rb");
+
+					if (file) {
+						u8* buf;
+						u64 size;
+
+						read_raw_no_pck(path, &buf, &size, false);
+
+						if (size < sizeof(struct bitmap)) {
+							print_error(&error, "Not a valid Bitmap image.");
+							goto end;
+						}
+
+						struct bitmap* header = (struct bitmap*)buf;
+
+						if (header->signature[0] != 'B' || header->signature[1] != 'M') {
+							print_error(&error, "Not a valid Bitmap image.");
+							goto end;
+						}
+
+						core_free(bitmap);
+
+						struct color* src = (struct color*)(buf + header->pixel_offset);
+						struct color* dst = core_alloc(header->image_size);
+
+						for (u32 y = 0; y < header->height; y++) {
+							for (u32 x = 0; x < header->width; x++) {
+								dst[(header->height - y - 1) * header->width + x] = src[y * header->width + x];
+							}
+						}
+
+						bitmap_width = header->width;
+						bitmap_height = header->height;
+						bitmap = dst;
+	end:
+						core_free(buf);
+					} else {
+						print_error(&error, "Failed to fopen file: `%s'.", path);
+					}
+				}
+			}
+
 			ui_end_window(ui);
 		}
 
-		update_texture_no_bmp(&texture, (u8*)bitmap, texture.width, texture.height, false);
+		update_texture_no_bmp(&texture, (u8*)bitmap, bitmap_width, bitmap_height, false);
 
 		renderer_push(ui_get_renderer(ui), &background);
 		renderer_push(ui_get_renderer(ui), &quad);
