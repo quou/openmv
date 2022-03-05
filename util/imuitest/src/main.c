@@ -32,6 +32,8 @@ i32 main() {
 	u64 now = get_time(), last = now; 
 	f64 timestep = 0.0;
 
+	f32 float_val = 0.0f;
+
 	char texts[256][256];
 	u32 text_count = 0;
 	char buffer[256] = "";
@@ -61,7 +63,7 @@ i32 main() {
 				text_count = 0;
 			}
 
-			ui_columns(ui, 1, 0);
+			ui_columns(ui, 1, 100);
 
 			ui_color(ui, make_color(0xff0000, 255));
 			ui_text(ui, "Red Text!");

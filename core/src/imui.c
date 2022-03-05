@@ -1172,7 +1172,7 @@ bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 				ui->active = e;
 				ui->input_buf = buf;
 				ui->input_buf_size = buf_size;
-				ui->input_cursor = 0;
+				ui->input_cursor = (u32)strlen(buf);
 			}
 		}
 	}
