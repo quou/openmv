@@ -11,6 +11,9 @@
 #include "imui.h"
 #include "video.h"
 
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 static void on_text_input(struct window* window, const char* text, void* udata) {
 	ui_text_input_event(udata, text);
 }
@@ -74,6 +77,8 @@ i32 main() {
 
 	u32 bitmap_width = 64, bitmap_height = 64;
 	struct color* bitmap = core_calloc(1, bitmap_width * bitmap_height * sizeof(struct color));
+	struct color* clipboard = null;
+	struct rect clipboard_rect = { 0, 0, 0, 0 };
 
 	struct texture texture;
 	init_texture_no_bmp(&texture, (u8*)bitmap, bitmap_width, bitmap_height, false);
@@ -82,6 +87,10 @@ i32 main() {
 	v2i mouse_pos = { 0 };
 	v2i pan_offset = { 0 };
 	v2i pan_drag_offset = { 0 };
+
+	bool selecting = false;
+	v2i selection_start;
+	v2i selection_end;
 
 	struct color colors[32];
 
@@ -122,6 +131,18 @@ i32 main() {
 			.color = make_color(0x1e1e1e, 255)
 		};
 
+		struct textured_quad selection = {
+			.position = {
+				.x = quad.position.x + selection_start.x * texture_scale,
+				.y = quad.position.y + selection_start.y * texture_scale,
+			},
+			.dimentions = {
+				.x = (quad.position.x + selection_end.x * texture_scale) - (quad.position.x + selection_start.x * texture_scale),
+				.y = (quad.position.y + selection_end.y * texture_scale) - (quad.position.y + selection_start.y * texture_scale)
+			},
+			.color = make_color(0xaaaaaa, 100)
+		};
+
 		mouse_pos = get_mouse_position(main_window);
 
 		mouse_pos = v2i_sub(mouse_pos, quad.position);
@@ -139,6 +160,15 @@ i32 main() {
 					sprintf(b_buf, "%d", cur_color.r);
 					sprintf(a_buf, "%d", cur_color.a);
 				}
+			} else if (key_pressed(main_window, KEY_SHIFT)) {
+				if (mouse_btn_just_pressed(main_window, MOUSE_BTN_LEFT)) {
+					selecting = !selecting;
+					selection_start = mouse_pos;
+				}
+
+				if (selecting && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {	
+					selection_end = mouse_pos;
+				}
 			} else {
 				if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 					bitmap[mouse_pos.x + mouse_pos.y * texture.width] = cur_color;
@@ -146,6 +176,41 @@ i32 main() {
 				
 				if (mouse_btn_pressed(main_window, MOUSE_BTN_RIGHT)) {
 					bitmap[mouse_pos.x + mouse_pos.y * texture.width] = make_color(0x000000, 0);
+				}
+			}
+		}
+
+		if (selecting) {
+			if (key_just_pressed(main_window, KEY_Y)) {
+				v2i s = make_v2i(MIN(selection_start.x, selection_end.x), MIN(selection_start.y, selection_end.y));
+				v2i e = make_v2i(MAX(selection_start.x, selection_end.x), MAX(selection_start.y, selection_end.y));
+
+				clipboard_rect.x = s.x;
+				clipboard_rect.y = s.y;
+				clipboard_rect.w = e.x - s.x;
+				clipboard_rect.h = e.y - s.y;
+
+				clipboard = core_realloc(clipboard, bitmap_width * bitmap_height * sizeof(struct color));
+
+				for (i32 y = clipboard_rect.y; y < e.y; y++) {
+					for (i32 x = clipboard_rect.x; x < e.x; x++) {
+						clipboard[x + y * clipboard_rect.w] = bitmap[x + y * bitmap_width];
+					}
+				}
+			}
+		}
+
+		if (clipboard && key_just_pressed(main_window, KEY_P)) {
+			v2i p_offset = { 0 };
+
+			if (selecting) {
+				p_offset = make_v2i(MIN(selection_start.x, selection_end.x), MIN(selection_start.y, selection_end.y));
+				selecting = false;
+			}
+
+			for (i32 y = clipboard_rect.y, yy = p_offset.y; y < clipboard_rect.y + clipboard_rect.h && yy < bitmap_height; y++, yy++) {
+				for (i32 x = clipboard_rect.x, xx = p_offset.x; x < clipboard_rect.x + clipboard_rect.w && xx < bitmap_width; x++, xx++) {
+					bitmap[xx + yy * bitmap_width] = clipboard[x + y * clipboard_rect.w];
 				}
 			}
 		}
@@ -193,7 +258,8 @@ i32 main() {
 			if (ui_text_input(ui, a_buf, sizeof(a_buf))) {
 				cur_color.a = (u8)strtod(a_buf, null);
 			}
-			ui_columns(ui, 1, 100);
+
+			ui_columns(ui, 2, 100);
 
 			if (ui_button(ui, "Write") || key_just_pressed(main_window, KEY_W)) {
 				if (!cur_save_path || key_pressed(main_window, KEY_SHIFT)) {
@@ -288,6 +354,7 @@ i32 main() {
 						}
 
 						core_free(bitmap);
+						core_free(clipboard);
 
 						struct color* src = (struct color*)(buf + header->pixel_offset);
 						struct color* dst = core_alloc(header->image_size);
@@ -308,6 +375,8 @@ i32 main() {
 					}
 				}
 			}
+			
+			ui_columns(ui, 1, 100);
 
 			ui_end_window(ui);
 		}
@@ -317,12 +386,20 @@ i32 main() {
 		renderer_push(ui_get_renderer(ui), &background);
 		renderer_push(ui_get_renderer(ui), &quad);
 
+		if (selecting) {
+			renderer_push(ui_get_renderer(ui), &selection);
+		}
+
 		ui_end_frame(ui);
 
 		swap_window(main_window);
 	}
 
 	deinit_texture(&texture);
+
+	if (clipboard) {
+		core_free(clipboard);
+	}
 
 	core_free(bitmap);
 
