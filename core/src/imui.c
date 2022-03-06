@@ -116,10 +116,6 @@ enum {
 	ui_dock_dir_down
 };
 
-struct float_rect {
-	f32 x, y, w, h;
-};
-
 static inline struct float_rect make_float_rect(f32 x, f32 y, f32 w, f32 h) {
 	return (struct float_rect) { x, y, w, h };
 }
@@ -959,8 +955,38 @@ void ui_end_frame(struct ui_context* ui) {
 	renderer_end_frame(ui->renderer);
 }
 
+void ui_set_root_dockspace(struct ui_context* ui, struct float_rect rect) {
+	ui->dockspaces[0].rect = rect;
+}
+
 v2i ui_get_cursor_pos(struct ui_context* ui) {
 	return ui->cursor_pos;
+}
+
+bool ui_any_window_hovered(struct ui_context* ui) {
+	u32 count = ui_get_hovered_windows(ui, null, 1);
+
+	return count > 0;
+}
+
+bool ui_any_item_hovered(struct ui_context* ui) {
+	return ui->hovered != null;
+}
+
+bool ui_anything_hovered(struct ui_context* ui) {
+	return ui_any_window_hovered(ui) || ui_any_item_hovered(ui);
+}
+
+bool ui_any_item_active(struct ui_context* ui) {
+	return ui->active != null;
+}
+
+bool ui_any_item_hot(struct ui_context* ui) {
+	return ui->hot != null;
+}
+
+bool ui_any_windows_dragging(struct ui_context* ui) {
+	return ui->dragging != null;
 }
 
 bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {

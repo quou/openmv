@@ -23,6 +23,10 @@ enum {
 	ui_col_count
 };
 
+struct float_rect {
+	f32 x, y, w, h;
+};
+
 API struct ui_context* new_ui_context(struct shader shader, struct window* window, struct font* font);
 API void free_ui_context(struct ui_context* ui);
 API void ui_set_color(struct ui_context* ui, u32 id, struct color color);
@@ -30,7 +34,16 @@ API void ui_text_input_event(struct ui_context* ui, const char* text);
 API void ui_begin_frame(struct ui_context* ui);
 API void ui_end_frame(struct ui_context* ui);
 
+API void ui_set_root_dockspace(struct ui_context* ui, struct float_rect rect);
+
 API v2i ui_get_cursor_pos(struct ui_context* ui);
+
+API bool ui_any_window_hovered(struct ui_context* ui);
+API bool ui_any_item_hovered(struct ui_context* ui);
+API bool ui_anything_hovered(struct ui_context* ui);
+API bool ui_any_item_active(struct ui_context* ui);
+API bool ui_any_item_hot(struct ui_context* ui);
+API bool ui_any_windows_dragging(struct ui_context* ui);
 
 API bool ui_begin_window(struct ui_context* ui, const char* name, v2i position);
 API void ui_end_window(struct ui_context* ui);

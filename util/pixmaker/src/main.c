@@ -75,10 +75,18 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
+	ui_set_root_dockspace(ui, (struct float_rect) { 0.0f, 0.0f, 0.25f, 1.0f });
+
 	u32 bitmap_width = 64, bitmap_height = 64;
 	struct color* bitmap = core_calloc(1, bitmap_width * bitmap_height * sizeof(struct color));
 	struct color* clipboard = null;
 	struct rect clipboard_rect = { 0, 0, 0, 0 };
+
+	bool show_grid = false;
+	v2i grid_size = { 16, 16 };
+
+	char grid_x_buf[32] = "16";
+	char grid_y_buf[32] = "16";
 
 	struct texture texture;
 	init_texture_no_bmp(&texture, (u8*)bitmap, bitmap_width, bitmap_height, false);
@@ -148,7 +156,8 @@ i32 main() {
 		mouse_pos = v2i_sub(mouse_pos, quad.position);
 		mouse_pos = v2i_div(mouse_pos, make_v2i(texture_scale, texture_scale));
 
-		if (mouse_pos.x >= 0 && mouse_pos.x < texture.width &&
+		if (!ui_anything_hovered(ui) && !ui_any_windows_dragging(ui) &&
+			mouse_pos.x >= 0 && mouse_pos.x < texture.width &&
 			mouse_pos.y >= 0 && mouse_pos.y < texture.height) {
 
 			if (key_pressed(main_window, KEY_CONTROL)) {	
@@ -245,18 +254,22 @@ i32 main() {
 
 			if (ui_text_input(ui, r_buf, sizeof(r_buf))) {
 				cur_color.b = (u8)strtod(r_buf, null);
+				sprintf(r_buf, "%d", cur_color.b);
 			}
 
 			if (ui_text_input(ui, g_buf, sizeof(g_buf))) {
 				cur_color.g = (u8)strtod(g_buf, null);
+				sprintf(g_buf, "%d", cur_color.g);
 			}
 
 			if (ui_text_input(ui, b_buf, sizeof(b_buf))) {
 				cur_color.r = (u8)strtod(b_buf, null);
+				sprintf(b_buf, "%d", cur_color.r);
 			}
 
 			if (ui_text_input(ui, a_buf, sizeof(a_buf))) {
 				cur_color.a = (u8)strtod(a_buf, null);
+				sprintf(a_buf, "%d", cur_color.a);
 			}
 
 			ui_columns(ui, 2, 100);
@@ -375,6 +388,21 @@ i32 main() {
 					}
 				}
 			}
+
+			ui_columns(ui, 4, 50);
+
+			ui_text(ui, "Grid");
+			ui_toggle(ui, &show_grid);
+
+			if (ui_text_input(ui, grid_x_buf, sizeof(grid_x_buf))) {
+				grid_size.x = (i32)strtod(grid_x_buf, null);
+				snprintf(grid_x_buf, sizeof(grid_x_buf), "%d", grid_size.x);
+			}
+
+			if (ui_text_input(ui, grid_y_buf, sizeof(grid_y_buf))) {
+				grid_size.y = (i32)strtod(grid_y_buf, null);
+				snprintf(grid_y_buf, sizeof(grid_y_buf), "%d", grid_size.y);
+			}
 			
 			ui_columns(ui, 1, 100);
 
@@ -385,6 +413,28 @@ i32 main() {
 
 		renderer_push(ui_get_renderer(ui), &background);
 		renderer_push(ui_get_renderer(ui), &quad);
+
+		if (show_grid) {
+			for (i32 x = 0; x <= quad.dimentions.x; x += grid_size.x * texture_scale) {
+					struct textured_quad line = {
+					.position = { quad.position.x + x, quad.position.y },
+					.dimentions = { 1, quad.dimentions.y },
+					.color = { 255, 255, 255, 100 }
+				};
+
+				renderer_push(ui_get_renderer(ui), &line);
+			}
+
+			for (i32 y = 0; y <= quad.dimentions.y; y += grid_size.y * texture_scale) {
+					struct textured_quad line = {
+					.position = { quad.position.x, quad.position.y + y },
+					.dimentions = { quad.dimentions.x, 1 },
+					.color = { 255, 255, 255, 100 }
+				};
+
+				renderer_push(ui_get_renderer(ui), &line);
+			}
+		}
 
 		if (selecting) {
 			renderer_push(ui_get_renderer(ui), &selection);
