@@ -20,14 +20,18 @@ project "imuitest"
 	}
 
 	links {
-		"core",
-		"m"
+		"core"
 	}
 
 	defines {
 		"IMPORT_SYMBOLS",
 		"_CRT_SECURE_NO_WARNINGS"
 	}
+
+	filter "system:linux"
+		links {
+			"m"
+		}
 
 	filter "configurations:debug"
 		defines { "DEBUG" }
