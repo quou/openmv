@@ -201,13 +201,13 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 		dw_style |= WS_THICKFRAME | WS_MAXIMIZEBOX;
 	}
 
+	window->w = size.x;
+	window->h = size.y;
+
 	RECT win_rect = { 0, 0, size.x, size.y };
 	AdjustWindowRectEx(&win_rect, dw_style, FALSE, dw_ex_style);
 	i32 create_width = win_rect.right - win_rect.left;
 	i32 create_height = win_rect.bottom - win_rect.top;
-
-	window->w = create_width;
-	window->h = create_height;
 
 	window->hwnd = CreateWindowExA(dw_ex_style, "openmv", "", dw_style, 0, 0,
 		create_width, create_height, null, null, GetModuleHandle(null), window);
