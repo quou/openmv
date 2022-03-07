@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -202,6 +203,8 @@ struct ui_context {
 	struct font* font;
 	struct renderer* renderer;
 
+	/* This is a generic text buffer used for temporary
+	 * text storage to avoid allocating a new buffer. */
 	char text_buffer[text_buffer_size];
 
 	v2i drag_start;
@@ -375,14 +378,13 @@ void ui_text_input_event(struct ui_context* ui, const char* text) {
 	u32 len = (u32)strlen(text);
 	u32 buf_len = (u32)strlen(ui->input_buf);
 
-	if (buf_len + len < ui->input_buf_size) {
+	if (buf_len + len < ui->input_buf_size && buf_len - ui->input_cursor < text_buffer_size) {
 		for (u32 i = 0; i < len; i++) {
 			if (ui->input_filter(text[i])) {
-				char after[256];
-				memcpy(after, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
+				memcpy(ui->text_buffer, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
 				ui->input_buf[ui->input_cursor] = '\0';
 				strncat(ui->input_buf, text + i, 1);
-				strncat(ui->input_buf, after, buf_len - ui->input_cursor);
+				strncat(ui->input_buf, ui->text_buffer, buf_len - ui->input_cursor);
 				ui->input_cursor++;
 			}
 		}
@@ -462,11 +464,11 @@ void ui_end_frame(struct ui_context* ui) {
 
 		if (ui->input_cursor > 0) {
 			if (key_just_pressed(main_window, KEY_BACKSPACE)) {
-				char after[256];
-				memcpy(after, ui->input_buf + ui->input_cursor, buf_len - ui->input_cursor);
+				for (u32 i = ui->input_cursor - 1; i < buf_len - 1; i++) {
+					ui->input_buf[i] = ui->input_buf[i + 1];
+				}
 
-				ui->input_buf[ui->input_cursor - 1] = '\0';
-				strncat(ui->input_buf, after, buf_len - ui->input_cursor);
+				ui->input_buf[buf_len - 1] = '\0';
 				ui->input_cursor--;
 			}
 
@@ -475,8 +477,18 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		}
 
-		if (ui->input_cursor < buf_len && key_just_released(main_window, KEY_RIGHT)) {
-			ui->input_cursor++;
+		if (ui->input_cursor < buf_len) {
+			if (key_just_pressed(main_window, KEY_RIGHT)) {
+				ui->input_cursor++;
+			}
+
+			if (buf_len > 0 && key_just_pressed(main_window, KEY_DELETE)) {
+				for (u32 i = ui->input_cursor; i < buf_len - 1; i++) {
+					ui->input_buf[i] = ui->input_buf[i + 1];
+				}
+
+				ui->input_buf[buf_len - 1] = '\0';
+			}
 		}
 	}
 
@@ -1128,10 +1140,15 @@ void ui_text(struct ui_context* ui, const char* text) {
 
 void ui_textf(struct ui_context* ui, const char* fmt, ...) {
 	va_list list;
-	va_start(list, fmt);
-	
-	vsnprintf(ui->text_buffer, text_buffer_size, fmt, list);
 
+	va_start(list, fmt);
+	u32 len = (u32)vsnprintf(null, 0, fmt, list);
+	va_end(list);
+
+	assert(len < text_buffer_size && "Text buffer overflow.");
+
+	va_start(list, fmt);
+	vsnprintf(ui->text_buffer, text_buffer_size, fmt, list);
 	va_end(list);
 
 	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
