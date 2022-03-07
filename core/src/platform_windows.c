@@ -164,6 +164,10 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 		window->released_btns[MOUSE_BTN_RIGHT] = true;
 		return 0;
 	}
+	case WM_MOUSEWHEEL: {
+		window->scroll += GET_WHEEL_DELTA_WPARAM(wparam) > 1 ? 1 : -1;
+		return 0;
+	}
 	default: break;
 	};
 
@@ -346,6 +350,8 @@ void swap_window(struct window* window) {
 }
 
 void update_events(struct window* window) {
+	window->scroll = 0;
+
 	MSG msg;
 
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0) {
