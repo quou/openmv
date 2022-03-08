@@ -49,6 +49,7 @@ i32 main() {
 
 		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
 			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
+			ui_textf(ui, "FPS: %g", 1.0 / timestep);
 
 			ui_toggle(ui, &toggle);
 
@@ -106,6 +107,14 @@ i32 main() {
 		ui_end_frame(ui);
 
 		swap_window(main_window);
+
+		now = get_time();
+		timestep = (f64)(now - last) / (f64)get_frequency();
+		last = now;
+
+		if (timestep > 0.1) {
+			timestep = 0.1;
+		}
 	}
 
 	free_ui_context(ui);

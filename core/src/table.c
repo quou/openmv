@@ -66,21 +66,44 @@ static void table_resize(struct table* table, u32 capacity) {
 	table->capacity = capacity;
 }
 
+static void* table_data_get(struct table* table, i32 idx) {
+	return ((u8*)table->data + idx * (table->element_size + 1)) + 1;
+}
+
+static u8* table_get_indicator(struct table* table, i32 idx) {
+	return ((u8*)table->data + idx * (table->element_size + 1));
+}
+
 static i32 table_data_add(struct table* table) {
-	if (table->data_count >= table->data_capacity) {
-		table->data_capacity = table->data_capacity < 8 ? 8 : table->data_capacity * 2;
-		table->data = core_realloc(table->data, table->data_capacity * table->element_size);
+	for (u32 i = 0; i < table->data_count; i++) {
+		u8* indicator = table_get_indicator(table, i);
+
+		if (*indicator == 0) {
+			*indicator = 1;
+			return (i32)i;
+		}
 	}
 
-	return table->data_count++;
+	if (table->data_count >= table->data_capacity) {
+		u32 old_cap = table->capacity;
+		table->data_capacity = table->data_capacity < 8 ? 8 : table->data_capacity * 2;
+		table->data = core_realloc(table->data, table->data_capacity * (table->element_size + 1));
+		memset(table->data + old_cap, 0, (table->data_capacity - old_cap) * (table->element_size + 1));
+	}
+
+	i32 idx = table->data_count++;
+
+	*(table_get_indicator(table, idx)) = 1;
+
+	return idx;
 }
 
 static void table_data_set(struct table* table, i32 idx, const void* ptr) {
-	memcpy(&((char*)table->data)[idx * table->element_size], ptr, table->element_size);
+	memcpy(table_data_get(table, idx), ptr, table->element_size);
 }
 
-static void* table_data_get(struct table* table, i32 idx) {
-	return &((char*)table->data)[idx * table->element_size]; 
+static void table_data_remove(struct table* table, i32 idx) {
+	*(table_get_indicator(table, idx)) = 0;
 }
 
 struct table* new_table(u32 element_size) {
@@ -162,6 +185,8 @@ void table_delete(struct table* table, const char* key) {
 
 	struct table_el* el = find_el(table->els, table->capacity, key);
 	if (!el->key) { return; }
+
+	table_data_remove(table, el->val_idx);
 
 	core_free(el->key);
 

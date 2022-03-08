@@ -410,6 +410,11 @@ void ui_begin_frame(struct ui_context* ui) {
 	ui->current_dockspace = null;
 
 	renderer_resize(ui->renderer, make_v2i(w, h));
+
+	for (table_iter(ui->strings, iter)) {
+		struct text_entry* entry = iter.value;
+		entry->life = 0;
+	}
 }
 
 static i32 cmp_window_z(const struct ui_window** a, const struct ui_window** b) {
@@ -954,9 +959,8 @@ void ui_end_frame(struct ui_context* ui) {
 
 	for (table_iter(ui->strings, iter)) {
 		struct text_entry* entry = iter.value;
-		entry->life--;
 
-		if (entry->life < 0) {
+		if (entry->life <= 0) {
 			char* ptr = entry->ptr;
 			table_delete(ui->strings, entry->ptr);
 			core_free(ptr);
