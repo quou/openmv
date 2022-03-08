@@ -194,6 +194,8 @@ void table_delete(struct table* table, const char* key) {
 	 * Gone but not deleted. */
 	el->key = null;
 	el->val_idx = -2;
+
+	table->count--;
 }
 
 u32 get_table_count(struct table* table) {
