@@ -47,9 +47,30 @@ i32 main() {
 
 		ui_begin_frame(ui);
 
-		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
+		if (ui_begin_window(ui, "A", make_v2i(0, 0))) {
 			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_textf(ui, "FPS: %g", 1.0 / timestep);
+
+			ui_columns(ui, 1, ui_max_column_size(ui));
+
+			ui_text_wrapped(ui,
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. "
+				"This is some wrapped text. iaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ");
 
 			ui_toggle(ui, &toggle);
 

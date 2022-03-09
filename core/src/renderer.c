@@ -1,6 +1,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #include "core.h"
 #include "platform.h"
@@ -505,11 +507,28 @@ i32 text_width(struct font* font, const char* text) {
 	p = text;
 	while (*p) {
 		p = utf8_to_codepoint(p, &codepoint);
+		
+		if (*p == '\n') {
+			x = 0;
+		}
+
 		set = get_glyph_set(font, codepoint);
 		g = &set->glyphs[codepoint & 0xff];
 		x += (i32)g->xadvance;
 	}
 	return x;
+}
+
+i32 char_width(struct font* font, char c) {
+	char p[2];
+	p[0] = c;
+
+	u32 codepoint;
+	utf8_to_codepoint(p, &codepoint);
+
+	struct glyph_set* set = get_glyph_set(font, codepoint);
+	stbtt_bakedchar* g = &set->glyphs[codepoint & 0xff];
+	return g->xadvance;
 }
 
 i32 text_height(struct font* font, const char* text) {
@@ -536,6 +555,11 @@ i32 text_width_n(struct font* font, const char* text, u32 n) {
 	u32 i = 0;
 	while (*p && i < n) {
 		p = utf8_to_codepoint(p, &codepoint);
+
+		if (*p == '\n') {
+			x = 0;
+		}
+
 		set = get_glyph_set(font, codepoint);
 		g = &set->glyphs[codepoint & 0xff];
 		x += (i32)g->xadvance;
@@ -682,4 +706,52 @@ i32 render_text_fancy(struct renderer* renderer, struct font* font,
 	}
 
 	return x;
+}
+
+char* word_wrap(struct font* font, char* buffer, const char* string, i32 width) {
+	i32 i = 0;
+
+	u32 string_len = (u32)strlen(string);
+	i32 line_start = 0;
+
+	while (i < string_len) {
+		for (i32 c = 1; c < width - 8; c += char_width(font, string[i])) {
+			if (i >= string_len) {
+				buffer[i] = '\0';
+				return buffer;
+			}
+
+			buffer[i] = string[i];
+
+			if (buffer[i] == '\n') {
+				line_start = i;
+				c = 1;
+			}
+
+			i++;
+		}
+
+		if (isspace(string[i])) {
+			buffer[i++] = '\n';
+			line_start = i;
+		} else {
+			for (i32 c = i; c > 0; c--) {
+				if (isspace(string[c])) {
+					buffer[c] = '\n';
+					i = c + 1;
+					line_start = i;
+					break;
+				}
+
+				if (c <= line_start) {
+					buffer[i++] = '\n';
+					break;
+				}
+			}
+		}
+	}
+
+	buffer[i] = '\0';
+
+	return buffer;
 }

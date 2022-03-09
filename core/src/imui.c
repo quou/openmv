@@ -44,6 +44,7 @@ static bool held() {
 
 enum {
 	ui_el_text = 0,
+	ui_el_text_wrapped,
 	ui_el_button,
 	ui_el_text_input,
 	ui_el_image,
@@ -64,6 +65,11 @@ struct ui_element {
 		struct {
 			char* text;
 		} text;
+
+		struct {
+			char* text;
+			i32 wrap;
+		} wrapped_text;
 
 		struct {
 			v2i dimentions;
@@ -613,6 +619,10 @@ void ui_end_frame(struct ui_context* ui) {
 				case ui_el_text:
 					render_text(ui->renderer, el->font, el->as.text.text, el->position.x, el->position.y, el->color);
 					break;
+				case ui_el_text_wrapped:
+					render_text(ui->renderer, el->font, el->as.wrapped_text.text, el->position.x, el->position.y, el->color);
+					core_free(el->as.wrapped_text.text);
+					break;
 				case ui_el_button: {
 					u32 c = ui_col_background;
 					if (ui->hovered == el) {
@@ -979,6 +989,10 @@ v2i ui_get_cursor_pos(struct ui_context* ui) {
 	return ui->cursor_pos;
 }
 
+i32 ui_max_column_size(struct ui_context* ui) {
+	return ui->current_window->dimentions.x - ui->padding * 2;
+}
+
 bool ui_any_window_hovered(struct ui_context* ui) {
 	u32 count = ui_get_hovered_windows(ui, null, 1);
 
@@ -1142,6 +1156,22 @@ void ui_text(struct ui_context* ui, const char* text) {
 	ui_advance(ui, text_height(ui->font, text) + ui->padding);
 }
 
+void ui_text_wrapped(struct ui_context* ui, const char* text) {
+	char* fin = core_alloc(strlen(text) + 257);
+	word_wrap(ui->font, fin, text, ui->column_size);
+
+	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_text_wrapped,
+		.position = ui->cursor_pos,
+		.as.wrapped_text = {
+			.text = fin,
+			.wrap = ui->column_size - ui->padding
+		}
+	});
+
+	ui_advance(ui, text_height(ui->font, fin) + ui->padding);
+}
+
 void ui_textf(struct ui_context* ui, const char* fmt, ...) {
 	va_list list;
 
@@ -1149,7 +1179,10 @@ void ui_textf(struct ui_context* ui, const char* fmt, ...) {
 	u32 len = (u32)vsnprintf(null, 0, fmt, list);
 	va_end(list);
 
-	assert(len < text_buffer_size && "Text buffer overflow.");
+	if (len >= text_buffer_size) {
+		fprintf(stderr, "IMGUI text buffer overflow.\n");
+		return;
+	}
 
 	va_start(list, fmt);
 	vsnprintf(ui->text_buffer, text_buffer_size, fmt, list);
