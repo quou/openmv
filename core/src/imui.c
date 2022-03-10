@@ -600,7 +600,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(main_window)));
-		if (dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+		if (!ui->resizing && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
 			set_window_cursor(main_window, CURSOR_MOVE);
 			ui->dragging = window;
 		}

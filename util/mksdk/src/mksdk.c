@@ -23,6 +23,7 @@ static const char* files[] = {
 	"util/mksdk/premake5.lua",
 	"util/test/premake5.lua",
 	"util/imuitest/premake5.lua",
+	".gitignore",
 	null
 };
 
