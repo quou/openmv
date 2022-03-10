@@ -40,6 +40,8 @@ i32 main() {
 
 	bool toggle = false;
 
+	bool b_open = false;
+
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
 
@@ -47,11 +49,21 @@ i32 main() {
 
 		ui_begin_frame(ui);
 
-		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0))) {
+		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0), null)) {
 			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_textf(ui, "FPS: %g", 1.0 / timestep);
 
 			ui_columns(ui, 1, ui_max_column_size(ui));
+
+			if (b_open) {
+				if (ui_button(ui, "Close B window")) {
+					b_open = false;
+				}
+			} else {
+				if (ui_button(ui, "Open B window")) {
+					b_open = true;
+				}
+			}
 
 			ui_text_wrapped(ui,
 				"This is some wrapped text. "
@@ -104,7 +116,7 @@ i32 main() {
 			ui_end_window(ui);
 		}
 
-		if (ui_begin_window(ui, "Test Window B", make_v2i(0, 300))) {
+		if (ui_begin_window(ui, "Test Window B", make_v2i(0, 300), &b_open)) {
 			ui_columns(ui, 2, 100);
 			if (ui_button(ui, "Save Layout")) {
 				ui_save_layout(ui, "util/imuitest/lay.out");

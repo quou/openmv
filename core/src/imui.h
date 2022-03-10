@@ -20,7 +20,10 @@ enum {
 	ui_col_image_hovered,
 	ui_col_image_hot,
 	ui_col_dock,
-	ui_col_count
+	ui_col_close,
+	ui_col_close_hover,
+	ui_col_close_active,
+	ui_col_count,
 };
 
 struct float_rect {
@@ -47,7 +50,7 @@ API bool ui_any_item_active(struct ui_context* ui);
 API bool ui_any_item_hot(struct ui_context* ui);
 API bool ui_any_windows_dragging(struct ui_context* ui);
 
-API bool ui_begin_window(struct ui_context* ui, const char* name, v2i position);
+API bool ui_begin_window(struct ui_context* ui, const char* name, v2i position, bool* open);
 API void ui_end_window(struct ui_context* ui);
 
 API void ui_text(struct ui_context* ui, const char* text);

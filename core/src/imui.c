@@ -108,6 +108,8 @@ struct ui_window {
 	i32 max_scroll;
 	i32 content_size;
 
+	bool* open;
+
 	i32 z;
 
 	struct ui_element* elements;
@@ -339,6 +341,9 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->style_colors[ui_col_image_hot]         = make_color(0x7686ff, 255);
 	ui->style_colors[ui_col_image]             = make_color(0xffffff, 255);
 	ui->style_colors[ui_col_dock]              = make_color(0xdb3d40, 150);
+	ui->style_colors[ui_col_close]             = make_color(0xc41d23, 255);
+	ui->style_colors[ui_col_close_hover]       = make_color(0xf90008, 255);
+	ui->style_colors[ui_col_close_active]      = make_color(0x9b1115, 255);
 
 	ui->padding = 3;
 	ui->column_size = 150;
@@ -583,13 +588,15 @@ void ui_end_frame(struct ui_context* ui) {
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = ui->sorted_windows[i];
 
-		struct rect window_rect = make_rect(
+		struct rect window_rect = {
 			window->position.x, window->position.y,
-			window->dimentions.x, window->dimentions.y);
+			window->dimentions.x, window->dimentions.y
+		};
 
-		struct rect window_border_rect = make_rect(
+		struct rect window_border_rect = {
 			window->position.x - 1, window->position.y - 1,
-			window->dimentions.x + 2, window->dimentions.y + 2);
+			window->dimentions.x + 2, window->dimentions.y + 2
+		};
 
 		renderer_clip(ui->renderer, window_border_rect);
 
@@ -603,6 +610,37 @@ void ui_end_frame(struct ui_context* ui) {
 		render_text(ui->renderer, window->font, window->title,
 			window->position.x + ((window->dimentions.x / 2) - (title_w / 2)),
 			window->position.y + ui->padding, ui->style_colors[ui_col_text]);
+
+		if (window->open) {
+			i32 close_size = font_height(window->font);
+
+			struct rect close_rect = {
+				(window->position.x + window->dimentions.x) - (close_size + ui->padding),
+				window->position.y + ui->padding,
+				close_size, close_size
+			};
+
+			u32 close_col = ui_col_close;
+
+			if (mouse_over_rect(close_rect)) {
+				close_col = ui_col_close_hover;
+
+				if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+					close_col = ui_col_close_active;
+				}
+
+				if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+					*window->open = false;
+
+					struct window_meta* meta = table_get(ui->window_meta, window->title);
+					if (meta && meta->dock) {
+						ui_window_change_dock(ui, meta, null);
+					}
+				}
+			}
+
+			ui_draw_rect(ui, close_rect, close_col);
+		}
 
 		struct rect clip_rect = make_rect(window_rect.x, window_rect.y + title_h,
 			window_rect.w, window_rect.h - title_h);
@@ -1020,7 +1058,11 @@ bool ui_any_windows_dragging(struct ui_context* ui) {
 	return ui->dragging != null;
 }
 
-bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
+bool ui_begin_window(struct ui_context* ui, const char* name, v2i position, bool* open) {
+	if (open && !*open) {
+		return false;
+	}
+
 	if (ui->window_count >= ui->window_capacity) {
 		ui->window_capacity = ui->window_capacity < 8 ? 8 : ui->window_capacity * 2;
 		ui->windows = core_realloc(ui->windows, ui->window_capacity * sizeof(struct ui_window));
@@ -1036,6 +1078,8 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position) {
 	ui->current_window = window;
 
 	window->font = ui->font;
+
+	window->open = open;
 
 	window->element_count = 0;
 	window->title = ui_copy_string(ui, name);

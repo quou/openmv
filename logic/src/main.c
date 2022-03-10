@@ -358,7 +358,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		renderer_flush(renderer);
 		renderer_end_frame(renderer);
 		
-		if (ui_begin_window(ui, "Debug", make_v2i(0, 0))) {
+		if (ui_begin_window(ui, "Debug", make_v2i(0, 0), null)) {
 			ui_text(ui, logic_store->fps_buf);
 
 			char buf[256];
@@ -397,7 +397,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 			ui_end_window(ui);
 		}
 
-		if (ui_begin_window(ui, "Commands", make_v2i(0, 300))) {
+		if (ui_begin_window(ui, "Commands", make_v2i(0, 300), null)) {
 			ui_columns(ui, 3, 80);
 			if (ui_text_input(ui, logic_store->lsp_buf, 256) || ui_button(ui, "Submit")) {
 				lsp_do_string(logic_store->lsp, "command", logic_store->lsp_buf);
