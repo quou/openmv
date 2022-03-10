@@ -14,6 +14,7 @@ static const char* files[] = {
 	"logic/premake5.lua",
 	"res/CourierPrime.ttf",
 	"res/DejaVuSans.ttf",
+	"res/bmp/char.bmp",
 	"res/shaders/sprite.glsl",
 	"res/shaders/crt.glsl",
 	"res/shaders/invert.glsl",
@@ -21,6 +22,7 @@ static const char* files[] = {
 	"util/packer/lay.out",
 	"util/mksdk/premake5.lua",
 	"util/test/premake5.lua",
+	"util/imuitest/premake5.lua",
 	null
 };
 
@@ -32,6 +34,8 @@ static const char* dirs[] = {
 	"util/mksdk/template/",
 	"util/test/src/",
 	"util/test/scripts/",
+	"util/imuitest/src/",
+	"util/imuitest/res/",
 	null
 };
 
@@ -89,6 +93,8 @@ i32 main() {
 	add_file_ex(&tar, "util/mksdk/template/logic.c", "logic/src/main.c");
 	add_file_ex(&tar, "util/mksdk/template/premake5.lua", "premake5.lua");
 	add_file_ex(&tar, "util/mksdk/template/packed.include", "packed.include");
+	add_file_ex(&tar, "util/sdk_git_init.sh", "sdk_git_init.sh");
+	add_file_ex(&tar, "util/sdk_git_update.sh", "sdk_git_update.sh");
 
 	for (const char** dirname = dirs; *dirname != null; dirname++) {
 		add_dir(&tar, *dirname);
