@@ -23,6 +23,9 @@ enum {
 	ui_col_close,
 	ui_col_close_hover,
 	ui_col_close_active,
+	ui_col_floating_btn,
+	ui_col_floating_btn_hover,
+	ui_col_floating_btn_active,
 	ui_col_count,
 };
 
@@ -63,6 +66,8 @@ API bool ui_image_button(struct ui_context* ui, struct texture* texture, struct 
 API bool ui_toggle(struct ui_context* ui, bool* value);
 API void ui_rect(struct ui_context* ui, v2i dimentions, struct color color);
 API void ui_loading_bar(struct ui_context* ui, const char* text, i32 percentage);
+API bool ui_floating_button(struct ui_context* ui, const char* text);
+API bool ui_floating_image(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions);
 
 API void ui_columns(struct ui_context* ui, u32 count, i32 width);
 API void ui_color(struct ui_context* ui, struct color color);

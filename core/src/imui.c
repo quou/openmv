@@ -101,6 +101,19 @@ struct ui_element {
 	} as;
 };
 
+struct ui_floating_btn {
+	v2i position;
+	v2i dimentions;
+
+	struct font* font;
+	u32 color;
+
+	struct texture* texture;
+	struct rect rect;
+
+	char* text;
+};
+
 struct ui_window {
 	v2i position;
 	v2i dimentions;
@@ -239,6 +252,13 @@ struct ui_context {
 
 	struct color color_override;
 	bool override_color;
+
+	i32 floating_padding;
+	v2i floating_cursor;
+
+	struct ui_floating_btn* floating;
+	u32 floating_count;
+	u32 floating_capacity;
 };
 
 struct text_entry {
@@ -331,21 +351,25 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->renderer = new_renderer(shader, make_v2i(800, 600));
 	ui->renderer->clip_enable = true;
 
-	ui->style_colors[ui_col_window_background] = make_color(0x1a1a1a, 150);
-	ui->style_colors[ui_col_window_border]     = make_color(0x0f0f0f, 200);
-	ui->style_colors[ui_col_background]        = make_color(0x212121, 255);
-	ui->style_colors[ui_col_hovered]           = make_color(0x242533, 255);
-	ui->style_colors[ui_col_hot]               = make_color(0x393d5b, 255);
-	ui->style_colors[ui_col_text]              = make_color(0xffffff, 255);
-	ui->style_colors[ui_col_image_hovered]     = make_color(0xaaaeeb, 255);
-	ui->style_colors[ui_col_image_hot]         = make_color(0x7686ff, 255);
-	ui->style_colors[ui_col_image]             = make_color(0xffffff, 255);
-	ui->style_colors[ui_col_dock]              = make_color(0xdb3d40, 150);
-	ui->style_colors[ui_col_close]             = make_color(0xc41d23, 255);
-	ui->style_colors[ui_col_close_hover]       = make_color(0xf90008, 255);
-	ui->style_colors[ui_col_close_active]      = make_color(0x9b1115, 255);
+	ui->style_colors[ui_col_window_background]   = make_color(0x1a1a1a, 150);
+	ui->style_colors[ui_col_window_border]       = make_color(0x0f0f0f, 200);
+	ui->style_colors[ui_col_background]          = make_color(0x212121, 255);
+	ui->style_colors[ui_col_hovered]             = make_color(0x242533, 255);
+	ui->style_colors[ui_col_hot]                 = make_color(0x393d5b, 255);
+	ui->style_colors[ui_col_text]                = make_color(0xffffff, 255);
+	ui->style_colors[ui_col_image_hovered]       = make_color(0xaaaeeb, 255);
+	ui->style_colors[ui_col_image_hot]           = make_color(0x7686ff, 255);
+	ui->style_colors[ui_col_image]               = make_color(0xffffff, 255);
+	ui->style_colors[ui_col_dock]                = make_color(0xdb3d40, 150);
+	ui->style_colors[ui_col_close]               = make_color(0xc41d23, 255);
+	ui->style_colors[ui_col_close_hover]         = make_color(0xf90008, 255);
+	ui->style_colors[ui_col_close_active]        = make_color(0x9b1115, 255);
+	ui->style_colors[ui_col_floating_btn]        = make_color(0xe5e5e5, 255);
+	ui->style_colors[ui_col_floating_btn_hover]  = make_color(0xc6c6c6, 255);
+	ui->style_colors[ui_col_floating_btn_active] = make_color(0xffffff, 255);
 
 	ui->padding = 3;
+	ui->floating_padding = 15;
 	ui->column_size = 150;
 	ui->window_max_height = 300;
 
@@ -415,6 +439,12 @@ void ui_begin_frame(struct ui_context* ui) {
 	query_window(ui->window, &w, &h);
 
 	renderer_clip(ui->renderer, make_rect(0, 0, w, h));
+
+	ui->floating_cursor = make_v2i(
+		ui->floating_padding,
+		h - ui->floating_padding
+	);
+	ui->floating_count = 0;
 
 	ui->hovered = null;
 	ui->hot = null;
@@ -576,6 +606,25 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 	} else if (hovered_count == 0) {
 		set_window_cursor(main_window, CURSOR_POINTER);
+	}
+
+	/* Draw floating buttons. */
+	for (u32 i = 0; i < ui->floating_count; i++) {
+		struct ui_floating_btn* btn = ui->floating + i;
+
+		if (btn->text) {
+			render_text(ui->renderer, btn->font, btn->text, btn->position.x, btn->position.y, ui->style_colors[btn->color]);
+		} else if (btn->texture) {
+			struct textured_quad quad = {
+				.texture = btn->texture,
+				.position = btn->position,
+				.dimentions = btn->dimentions,
+				.rect = btn->rect,
+				.color = { 255, 255, 255, 255 },
+			};
+
+			renderer_push(ui->renderer, &quad);
+		}
 	}
 
 	for (u32 i = 0; i < ui->window_count; i++) {
@@ -1389,6 +1438,91 @@ void ui_loading_bar(struct ui_context* ui, const char* text, i32 percentage) {
 	ui->loading = ui_copy_string(ui, text);
 	ui->loading_p = percentage;
 	ui->loading_f = ui->font;
+}
+
+static struct ui_floating_btn* ui_add_floating(struct ui_context* ui) {
+	if (ui->floating_count >= ui->floating_capacity) {
+		ui->floating_capacity = ui->floating_capacity < 8 ? 8 : ui->floating_capacity * 2;
+		ui->floating = core_realloc(ui->floating, ui->floating_capacity * sizeof(struct ui_floating_btn));
+	}
+
+	struct ui_floating_btn* btn = ui->floating + (ui->floating_count++);
+
+	memset(btn, 0, sizeof(struct ui_floating_btn));
+
+	return btn;
+}
+
+bool ui_floating_button(struct ui_context* ui, const char* text) {
+	struct ui_floating_btn* btn = ui_add_floating(ui);
+
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	btn->texture = null;
+	btn->font = ui->font;
+	btn->text = ui_copy_string(ui, text);
+	btn->dimentions = make_v2i(text_width(ui->font, text), text_height(ui->font, text));
+	btn->color = ui_col_floating_btn;
+
+	ui->floating_cursor.y -= btn->dimentions.y + ui->floating_padding;
+	btn->position = ui->floating_cursor;
+
+	struct rect rect = {
+		btn->position.x, btn->position.y,
+		btn->dimentions.x, btn->dimentions.y
+	};
+
+	if (ui_anything_hovered(ui)) {
+		return false;
+	}
+
+	if (mouse_over_rect(rect)) {
+		btn->color = ui_col_floating_btn_hover;
+
+		if (mouse_btn_pressed(main_window, MOUSE_BTN_LEFT)) {
+			btn->color = ui_col_floating_btn_active;
+		}
+
+		if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool ui_floating_image(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions) {
+	struct ui_floating_btn* btn = ui_add_floating(ui);
+
+	i32 win_w, win_h;
+	query_window(main_window, &win_w, &win_h);
+
+	btn->texture = texture;
+	btn->rect = rect;
+	btn->font = ui->font;
+	btn->dimentions = dimentions;
+	btn->color = ui_col_floating_btn;
+
+	ui->floating_cursor.y -= btn->dimentions.y + ui->floating_padding;
+	btn->position = ui->floating_cursor;
+
+	struct rect s_rect = {
+		btn->position.x, btn->position.y,
+		btn->dimentions.x, btn->dimentions.y
+	};
+
+	if (ui_anything_hovered(ui)) {
+		return false;
+	}
+
+	if (mouse_over_rect(s_rect)) {
+		if (mouse_btn_just_released(main_window, MOUSE_BTN_LEFT)) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 bool ui_toggle(struct ui_context* ui, bool* value) {

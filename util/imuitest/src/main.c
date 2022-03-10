@@ -27,7 +27,10 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
+	struct font* big_font = load_font("res/CourierPrime.ttf", 25.0f);
+
 	struct texture* player_texture = load_texture("res/bmp/char.bmp");
+	struct texture* logo_texture = load_texture("util/imuitest/res/logo.bmp");
 
 	u64 now = get_time(), last = now; 
 	f64 timestep = 0.0;
@@ -40,6 +43,7 @@ i32 main() {
 
 	bool toggle = false;
 
+	bool a_open = false;
 	bool b_open = false;
 
 	while (!window_should_close(main_window)) {
@@ -49,7 +53,7 @@ i32 main() {
 
 		ui_begin_frame(ui);
 
-		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0), null)) {
+		if (ui_begin_window(ui, "Test Window A", make_v2i(0, 0), &a_open)) {
 			ui_textf(ui, "Memory Usage (KIB): %g", round(((f64)core_get_memory_usage() / 1024.0) * 100.0) / 100.0);
 			ui_textf(ui, "FPS: %g", 1.0 / timestep);
 
@@ -136,6 +140,22 @@ i32 main() {
 
 			ui_end_window(ui);
 		}
+
+		struct font* ori_font = ui_get_font(ui);
+		ui_set_font(ui, big_font);
+
+		if (ui_floating_button(ui, "Window B")) {
+			b_open = true;
+		}
+
+		if (ui_floating_button(ui, "Window A")) {
+			a_open = true;
+		}
+
+		ui_floating_image(ui, logo_texture, make_rect(0, 0, logo_texture->width, logo_texture->height),
+			make_v2i(logo_texture->width, logo_texture->height));
+
+		ui_set_font(ui, ori_font);
 
 		ui_end_frame(ui);
 
