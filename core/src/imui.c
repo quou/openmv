@@ -105,6 +105,9 @@ struct ui_window {
 	v2i position;
 	v2i dimentions;
 
+	i32 max_scroll;
+	i32 content_size;
+
 	i32 z;
 
 	struct ui_element* elements;
@@ -528,12 +531,10 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		if (meta) {
-			i32 content_size = ((ui->cursor_pos.y - meta->scroll) - window->position.y);
-			i32 max_scroll = content_size - window->dimentions.y;
 			meta->scroll += get_scroll(main_window) * (text_height(ui->font, window->title) + ui->padding);
 
-			if (meta->scroll < -max_scroll) {
-				meta->scroll = -max_scroll;
+			if (meta->scroll < -window->max_scroll) {
+				meta->scroll = -window->max_scroll;
 			}
 
 			if (meta->scroll > 0) {
@@ -1082,6 +1083,9 @@ void ui_end_window(struct ui_context* ui) {
 		struct rect window_rect = make_rect(
 			window->position.x, window->position.y,
 			window->dimentions.x, window->dimentions.y);
+
+		window->content_size = ((ui->cursor_pos.y - meta->scroll) - window->position.y);
+		window->max_scroll = window->content_size - window->dimentions.y;
 
 		if (window == ui->dragging) {
 			meta->position = v2i_sub(get_mouse_position(main_window), ui->drag_offset);
