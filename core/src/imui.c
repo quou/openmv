@@ -1160,6 +1160,8 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 	char* fin = core_alloc(strlen(text) + 257);
 	word_wrap(ui->font, fin, text, ui->column_size);
 
+	bool clipped = ui->cursor_pos.y > ui->current_window->position.y + ui->current_window->dimentions.y;
+
 	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_wrapped,
 		.position = ui->cursor_pos,
@@ -1170,6 +1172,10 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 	});
 
 	ui_advance(ui, text_height(ui->font, fin) + ui->padding);
+
+	if (clipped) {
+		core_free(fin);
+	}
 }
 
 void ui_textf(struct ui_context* ui, const char* fmt, ...) {

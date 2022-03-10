@@ -51,13 +51,7 @@ API bool ui_begin_window(struct ui_context* ui, const char* name, v2i position);
 API void ui_end_window(struct ui_context* ui);
 
 API void ui_text(struct ui_context* ui, const char* text);
-
-/* NOTE: ui_text_wrapped DOES NOT copy the string, since it is intended
- * for use with larger blocks of text that would be slow to copy into the
- * string table. This means a temporary buffer cannot be used for multiple
- * calls to this function. */
 API void ui_text_wrapped(struct ui_context* ui, const char* text);
-
 API void ui_textf(struct ui_context* ui, const char* fmt, ...);
 API bool ui_button(struct ui_context* ui, const char* text);
 API bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size);

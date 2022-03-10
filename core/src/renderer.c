@@ -723,7 +723,7 @@ char* word_wrap(struct font* font, char* buffer, const char* string, i32 width) 
 
 			buffer[i] = string[i];
 
-			if (buffer[i] == '\n') {
+			if (string[i] == '\n') {
 				line_start = i;
 				c = 1;
 			}
