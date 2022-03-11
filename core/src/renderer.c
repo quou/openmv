@@ -195,12 +195,11 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	const f32 x = (f32)quad->position.x;
 	const f32 y = (f32)quad->position.y;
 
-	/* I thought this was causing the lack of performance, but removing it had no effect. */
-	m4f transform = m4f_translate(m4f_identity(), make_v3f((f32)quad->position.x, (f32)quad->position.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f((f32)quad->origin.x, (f32)quad->origin.y, 0.0f));
-	transform = m4f_rotate(transform, (f32)torad((f32)quad->rotation), make_v3f(0.0f, 0.0f, 1.0f));
-	transform = m4f_scale(transform, make_v3f((f32)quad->dimentions.x, (f32)quad->dimentions.y, 0.0f));
-	transform = m4f_translate(transform, make_v3f((f32)-quad->origin.x, (f32)-quad->origin.y, 0.0f));
+	m4f transform = m4f_translate(m4f_identity(), (v3f) { (f32)quad->position.x, (f32)quad->position.y, 0.0f });
+	transform = m4f_translate(transform, (v3f) { (f32)quad->origin.x, (f32)quad->origin.y, 0.0f });
+	transform = m4f_rotate(transform, (f32)torad((f32)quad->rotation), (v3f) { 0.0f, 0.0f, 1.0f });
+	transform = m4f_scale(transform, (v3f) { (f32)quad->dimentions.x, (f32)quad->dimentions.y, 0.0f });
+	transform = m4f_translate(transform, (v3f) {(f32)-quad->origin.x, (f32)-quad->origin.y, 0.0f });
 
 	f32 trans_id = (f32)renderer->transform_count;
 
