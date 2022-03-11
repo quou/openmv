@@ -122,8 +122,8 @@
 ;
 ; ...Will result in a string with the contents: "Hello, wonderful world!"
 (set format (fun (fmt args) (
-;	(type_assert fmt "string" "Argument 0 to `format' must be a string.")
-;	(type_assert args "array" "Argument 1 to `format' must be an array.")
+	(type_assert fmt "string" "Argument 0 to `format' must be a string.")
+	(type_assert args "array" "Argument 1 to `format' must be an array.")
 
 	(set i 0)
 	(set n 0)

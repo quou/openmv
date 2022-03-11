@@ -2044,6 +2044,21 @@ struct lsp_val lsp_do_file(struct lsp_state* ctx, const char* file_path) {
 	return lsp_make_nil();
 }
 
+struct lsp_val lsp_do_file_no_pck(struct lsp_state* ctx, const char* file_path) {
+	char* buf;
+	u64 size;
+
+	if (read_raw_no_pck(file_path, (u8**)&buf, &size, true)) {
+		struct lsp_val r = lsp_do_string(ctx, file_path, buf);
+
+		core_free(buf);
+
+		return r;
+	}
+
+	return lsp_make_nil();
+}
+
 void lsp_register(struct lsp_state* ctx, const char* name, u32 argc, lsp_nat_fun_t fun) {
 	if (ctx->nat_count >= max_natives) {
 		fprintf(ctx->error, "Failed to register native function `%s': Too many natives. Max: %d\n", name, max_natives);
