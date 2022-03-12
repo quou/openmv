@@ -672,7 +672,9 @@ struct mutex* new_mutex(u64 size) {
 
 	mutex->handle = CreateMutex(null, false, null);
 
-	mutex->data = core_calloc(1, size);
+	if (size > 0) {
+		mutex->data = core_calloc(1, size);
+	}
 
 	return mutex;
 }
@@ -680,7 +682,9 @@ struct mutex* new_mutex(u64 size) {
 void free_mutex(struct mutex* mutex) {
 	CloseHandle(mutex->handle);
 
-	core_free(mutex->data);
+	if (mutex->data) {
+		core_free(mutex->data);
+	}
 
 	core_free(mutex);
 }

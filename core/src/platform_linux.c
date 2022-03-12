@@ -194,7 +194,9 @@ struct mutex* new_mutex(u64 size) {
 
 	pthread_mutex_init(&mutex->m, null);
 
-	mutex->data = core_calloc(1, size);
+	if (size > 0) {
+		mutex->data = core_calloc(1, size);
+	}
 
 	return mutex;
 }
@@ -202,7 +204,9 @@ struct mutex* new_mutex(u64 size) {
 void free_mutex(struct mutex* mutex) {
 	pthread_mutex_destroy(&mutex->m);
 
-	core_free(mutex->data);
+	if (mutex->data) {
+		core_free(mutex->data);
+	}
 
 	core_free(mutex);
 }

@@ -54,6 +54,7 @@ enum {
 
 struct ui_element {
 	v2i position;
+	v2i dimentions;
 
 	u32 type;
 
@@ -72,18 +73,15 @@ struct ui_element {
 		} wrapped_text;
 
 		struct {
-			v2i dimentions;
 			struct color color;
 		} rect;
 
 		struct {
 			char* text;
-			v2i dimentions;
 		} button;
 
 		struct {
 			bool* value;
-			v2i dimentions;
 		} toggle;
 
 		struct {
@@ -96,7 +94,6 @@ struct ui_element {
 		struct {
 			struct texture* texture;
 			struct rect rect;
-			v2i dimentions;
 		} image;
 	} as;
 };
@@ -700,7 +697,19 @@ void ui_end_frame(struct ui_context* ui) {
 			struct ui_element* el = window->elements + i;
 
 			if (el->position.y > window->position.y + window->dimentions.y) {
+				if (el->type == ui_el_text_wrapped) {
+					core_free(el->as.wrapped_text.text);
+				}
+
 				break;
+			}
+
+			if (el->position.y + el->dimentions.y < window->position.y + title_h) {
+				if (el->type == ui_el_text_wrapped) {
+					core_free(el->as.wrapped_text.text);
+				}
+
+				continue;
 			}
 
 			switch (el->type) {
@@ -723,7 +732,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 					ui_draw_rect(ui, make_rect(
 						el->position.x, el->position.y,
-						el->as.button.dimentions.x, el->as.button.dimentions.y
+						el->dimentions.x, el->dimentions.y
 					), c);
 					render_text(ui->renderer, el->font, el->as.button.text,
 						el->position.x + ui->padding,
@@ -742,12 +751,12 @@ void ui_end_frame(struct ui_context* ui) {
 
 					ui_draw_rect(ui, make_rect(
 						el->position.x, el->position.y,
-						el->as.toggle.dimentions.x, el->as.toggle.dimentions.y
+						el->dimentions.x, el->dimentions.y
 					), c);
 
 					if (*el->as.toggle.value) {
 						render_text(ui->renderer, el->font, "x",
-							el->position.x + ((el->as.toggle.dimentions.x / 2) - (text_width(el->font, "x") / 2)),
+							el->position.x + ((el->dimentions.x / 2) - (text_width(el->font, "x") / 2)),
 							el->position.y + ui->padding,
 							el->color);
 					}
@@ -824,7 +833,7 @@ void ui_end_frame(struct ui_context* ui) {
 					struct textured_quad quad = {
 						.texture = el->as.image.texture,
 						.position = el->position,
-						.dimentions = el->as.image.dimentions,
+						.dimentions = el->dimentions,
 						.rect = el->as.image.rect,
 						.color = ui->style_colors[c],
 					};
@@ -834,7 +843,7 @@ void ui_end_frame(struct ui_context* ui) {
 				case ui_el_rect: {	
 					struct textured_quad quad = {
 						.position = el->position,
-						.dimentions = el->as.rect.dimentions,
+						.dimentions = el->dimentions,
 						.rect = el->as.image.rect,
 						.color = el->as.rect.color,
 					};
@@ -1257,22 +1266,19 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 	char* fin = core_alloc(strlen(text) + 257);
 	word_wrap(ui->font, fin, text, ui->column_size);
 
-	bool clipped = ui->cursor_pos.y > ui->current_window->position.y + ui->current_window->dimentions.y;
+	i32 height = text_height(ui->font, fin);
 
 	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_wrapped,
 		.position = ui->cursor_pos,
+		.dimentions = { text_width(ui->font, fin), height },
 		.as.wrapped_text = {
 			.text = fin,
 			.wrap = ui->column_size - ui->padding
 		}
 	});
 
-	ui_advance(ui, text_height(ui->font, fin) + ui->padding);
-
-	if (clipped) {
-		core_free(fin);
-	}
+	ui_advance(ui, height + ui->padding);
 }
 
 void ui_textf(struct ui_context* ui, const char* fmt, ...) {
@@ -1291,15 +1297,18 @@ void ui_textf(struct ui_context* ui, const char* fmt, ...) {
 	vsnprintf(ui->text_buffer, text_buffer_size, fmt, list);
 	va_end(list);
 
+	i32 height = text_height(ui->font, ui->text_buffer);
+
 	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text,
 		.position = ui->cursor_pos,
+		.dimentions = { text_width(ui->font, ui->text_buffer), height },
 		.as.text = {
 			.text = ui_copy_string(ui, ui->text_buffer)
 		}
 	});
 
-	ui_advance(ui, text_height(ui->font, ui->text_buffer) + ui->padding);
+	ui_advance(ui, height + ui->padding);
 }
 
 bool ui_button(struct ui_context* ui, const char* text) {
@@ -1310,9 +1319,9 @@ bool ui_button(struct ui_context* ui, const char* text) {
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_button,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
 		.as.button = {
-			.text = ui_copy_string(ui, text),
-			.dimentions = make_v2i(r.w, r.h)
+			.text = ui_copy_string(ui, text)
 		}
 	});
 
@@ -1346,6 +1355,7 @@ bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_input,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.x, r.y),
 		.as.text_input = {
 			.buf = buf,
 			.buf_size = buf_size,
@@ -1391,14 +1401,14 @@ void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect, 
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_image,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
 		.as.image = {
 			.texture = texture,
-			.dimentions = make_v2i(r.w, r.h),
 			.rect = rect
 		}
 	});
 
-	ui_advance(ui, e->as.image.dimentions.y + ui->padding);
+	ui_advance(ui, e->dimentions.y + ui->padding);
 }
 
 bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions) {
@@ -1407,14 +1417,14 @@ bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_image,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
 		.as.image = {
 			.texture = texture,
-			.dimentions = make_v2i(r.w, r.h),
 			.rect = rect
 		}
 	});
 
-	ui_advance(ui, e->as.image.dimentions.y + ui->padding);
+	ui_advance(ui, e->dimentions.y + ui->padding);
 
 	if (ui->top_window == ui->current_window &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
@@ -1532,13 +1542,13 @@ bool ui_toggle(struct ui_context* ui, bool* value) {
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_toggle,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
 		.as.toggle = {
-			.value = value,
-			.dimentions = make_v2i(r.w, r.h),
+			.value = value
 		}
 	});
 
-	ui_advance(ui, e->as.toggle.dimentions.y + ui->padding);
+	ui_advance(ui, e->dimentions.y + ui->padding);
 
 	if (ui->top_window == ui->current_window &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
@@ -1563,13 +1573,13 @@ void ui_rect(struct ui_context* ui, v2i dimentions, struct color color) {
 	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_rect,
 		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
 		.as.rect = {
 			.color = color,
-			.dimentions = make_v2i(r.w, r.h),
 		}
 	});
 
-	ui_advance(ui, e->as.rect.dimentions.y + ui->padding);
+	ui_advance(ui, e->dimentions.y + ui->padding);
 }
 
 struct renderer* ui_get_renderer(struct ui_context* ui) {
