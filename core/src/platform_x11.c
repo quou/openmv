@@ -282,6 +282,10 @@ void swap_window(struct window* window) {
 	glXSwapBuffers(window->display, window->window);
 }
 
+void window_make_context_current(struct window* window) {
+	glXMakeCurrent(window->display, window->window, window->context);
+}
+
 i32 get_scroll(struct window* window) {
 	return window->scroll;
 }

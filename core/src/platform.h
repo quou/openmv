@@ -20,6 +20,7 @@ API void update_events(struct window* window);
 API void query_window(struct window* window, i32* width, i32* height);
 API bool window_should_close(struct window* window);
 API void set_window_should_close(struct window* window, bool close);
+API void window_make_context_current(struct window* window);
 
 API void set_window_size(struct window* window, v2i size);
 API void set_window_fullscreen(struct window* window, bool fullscreen);

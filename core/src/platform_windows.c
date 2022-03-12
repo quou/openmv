@@ -349,6 +349,10 @@ void swap_window(struct window* window) {
 	SwapBuffers(window->device_context);
 }
 
+void window_make_context_current(struct window* window) {
+	wglMakeCurrent(window->device_context, window->render_context);
+}
+
 void update_events(struct window* window) {
 	window->scroll = 0;
 
