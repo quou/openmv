@@ -1565,6 +1565,8 @@ bool ui_toggle(struct ui_context* ui, bool* value) {
 			}
 		}
 	}
+
+	return false;
 }
 
 void ui_rect(struct ui_context* ui, v2i dimentions, struct color color) {
