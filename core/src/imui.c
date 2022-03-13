@@ -697,18 +697,10 @@ void ui_end_frame(struct ui_context* ui) {
 			struct ui_element* el = window->elements + i;
 
 			if (el->position.y > window->position.y + window->dimentions.y) {
-				if (el->type == ui_el_text_wrapped) {
-					core_free(el->as.wrapped_text.text);
-				}
-
 				break;
 			}
 
-			if (el->position.y + el->dimentions.y < window->position.y + title_h) {
-				if (el->type == ui_el_text_wrapped) {
-					core_free(el->as.wrapped_text.text);
-				}
-
+			if (el->position.y + el->dimentions.y < window->position.y) {
 				continue;
 			}
 
@@ -1268,7 +1260,7 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 
 	i32 height = text_height(ui->font, fin);
 
-	ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+	struct ui_element* el = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
 		.type = ui_el_text_wrapped,
 		.position = ui->cursor_pos,
 		.dimentions = { text_width(ui->font, fin), height },
@@ -1277,6 +1269,18 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 			.wrap = ui->column_size - ui->padding
 		}
 	});
+
+	struct ui_window* window = ui->current_window;
+
+	bool clipped = (el->position.y > window->position.y + window->dimentions.y) ||
+		(el->position.y + el->dimentions.y < window->position.y); 
+
+	/* The element is freed after it is drawn, so if it is clipped then the
+	 * text won't be freed, so free it here. It still needs to be allocated
+	 * in the first place in order to calculate how much space it takes up. */
+	if (clipped) {
+		core_free(el->as.wrapped_text.text);
+	}
 
 	ui_advance(ui, height + ui->padding);
 }
