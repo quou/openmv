@@ -196,6 +196,7 @@ struct ui_context {
 	u32 item;
 
 	i32 padding;
+	i32 scrollbar_width;
 	i32 column_size;
 
 	i32 window_max_height;
@@ -370,6 +371,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->style_colors[ui_col_floating_btn_active] = make_color(0xffffff, 255);
 
 	ui->padding = 3;
+	ui->scrollbar_width = 10;
 	ui->floating_padding = 15;
 	ui->column_size = 150;
 	ui->window_max_height = 300;
@@ -594,7 +596,7 @@ void ui_end_frame(struct ui_context* ui) {
 			for (u32 i = 0; i < ui->window_count; i++) {
 				struct ui_window* w = ui->windows + i;
 				if (w == ui->top_window) { continue; }
-				
+
 				struct window_meta* m = table_get(ui->window_meta, w->title);
 				if (m) {
 					m->z++;
@@ -643,14 +645,17 @@ void ui_end_frame(struct ui_context* ui) {
 
 		bool can_scroll = window->content_size > window->dimentions.y;
 
+		i32 title_w = text_width(window->font, window->title);
+		i32 title_h = text_height(window->font, window->title) + ui->padding * 2;
+
 		i32 scrollbar_width = 0;
 		if (can_scroll) {
-			scrollbar_width = 10;
+			scrollbar_width = ui->scrollbar_width;
 		}
 
 		struct rect window_rect = {
 			window->position.x, window->position.y,
-			window->dimentions.x + scrollbar_width, window->dimentions.y
+			window->dimentions.x, window->dimentions.y
 		};
 
 		struct rect window_border_rect = {
@@ -659,8 +664,8 @@ void ui_end_frame(struct ui_context* ui) {
 		};
 
 		struct rect scrollbar_rect = {
-			window->position.x + window->dimentions.x, window->position.y,
-			scrollbar_width, window->dimentions.y
+			(window->position.x + window->dimentions.x) - scrollbar_width, window->position.y + title_h,
+			scrollbar_width, window->dimentions.y - title_h
 		};
 
 		struct rect scrollbar_handle_rect = scrollbar_rect;
@@ -669,6 +674,12 @@ void ui_end_frame(struct ui_context* ui) {
 		if (meta && can_scroll) {
 			scrollbar_handle_rect.h = maximum(32, scrollbar_rect.h * window->dimentions.y / window->content_size);
 			scrollbar_handle_rect.y = scrollbar_rect.y + (-meta->scroll * (scrollbar_rect.h - scrollbar_handle_rect.h) / window->max_scroll);
+
+			if (meta->dock) {
+				window->dimentions.x = get_dockspace_dimentions(ui, meta->dock).x - scrollbar_width;
+			} else {
+				window->dimentions.x = meta->dimentions.x - scrollbar_width;
+			}
 
 			if (!ui->dragging && !ui->active && !ui->hot && !ui->scrolling &&
 				mouse_over_rect(ui, scrollbar_handle_rect)) {
@@ -717,8 +728,6 @@ void ui_end_frame(struct ui_context* ui) {
 		ui_draw_rect(ui, scrollbar_handle_rect,
 			scroll_col);
 
-		i32 title_w = text_width(window->font, window->title);
-		i32 title_h = text_height(window->font, window->title) + ui->padding * 2;
 		render_text(ui->renderer, window->font, window->title,
 			window->position.x + ((window->dimentions.x / 2) - (title_w / 2)),
 			window->position.y + ui->padding, ui->style_colors[ui_col_text]);
@@ -731,6 +740,8 @@ void ui_end_frame(struct ui_context* ui) {
 				window->position.y + ui->padding,
 				close_size, close_size
 			};
+
+			close_rect.x += scrollbar_width;
 
 			u32 close_col = ui_col_close;
 
@@ -753,8 +764,8 @@ void ui_end_frame(struct ui_context* ui) {
 			ui_draw_rect(ui, close_rect, close_col);
 		}
 
-		struct rect clip_rect = make_rect(window_rect.x, window_rect.y + title_h,
-			window_rect.w - scrollbar_width, window_rect.h - title_h);
+		struct rect clip_rect = make_rect(window->position.x, window->position.y + title_h,
+			window->dimentions.x, window->dimentions.y - title_h);
 
 		renderer_clip(ui->renderer, clip_rect);
 
@@ -863,7 +874,7 @@ void ui_end_frame(struct ui_context* ui) {
 					render_text(ui->renderer, el->font, el->as.text_input.buf,
 						(el->as.text_input.input_pos.x + ui->padding) + input_scroll,
 						el->as.text_input.input_pos.y + ui->padding,
-						el->color);	
+						el->color);
 
 					if (want_reset) {
 						renderer_clip(ui->renderer, clip_rect);
@@ -1147,7 +1158,13 @@ v2i ui_get_cursor_pos(struct ui_context* ui) {
 }
 
 i32 ui_max_column_size(struct ui_context* ui) {
-	return ui->current_window->dimentions.x - ui->padding * 2;
+	i32 dim = ui->current_window->dimentions.x;
+
+	if (ui->current_window->content_size > ui->current_window->dimentions.y) {
+		dim -= ui->scrollbar_width;
+	}
+
+	return dim - ui->padding * 2;
 }
 
 bool ui_any_window_hovered(struct ui_context* ui) {
@@ -1666,6 +1683,26 @@ struct font* ui_get_font(struct ui_context* ui) {
 
 void ui_set_font(struct ui_context* ui, struct font* font) {
 	ui->font = font;
+}
+
+i32 ui_get_padding(struct ui_context* ui) {
+	return ui->padding;
+}
+
+void ui_set_padding(struct ui_context* ui, i32 padding) {
+	ui->padding = padding;
+}
+
+i32 ui_get_scrollbar_width(struct ui_context* ui) {
+	return ui->scrollbar_width;
+}
+
+void ui_set_scrollbar_width(struct ui_context* ui, i32 width) {
+	ui->scrollbar_width = width;
+}
+
+bool ui_can_scroll(struct ui_context* ui) {
+	return ui->current_window->content_size > ui->current_window->dimentions.y;
 }
 
 void ui_save_layout(struct ui_context* ui, const char* path) {

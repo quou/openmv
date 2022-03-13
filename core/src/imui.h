@@ -79,5 +79,12 @@ API struct renderer* ui_get_renderer(struct ui_context* ui);
 API struct font* ui_get_font(struct ui_context* ui);
 API void ui_set_font(struct ui_context* ui, struct font* font);
 
+API i32 ui_get_padding(struct ui_context* ui);
+API void ui_set_padding(struct ui_context* ui, i32 padding);
+API i32 ui_get_scrollbar_width(struct ui_context* ui);
+API void ui_set_scrollbar_width(struct ui_context* ui, i32 width);
+
+API bool ui_can_scroll(struct ui_context* ui);
+
 API void ui_save_layout(struct ui_context* ui, const char* path);
 API void ui_load_layout(struct ui_context* ui, const char* path);
