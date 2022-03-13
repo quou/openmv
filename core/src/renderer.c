@@ -7,7 +7,6 @@
 #include "core.h"
 #include "platform.h"
 #include "res.h"
-#include "util/glad.h"
 #include "util/stb_rect_pack.h"
 #include "util/stb_truetype.h"
 #include "video.h"
@@ -73,11 +72,11 @@ void renderer_flush(struct renderer* renderer) {
 	if (renderer->quad_count == 0) { return; }
 
 	if (renderer->clip_enable) {
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(renderer->clip.x, renderer->dimentions.y - (renderer->clip.y + renderer->clip.h),
-				renderer->clip.w, renderer->clip.h);
+		video_enable(vt_clip);
+		video_clip((struct rect) { renderer->clip.x, renderer->dimentions.y - (renderer->clip.y + renderer->clip.h),
+				renderer->clip.w, renderer->clip.h });
 	} else {
-		glDisable(GL_SCISSOR_TEST);
+		video_disable(vt_clip);
 	}
 
 	bind_shader(&renderer->shader);
@@ -135,7 +134,7 @@ void renderer_flush(struct renderer* renderer) {
 	renderer->texture_count = 0;
 	renderer->transform_count = 0;
 
-	glDisable(GL_SCISSOR_TEST);
+	video_disable(vt_clip);
 }
 
 void renderer_end_frame(struct renderer* renderer) {

@@ -7,8 +7,22 @@
 
 /* Basic renderer; Graphics API abstraction. */
 
+struct rect {
+	i32 x, y, w, h;
+};
+
+API struct rect make_rect(i32 x, i32 y, i32 w, i32 h);
+
 API void video_init();
 API void video_clear();
+
+enum {
+	vt_clip = 0
+};
+
+API void video_enable(u32 thing);
+API void video_disable(u32 thing);
+API void video_clip(struct rect rect);
 
 struct shader {
 	bool panic;
@@ -83,12 +97,6 @@ API void deinit_render_target(struct render_target* target);
 API void resize_render_target(struct render_target* target, u32 width, u32 height);
 API void bind_render_target(struct render_target* target);
 API void bind_render_target_output(struct render_target* target, u32 unit);
-
-struct rect {
-	i32 x, y, w, h;
-};
-
-API struct rect make_rect(i32 x, i32 y, i32 w, i32 h);
 
 struct color {
 	u8 r, g, b, a;

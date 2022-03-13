@@ -24,6 +24,24 @@ void video_clear() {
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
+static u32 get_gl_thing(u32 thing) {
+	switch (thing) {
+		case vt_clip: return GL_SCISSOR_TEST;
+	}
+}
+
+void video_enable(u32 thing) {
+	glEnable(get_gl_thing(thing));
+}
+
+void video_disable(u32 thing) {
+	glDisable(get_gl_thing(thing));
+}
+
+void video_clip(struct rect rect) {
+	glScissor(rect.x, rect.y, rect.w, rect.h);
+}
+
 #pragma pack(push, 1)
 struct bmp_header {
 	u16 ftype;
