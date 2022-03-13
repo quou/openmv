@@ -37,6 +37,10 @@ u64 get_time() {
 	return (u64)ts.tv_sec * global_freq + (u64)ts.tv_nsec;
 }
 
+const char* get_root_dir() {
+	return "/";
+}
+
 struct dir_iter {
 	char root[1024];
 
@@ -49,7 +53,7 @@ struct dir_iter* new_dir_iter(const char* dir_name) {
 	DIR* dir = opendir(dir_name);
 
 	if (!dir) {
-		fprintf(stderr, "Failed to open directory: `%s'", dir_name);
+		fprintf(stderr, "Failed to open directory: `%s'\n", dir_name);
 		return null;
 	}
 

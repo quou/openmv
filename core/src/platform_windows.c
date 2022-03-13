@@ -454,6 +454,10 @@ void set_window_fullscreen(struct window* window, bool fullscreen) {
 	}
 }
 
+const char* get_root_dir() {
+	return "C:/";
+}
+
 struct dir_iter {
 	char root[1024];
 	char original[1024];

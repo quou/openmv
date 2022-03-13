@@ -152,6 +152,8 @@ struct dir_entry {
 	struct dir_iter* iter;
 };
 
+API const char* get_root_dir();
+
 API struct dir_iter* new_dir_iter(const char* dir_name);
 API void free_dir_iter(struct dir_iter* it);
 API struct dir_entry* dir_iter_cur(struct dir_iter* it);
