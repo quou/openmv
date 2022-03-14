@@ -393,7 +393,7 @@ void free_ui_context(struct ui_context* ui) {
 			}
 		}
 
-		core_free(ui->windows);	
+		core_free(ui->windows);
 		core_free(ui->sorted_windows);
 	}
 
@@ -908,7 +908,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 					renderer_push(ui->renderer, &quad);
 				} break;
-				case ui_el_rect: {	
+				case ui_el_rect: {
 					struct textured_quad quad = {
 						.position = el->position,
 						.dimentions = el->dimentions,
@@ -1206,7 +1206,7 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position, bool
 		for (u32 i = ui->window_count; i < ui->window_capacity; i++) {
 			ui->windows[i] = (struct ui_window) { 0 };
 		}
-	}	
+	}
 
 	struct ui_window* window = &ui->windows[ui->window_count++];
 
@@ -1221,7 +1221,7 @@ bool ui_begin_window(struct ui_context* ui, const char* name, v2i position, bool
 
 	window->position = position;
 	struct window_meta* meta = table_get(ui->window_meta, name);
-	
+
 	window->dimentions = make_v2i(300, ui->window_max_height);
 
 	if (!meta) {
@@ -1358,7 +1358,7 @@ void ui_text_wrapped(struct ui_context* ui, const char* text) {
 	struct ui_window* window = ui->current_window;
 
 	bool clipped = (el->position.y > window->position.y + window->dimentions.y) ||
-		(el->position.y + el->dimentions.y < window->position.y); 
+		(el->position.y + el->dimentions.y < window->position.y);
 
 	/* The element is freed after it is drawn, so if it is clipped then the
 	 * text won't be freed, so free it here. It still needs to be allocated
@@ -1745,8 +1745,8 @@ void ui_save_layout(struct ui_context* ui, const char* path) {
 		struct ui_dockspace* dock = ui->dockspaces + i;
 
 		i32 parent_idx = dock->parent - ui->dockspaces;
-		if (dock->parent) {	
-			parent_idx = dock->parent - ui->dockspaces;		
+		if (dock->parent) {
+			parent_idx = dock->parent - ui->dockspaces;
 		} else {
 			parent_idx = -1;
 		}
