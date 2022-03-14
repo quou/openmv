@@ -176,6 +176,7 @@ struct ui_context {
 	v2i drag_offset;
 
 	struct ui_window* resizing;
+	struct ui_window* scrolling;
 
 	struct window* window;
 	struct font* font;
@@ -186,6 +187,8 @@ struct ui_context {
 	char text_buffer[text_buffer_size];
 
 	v2i drag_start;
+	v2i mouse_delta;
+	v2i last_mouse_pos;
 
 	i32 input_scroll;
 
@@ -351,6 +354,7 @@ struct ui_context* new_ui_context(struct shader shader, struct window* window, s
 	ui->style_colors[ui_col_window_background]   = make_color(0x1a1a1a, 150);
 	ui->style_colors[ui_col_window_border]       = make_color(0x0f0f0f, 200);
 	ui->style_colors[ui_col_background]          = make_color(0x212121, 255);
+	ui->style_colors[ui_col_background2]         = make_color(0x2d2d2d, 255);
 	ui->style_colors[ui_col_hovered]             = make_color(0x242533, 255);
 	ui->style_colors[ui_col_hot]                 = make_color(0x393d5b, 255);
 	ui->style_colors[ui_col_text]                = make_color(0xffffff, 255);
@@ -445,6 +449,8 @@ void ui_begin_frame(struct ui_context* ui) {
 
 	ui->hovered = null;
 	ui->hot = null;
+
+	ui->mouse_delta = v2i_sub(get_mouse_position(ui->window), ui->last_mouse_pos);
 
 	ui->window_count = 0;
 
@@ -597,7 +603,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(ui->window)));
-		if (!ui->resizing && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT)) {
+		if (!ui->resizing && !ui->scrolling && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT)) {
 			set_window_cursor(ui->window, CURSOR_MOVE);
 			ui->dragging = window;
 		}
@@ -633,16 +639,72 @@ void ui_end_frame(struct ui_context* ui) {
 
 	for (u32 i = 0; i < ui->window_count; i++) {
 		struct ui_window* window = ui->sorted_windows[i];
+		struct window_meta* meta = table_get(ui->window_meta, window->title);
+
+		bool can_scroll = window->content_size > window->dimentions.y;
+
+		i32 scrollbar_width = 0;
+		if (can_scroll) {
+			scrollbar_width = 10;
+		}
 
 		struct rect window_rect = {
 			window->position.x, window->position.y,
-			window->dimentions.x, window->dimentions.y
+			window->dimentions.x + scrollbar_width, window->dimentions.y
 		};
 
 		struct rect window_border_rect = {
-			window->position.x - 1, window->position.y - 1,
-			window->dimentions.x + 2, window->dimentions.y + 2
+			window_rect.x - 1, window_rect.y - 1,
+			window_rect.w + 2, window_rect.h + 2
 		};
+
+		struct rect scrollbar_rect = {
+			window->position.x + window->dimentions.x, window->position.y,
+			scrollbar_width, window->dimentions.y
+		};
+
+		struct rect scrollbar_handle_rect = scrollbar_rect;
+		u32 scroll_col = ui_col_background2;
+
+		if (meta && can_scroll) {
+			scrollbar_handle_rect.h = maximum(32, scrollbar_rect.h * window->dimentions.y / window->content_size);
+			scrollbar_handle_rect.y = scrollbar_rect.y + (-meta->scroll * (scrollbar_rect.h - scrollbar_handle_rect.h) / window->max_scroll);
+
+			if (!ui->dragging && !ui->active && !ui->hot && !ui->scrolling &&
+				mouse_over_rect(ui, scrollbar_handle_rect)) {
+
+				scroll_col = ui_col_hovered;
+				meta->scroll += get_scroll(ui->window) * (text_height(ui->font, window->title) + ui->padding);
+
+				if (mouse_btn_just_pressed(ui->window, MOUSE_BTN_LEFT)) {
+					ui->scrolling = window;
+				}
+
+				if (meta->scroll < -window->max_scroll) {
+					meta->scroll = -window->max_scroll;
+				}
+
+				if (meta->scroll > 0) {
+					meta->scroll = 0;
+				}
+			}
+		}
+
+		if (ui->scrolling == window) {
+			scroll_col = ui_col_hot;
+		}
+
+		if (window == ui->scrolling) {
+			meta->scroll += -ui->mouse_delta.y * window->content_size / scrollbar_rect.h;
+
+			if (meta->scroll < -window->max_scroll) {
+				meta->scroll = -window->max_scroll;
+			}
+
+			if (meta->scroll > 0) {
+				meta->scroll = 0;
+			}
+		}
 
 		renderer_clip(ui->renderer, window_border_rect);
 
@@ -650,6 +712,10 @@ void ui_end_frame(struct ui_context* ui) {
 			ui_col_window_border);
 		ui_draw_rect(ui, window_rect,
 			ui_col_window_background);
+		ui_draw_rect(ui, scrollbar_rect,
+			ui_col_background);
+		ui_draw_rect(ui, scrollbar_handle_rect,
+			scroll_col);
 
 		i32 title_w = text_width(window->font, window->title);
 		i32 title_h = text_height(window->font, window->title) + ui->padding * 2;
@@ -678,7 +744,6 @@ void ui_end_frame(struct ui_context* ui) {
 				if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
 					*window->open = false;
 
-					struct window_meta* meta = table_get(ui->window_meta, window->title);
 					if (meta && meta->dock) {
 						ui_window_change_dock(ui, meta, null);
 					}
@@ -689,7 +754,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		struct rect clip_rect = make_rect(window_rect.x, window_rect.y + title_h,
-			window_rect.w, window_rect.h - title_h);
+			window_rect.w - scrollbar_width, window_rect.h - title_h);
 
 		renderer_clip(ui->renderer, clip_rect);
 
@@ -1006,6 +1071,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 		ui->dragging = null;
 		ui->resizing = null;
+		ui->scrolling = null;
 		set_window_cursor(ui->window, CURSOR_POINTER);
 	}
 
@@ -1068,6 +1134,8 @@ void ui_end_frame(struct ui_context* ui) {
 
 	renderer_flush(ui->renderer);
 	renderer_end_frame(ui->renderer);
+
+	ui->last_mouse_pos = get_mouse_position(ui->window);
 }
 
 void ui_set_root_dockspace(struct ui_context* ui, struct float_rect rect) {

@@ -13,6 +13,7 @@ enum {
 	ui_col_window_background = 0,
 	ui_col_window_border,
 	ui_col_background,
+	ui_col_background2,
 	ui_col_hovered,
 	ui_col_text,
 	ui_col_hot,

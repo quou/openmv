@@ -4,6 +4,9 @@
 
 #include "common.h"
 
+#define minimum(a_, b_) ((a_) < (b_) ? (a_) : (b_))
+#define maximum(a_, b_) ((a_) > (b_) ? (a_) : (b_))
+
 struct window;
 API extern struct window* main_window;
 
