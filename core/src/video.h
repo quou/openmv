@@ -44,11 +44,11 @@ API void shader_set_m3f(const struct shader* shader, const char* name, const m3f
 API void shader_set_m4f(const struct shader* shader, const char* name, const m4f v);
 
 enum {
-	VB_STATIC     = 1 << 0,
-	VB_DYNAMIC    = 1 << 1,
-	VB_LINES      = 1 << 2,
-	VB_LINE_STRIP = 1 << 3,
-	VB_TRIS       = 1 << 4
+	vb_static     = 1 << 0,
+	vb_dynamic    = 1 << 1,
+	vb_lines      = 1 << 2,
+	vb_line_strip = 1 << 3,
+	vb_tris       = 1 << 4
 };
 
 struct vertex_buffer {

@@ -294,13 +294,13 @@ void bind_vb_for_edit(const struct vertex_buffer* vb) {
 }
 
 void push_vertices(const struct vertex_buffer* vb, f32* vertices, u32 count) {
-	const u32 mode = vb->flags & VB_STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
+	const u32 mode = vb->flags & vb_static ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(f32), vertices, mode);
 }
 
 void push_indices(struct vertex_buffer* vb, u32* indices, u32 count) {
-	const u32 mode = vb->flags & VB_STATIC ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
+	const u32 mode = vb->flags & vb_static ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 
 	vb->index_count = count;
 
@@ -329,9 +329,9 @@ void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_count
 
 void draw_vb(const struct vertex_buffer* vb) {
 	u32 draw_type = GL_TRIANGLES;
-	if (vb->flags & VB_LINES) {
+	if (vb->flags & vb_lines) {
 		draw_type = GL_LINES;
-	} else if (vb->flags & VB_LINE_STRIP) {
+	} else if (vb->flags & vb_line_strip) {
 		draw_type = GL_LINE_STRIP;
 	}
 
@@ -340,9 +340,9 @@ void draw_vb(const struct vertex_buffer* vb) {
 
 void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	u32 draw_type = GL_TRIANGLES;
-	if (vb->flags & VB_LINES) {
+	if (vb->flags & vb_lines) {
 		draw_type = GL_LINES;
-	} else if (vb->flags & VB_LINE_STRIP) {
+	} else if (vb->flags & vb_line_strip) {
 		draw_type = GL_LINE_STRIP;
 	}
 

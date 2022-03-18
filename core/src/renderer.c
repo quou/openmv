@@ -34,7 +34,7 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 
 	renderer->ambient_light = 1.0f;
 
-	init_vb(&renderer->vb, VB_DYNAMIC | VB_TRIS);
+	init_vb(&renderer->vb, vb_dynamic | vb_tris);
 	bind_vb_for_edit(&renderer->vb);
 	push_vertices(&renderer->vb, null, els_per_vert * verts_per_quad * batch_size);
 	push_indices(&renderer->vb, null, indices_per_quad * batch_size);
@@ -276,7 +276,7 @@ struct post_processor* new_post_processor(struct shader shader) {
 		3, 1, 0
 	};
 
-	init_vb(&p->vb, VB_STATIC | VB_TRIS);
+	init_vb(&p->vb, vb_static | vb_tris);
 	bind_vb_for_edit(&p->vb);
 	push_vertices(&p->vb, verts, 4 * 4);
 	push_indices(&p->vb, indices, 6);
