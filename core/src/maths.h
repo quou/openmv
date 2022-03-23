@@ -1168,10 +1168,10 @@ m4d m4d_rotate(m4d m, f64 a, v3d v) {
 
 v4d m4d_transform(m4d m, v4d v) {
 	return make_v4d(
-		m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z + m.m[0][3] + v.w,
-		m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z + m.m[1][3] + v.w,
-		m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] + v.w,
-		m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] + v.w);
+		m.m[0][0] * v.x + m.m[1][0] * v.y + m.m[2][0] * v.z + m.m[3][0] + v.w,
+		m.m[0][1] * v.x + m.m[1][1] * v.y + m.m[2][1] * v.z + m.m[3][1] + v.w,
+		m.m[0][2] * v.x + m.m[1][2] * v.y + m.m[2][2] * v.z + m.m[3][2] + v.w,
+		m.m[0][3] * v.x + m.m[1][3] * v.y + m.m[2][3] * v.z + m.m[3][3] + v.w);
 }
 
 m4d m4d_mul(m4d a, m4d b) {
@@ -1319,10 +1319,10 @@ m4i m4i_rotate(m4i m, i32 a, v3i v) {
 
 v4i m4i_transform(m4i m, v4i v) {
 	return make_v4i(
-		m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z + m.m[0][3] + v.w,
-		m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z + m.m[1][3] + v.w,
-		m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] + v.w,
-		m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] + v.w);
+		m.m[0][0] * v.x + m.m[1][0] * v.y + m.m[2][0] * v.z + m.m[3][0] + v.w,
+		m.m[0][1] * v.x + m.m[1][1] * v.y + m.m[2][1] * v.z + m.m[3][1] + v.w,
+		m.m[0][2] * v.x + m.m[1][2] * v.y + m.m[2][2] * v.z + m.m[3][2] + v.w,
+		m.m[0][3] * v.x + m.m[1][3] * v.y + m.m[2][3] * v.z + m.m[3][3] + v.w);
 }
 
 m4i m4i_mul(m4i a, m4i b) {
@@ -1470,10 +1470,10 @@ m4f m4f_rotate(m4f m, f32 a, v3f v) {
 
 v4f m4f_transform(m4f m, v4f v) {
 	return make_v4f(
-		m.m[0][0] * v.x + m.m[0][1] * v.y + m.m[0][2] * v.z + m.m[0][3] + v.w,
-		m.m[1][0] * v.x + m.m[1][1] * v.y + m.m[1][2] * v.z + m.m[1][3] + v.w,
-		m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] + v.w,
-		m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] + v.w);
+		m.m[0][0] * v.x + m.m[1][0] * v.y + m.m[2][0] * v.z + m.m[3][0] + v.w,
+		m.m[0][1] * v.x + m.m[1][1] * v.y + m.m[2][1] * v.z + m.m[3][1] + v.w,
+		m.m[0][2] * v.x + m.m[1][2] * v.y + m.m[2][2] * v.z + m.m[3][2] + v.w,
+		m.m[0][3] * v.x + m.m[1][3] * v.y + m.m[2][3] * v.z + m.m[3][3] + v.w);
 }
 
 m4f m4f_mul(m4f a, m4f b) {

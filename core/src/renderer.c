@@ -12,7 +12,7 @@
 #include "video.h"
 
 #define batch_size 100
-#define els_per_vert 12
+#define els_per_vert 11
 #define verts_per_quad 4
 #define indices_per_quad 6
 
@@ -44,7 +44,6 @@ struct renderer* new_renderer(struct shader shader, v2i dimentions) {
 	configure_vb(&renderer->vb, 3, 1, els_per_vert, 8);  /* f32 texture_id */
 	configure_vb(&renderer->vb, 4, 1, els_per_vert, 9);  /* f32 inverted */
 	configure_vb(&renderer->vb, 5, 1, els_per_vert, 10); /* f32 unlit */
-	configure_vb(&renderer->vb, 6, 1, els_per_vert, 11); /* f32 trans_id */
 	bind_vb_for_edit(null);
 
 	renderer->clip_enable = false;
@@ -90,13 +89,6 @@ void renderer_flush(struct renderer* renderer) {
 		shader_set_i(&renderer->shader, name, i);
 	}
 
-	for (u32 i = 0; i < renderer->transform_count; i++) {
-		char name[32];
-		sprintf(name, "transforms[%u]", i);
-
-		shader_set_m4f(&renderer->shader, name, renderer->transforms[i]);
-	}
-
 	for (u32 i = 0; i < renderer->light_count; i++) {
 		char name[64];
 
@@ -125,6 +117,11 @@ void renderer_flush(struct renderer* renderer) {
 		shader_set_m4f(&renderer->shader, "view", m4f_identity());
 	}
 
+	bind_vb_for_edit(&renderer->vb);
+	update_vertices(&renderer->vb, renderer->verts, 0, renderer->quad_count * els_per_vert * verts_per_quad);
+	update_indices(&renderer->vb, renderer->indices, 0, renderer->quad_count * indices_per_quad);
+	bind_vb_for_edit(null);
+
 	bind_vb_for_draw(&renderer->vb);
 	draw_vb_n(&renderer->vb, renderer->quad_count * indices_per_quad);
 	bind_vb_for_draw(null);
@@ -132,7 +129,6 @@ void renderer_flush(struct renderer* renderer) {
 
 	renderer->quad_count = 0;
 	renderer->texture_count = 0;
-	renderer->transform_count = 0;
 
 	video_disable(vt_clip);
 }
@@ -152,8 +148,6 @@ void renderer_push_light(struct renderer* renderer, struct light light) {
 }
 
 void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
-	bind_vb_for_edit(&renderer->vb);
-	
 	f32 tx = 0, ty = 0, tw = 0, th = 0;
 
 	i32 tidx = -1;
@@ -200,16 +194,17 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	transform = m4f_scale(transform, (v3f) { (f32)quad->dimentions.x, (f32)quad->dimentions.y, 0.0f });
 	transform = m4f_translate(transform, (v3f) {(f32)-quad->origin.x, (f32)-quad->origin.y, 0.0f });
 
-	f32 trans_id = (f32)renderer->transform_count;
+	const v4f p0 = m4f_transform(transform, make_v4f(0.0f, 0.0f, 0.0f, 1.0f));
+	const v4f p1 = m4f_transform(transform, make_v4f(1.0f, 0.0f, 0.0f, 1.0f));
+	const v4f p2 = m4f_transform(transform, make_v4f(1.0f, 1.0f, 0.0f, 1.0f));
+	const v4f p3 = m4f_transform(transform, make_v4f(0.0f, 1.0f, 0.0f, 1.0f));
 
 	f32 verts[] = {
-		0.0f, 0.0f, tx, ty,           r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
-		1.0f, 0.0f, tx + tw, ty,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
-		1.0f, 1.0f, tx + tw, ty + th, r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id,
-		0.0f, 1.0f, tx, ty + th,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit, trans_id
+		p0.x, p0.y, tx, ty,           r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit,
+		p1.x, p1.y, tx + tw, ty,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit,
+		p2.x, p2.y, tx + tw, ty + th, r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit,
+		p3.x, p3.y, tx, ty + th,      r, g, b, a, (f32)tidx, (f32)quad->inverted, (f32)quad->unlit
 	};
-
-	renderer->transforms[renderer->transform_count++] = transform;
 
 	const u32 idx_off = renderer->quad_count * verts_per_quad;
 
@@ -218,10 +213,8 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 		idx_off + 3, idx_off + 1, idx_off + 0
 	};
 
-	update_vertices(&renderer->vb, verts, renderer->quad_count * els_per_vert * verts_per_quad, els_per_vert * verts_per_quad);
-	update_indices(&renderer->vb, indices, renderer->quad_count * indices_per_quad, indices_per_quad);
-
-	bind_vb_for_edit(null);
+	memcpy(renderer->verts + (renderer->quad_count * els_per_vert * verts_per_quad), verts, els_per_vert * verts_per_quad * sizeof(f32));
+	memcpy(renderer->indices + (renderer->quad_count * indices_per_quad), indices, indices_per_quad * sizeof(u32));
 
 	renderer->quad_count++;
 

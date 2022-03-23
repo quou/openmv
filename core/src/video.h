@@ -124,13 +124,6 @@ struct light {
 	f32 intensity;
 };
 
-/* For some reason the renderer is really slow, and I do not know
- * why. It *should* be fast; It doesn't cause too many draw calls
- * and it isn't doing too much maths. At first I thought the matrix
- * transformation was slowing it down, but removing rotations had
- * zero effect on ther performance.
- *
- * Fix this, somehow. */
 struct renderer {
 	struct shader shader;
 	struct vertex_buffer vb;
@@ -156,8 +149,8 @@ struct renderer {
 	struct light lights[max_lights];
 	u32 light_count;
 
-	m4f transforms[100];
-	u32 transform_count;
+	f32 verts[100 * 11 * 4];
+	u32 indices[100 * 6];
 };
 
 API struct renderer* new_renderer(struct shader shader, v2i dimentions);
