@@ -41,7 +41,7 @@ struct vector_header {
 				.element_size = sizeof(*(v_)) \
 			}; \
 			\
-			(v_) = malloc(sizeof(struct vector_header) + h_.element_size * h_.capacity); \
+			(v_) = core_alloc(sizeof(struct vector_header) + h_.element_size * h_.capacity); \
 			\
 			memcpy((v_), &h_, sizeof(struct vector_header)); \
 			\
@@ -52,7 +52,7 @@ struct vector_header {
 			\
 			if (h_->count >= h_->capacity) { \
 				h_->capacity = h_->capacity * 2; \
-				(v_) = realloc(h_, sizeof(struct vector_header) + h_->element_size * h_->capacity); \
+				(v_) = core_realloc(h_, sizeof(struct vector_header) + h_->element_size * h_->capacity); \
 				h_ = (struct vector_header*)v_; \
 				(v_) = (void*)(h_ + 1); \
 			} \
@@ -63,7 +63,7 @@ struct vector_header {
 
 #define vector_count(v_) ((v_) != null ? (((struct vector_header*)(v_)) - 1)->count : 0)
 
-#define free_vector(v_) if ((v_)) { free(((struct vector_header*)(v_)) - 1); }
+#define free_vector(v_) if ((v_)) { core_free(((struct vector_header*)(v_)) - 1); }
 
 #define vector_start(v_) (v_)
 #define vector_end(v_) ((v_) != null ? ((v_) + ((((struct vector_header*)(v_)) - 1)->count - 1)) : null)
