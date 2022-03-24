@@ -130,8 +130,10 @@ u64 file_mod_time(const char* name) {
 }
 
 char* get_file_path(const char* name) {
-	char* r = realpath(name, null);
-	if (!r) { return null; }
+	char* r = core_alloc(256);
+
+	r = realpath(name, r);
+	if (strlen(r) == 0) { core_free(r); return null; }
 
 	u32 len = (u32)strlen(r);
 

@@ -608,7 +608,7 @@ void window_enable_repeat(struct window* window, bool enable) {
 }
 
 char* get_file_path(const char* name) {
-	char* r = malloc(256);
+	char* r = core_alloc(256);
 
 	if (!GetFullPathNameA(name, 256, r, null)) {
 		free(r);
