@@ -166,6 +166,7 @@ API u64 file_mod_time(const char* name);
 
 API const char* get_file_name(const char* path);
 API const char* get_file_extension(const char* name);
+API char* get_file_path(const char* name);
 
 /* Multi-threading */
 

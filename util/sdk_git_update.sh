@@ -1,4 +1,4 @@
-git submodule update
+git submodule update --remote
 
 rm -rf ./core/
 rm -rf ./bootstrapper/

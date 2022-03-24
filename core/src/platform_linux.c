@@ -129,6 +129,21 @@ u64 file_mod_time(const char* name) {
 	return 0;
 }
 
+char* get_file_path(const char* name) {
+	char* r = realpath(name, null);
+	if (!r) { return null; }
+
+	u32 len = (u32)strlen(r);
+
+	char* cut = r + len;
+	while (cut > r && *cut != '/') {
+		*cut = '\0';
+		cut--;
+	}
+
+	return r;
+}
+
 struct thread {
 	pthread_t handle;
 	void* uptr;

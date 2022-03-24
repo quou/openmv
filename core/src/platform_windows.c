@@ -607,6 +607,25 @@ void window_enable_repeat(struct window* window, bool enable) {
 	window->repeat = enable;
 }
 
+char* get_file_path(const char* name) {
+	char* r = malloc(256);
+
+	if (!GetFullPathNameA(name, 256, r, null)) {
+		free(r);
+		return null;
+	}
+
+	u32 len = (u32)strlen(r);
+
+	char* cut = r + len;
+	while (cut > r && *cut != '\\') {
+		*cut = '\0';
+		cut--;
+	}
+
+	return r;
+}
+
 struct thread {
 	HANDLE handle;
 	DWORD id;

@@ -9,7 +9,7 @@ const char* get_file_name(const char* path) {
 	u32 len = (u32)strlen(path);
 
 	for (c = path + len; c != path; c--) {
-		if (*c == '/') {
+		if (*c == '/' || *c == '\\') {
 			return c + 1;
 		}
 	}
