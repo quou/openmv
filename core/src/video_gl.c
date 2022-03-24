@@ -389,27 +389,47 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 fla
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_mode);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mode);
 
-	struct color* colors = (struct color*)src;
-	struct color* dst = core_alloc(w * h * sizeof(struct color));
+	GLenum format = GL_RGB;
+	u32 wf = 3;
+	if (flags & texture_rgba) {
+		format = GL_RGBA;
+		wf = 4;
+	} else if (flags & texture_mono) {
+		format = GL_RED;
+		wf = 1;
+	}
+
+	u8* dst = core_alloc(w * h * wf);
 	if (flags & texture_flip) {
 		for (u32 y = 0; y < h; y++) {
 			for (u32 x = 0; x < w; x++) {
-				dst[(h - y - 1) * w + x] = colors[y * w + x];
+				if (!(flags & texture_mono)) {
+					dst[((h - y - 1) * w + x) * wf + 0] = src[(y * w + x) * wf + 0];
+					dst[((h - y - 1) * w + x) * wf + 1] = src[(y * w + x) * wf + 1];
+					dst[((h - y - 1) * w + x) * wf + 2] = src[(y * w + x) * wf + 2];
+				}
+
+				if (flags & texture_rgba) {
+					dst[((h - y - 1) * w + x) * wf + 3] = src[(y * w + x) * wf + 3];
+				} else if (flags & texture_mono) {
+					dst[((h - y - 1) * w + x) * wf] = src[(y * w + x) * wf];
+				}
 			}
 		}
 	} else {
-		memcpy(dst, src, w * h * sizeof(struct color));
+		memcpy(dst, src, w * h * wf);
 	}
 
-	for (u32 i = 0; i < w * h; i++) {
-		dst[i] = (struct color) { dst[i].b, dst[i].g, dst[i].r, dst[i].a };
-	}
+	if (!(flags & texture_mono)) {
+		for (u32 i = 0; i < w * h * wf; i += wf) {
+			u8 r = dst[i + 2];
+			u8 g = dst[i + 1];
+			u8 b = dst[i + 0];
 
-	GLenum format = GL_RGB;
-	if (flags & texture_rgba) {
-		format = GL_RGBA;
-	} else if (flags & texture_mono) {
-		format = GL_RED;
+			dst[i + 0] = r;
+			dst[i + 1] = g;
+			dst[i + 2] = b;
+		}
 	}
 
 	glTexImage2D(GL_TEXTURE_2D, 0, format,
@@ -446,31 +466,47 @@ void update_texture(struct texture* texture, u8* data, u64 size, u32 flags) {
 void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 flags) {
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 
-	struct color* colors = (struct color*)src;
-	struct color* dst = core_alloc(w * h * sizeof(struct color));
+	GLenum format = GL_RGB;
+	u32 wf = 3;
+	if (flags & texture_rgba) {
+		format = GL_RGBA;
+		wf = 4;
+	} else if (flags & texture_mono) {
+		format = GL_RED;
+		wf = 1;
+	}
+
+	u8* dst = core_alloc(w * h * wf);
 	if (flags & texture_flip) {
 		for (u32 y = 0; y < h; y++) {
 			for (u32 x = 0; x < w; x++) {
-				dst[(h - y - 1) * w + x] = colors[y * w + x];
+				if (!(flags & texture_mono)) {
+					dst[((h - y - 1) * w + x) * wf + 0] = src[(y * w + x) * wf + 0];
+					dst[((h - y - 1) * w + x) * wf + 1] = src[(y * w + x) * wf + 1];
+					dst[((h - y - 1) * w + x) * wf + 2] = src[(y * w + x) * wf + 2];
+				}
+
+				if (flags & texture_rgba) {
+					dst[((h - y - 1) * w + x) * wf + 3] = src[(y * w + x) * wf + 3];
+				} else if (flags & texture_mono) {
+					dst[((h - y - 1) * w + x) * wf + 0] = src[(y * w + x) * wf + 0];
+				}
 			}
 		}
 	} else {
-		memcpy(dst, src, w * h * sizeof(struct color));
+		memcpy(dst, src, w * h * wf);
 	}
 
-	for (u32 i = 0; i < w * h; i++) {
-		dst[i] = (struct color) { dst[i].b, dst[i].g, dst[i].r, dst[i].a };
+	if (!(flags & texture_mono)) {
+		for (u32 i = 0; i < w * h * wf; i += wf) {
+			dst[i + 0] = src[i + 2];
+			dst[i + 1] = src[i + 1];
+			dst[i + 2] = src[i + 0];
+		}
 	}
 
 	texture->width = w;
 	texture->height = h;
-
-	GLenum format = GL_RGB;
-	if (flags & texture_rgba) {
-		format = GL_RGBA;
-	} else if (flags & texture_mono) {
-		format = GL_RED;
-	}
 
 	if (texture->width == w && texture->height == h) {
 		glTexImage2D(GL_TEXTURE_2D, 0, format,
