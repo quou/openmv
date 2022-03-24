@@ -17,7 +17,8 @@ API void video_init();
 API void video_clear();
 
 enum {
-	vt_clip = 0
+	vt_clip = 0,
+	vt_depth_test
 };
 
 API void video_enable(u32 thing);

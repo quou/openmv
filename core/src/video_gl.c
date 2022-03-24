@@ -8,11 +8,15 @@
 #include "util/glad.h"
 #include "video.h"
 
+bool depth_test_enabled = false;
+
 void video_init() {
 	if (!gladLoadGL()) {
 		fprintf(stderr, "Failed to load OpenGL.\n");
 		abort();
 	}
+
+	depth_test_enabled = false;
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -22,19 +26,32 @@ void video_init() {
 void video_clear() {
 	glDisable(GL_SCISSOR_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	if (depth_test_enabled) {
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
 }
 
 static u32 get_gl_thing(u32 thing) {
 	switch (thing) {
-		case vt_clip: return GL_SCISSOR_TEST;
+		case vt_clip:       return GL_SCISSOR_TEST;
+		case vt_depth_test: return GL_DEPTH_TEST;
 	}
 }
 
 void video_enable(u32 thing) {
+	if (thing == vt_depth_test) {
+		depth_test_enabled = true;
+	}
+
 	glEnable(get_gl_thing(thing));
 }
 
 void video_disable(u32 thing) {
+	if (thing == vt_depth_test) {
+		depth_test_enabled = false;
+	}
+
 	glDisable(get_gl_thing(thing));
 }
 
