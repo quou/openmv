@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "core.h"
+#include "vector.h"
 
 u64 elf_hash(const u8* data, u32 size) {
 	u64 hash = 0, x = 0;

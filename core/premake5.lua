@@ -45,11 +45,12 @@ project "core"
 		"src/util/KHR/khrplatform.h",
 		"src/util/glad.c",
 		"src/util/glad.h",
+		"src/util/miniaudio.c",
+		"src/util/miniaudio.h",
 		"src/util/stb_rect_pack.h",
 		"src/util/stb_truetype.h",
 		"src/util/util.c",
-		"src/util/miniaudio.h",
-		"src/util/miniaudio.c",
+		"src/vector.h",
 		"src/video.h",
 		"src/video_gl.c"
 	}
