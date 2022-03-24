@@ -17,12 +17,12 @@ API void res_deinit();
 API void res_unload(const char* path);
 
 API struct shader load_shader(const char* path);
-API struct texture* load_texture(const char* path);
+API struct texture* load_texture(const char* path, u32 flags);
 API struct font* load_font(const char* path, f32 size);
 API struct audio_clip* load_audio_clip(const char* path);
 
 API struct shader load_shader_no_pck(const char* path);
-API struct texture* load_texture_no_pck(const char* path);
+API struct texture* load_texture_no_pck(const char* path, u32 flags);
 API struct font* load_font_no_pck(const char* path, f32 size);
 API struct audio_clip* load_audio_clip_no_pck(const char* path);
 

@@ -349,7 +349,7 @@ void draw_vb_n(const struct vertex_buffer* vb, u32 count) {
 	glDrawElements(draw_type, count, GL_UNSIGNED_INT, 0);
 }
 
-void init_texture(struct texture* texture, u8* data, u64 size) {
+void init_texture(struct texture* texture, u8* data, u64 size, u32 flags) {
 	assert(size > sizeof(struct bmp_header));
 
 	if (*data != 'B' && *(data + 1) != 'M') {
@@ -360,21 +360,38 @@ void init_texture(struct texture* texture, u8* data, u64 size) {
 	struct bmp_header* header = (struct bmp_header*)data;
 	u8* src = data + header->bmp_offset;
 
-	init_texture_no_bmp(texture, src, header->w, header->h, true);
+	u32 mode = texture_rgba;
+	if (header->bits_per_pixel == 24) {
+		mode = texture_rgb;
+	} else if (header->bits_per_pixel == 8) {
+		mode = texture_mono;
+	}
+
+	init_texture_no_bmp(texture, src, header->w, header->h, flags | mode | texture_flip);
 }
 
-void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip) {
+void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 flags) {
 	glGenTextures(1, &texture->id);
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	GLenum wrap_mode = GL_REPEAT;
+	if (flags & texture_clamp) {
+		wrap_mode = GL_CLAMP_TO_EDGE;
+	}
+
+	GLenum filter_mode = GL_LINEAR;
+	if (flags & texture_filter_nearest) {
+		filter_mode = GL_NEAREST;
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap_mode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap_mode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_mode);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_mode);
 
 	struct color* colors = (struct color*)src;
 	struct color* dst = core_alloc(w * h * sizeof(struct color));
-	if (flip) {
+	if (flags & texture_flip) {
 		for (u32 y = 0; y < h; y++) {
 			for (u32 x = 0; x < w; x++) {
 				dst[(h - y - 1) * w + x] = colors[y * w + x];
@@ -388,8 +405,15 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 		dst[i] = (struct color) { dst[i].b, dst[i].g, dst[i].r, dst[i].a };
 	}
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-			w, h, 0, GL_RGBA,
+	GLenum format = GL_RGB;
+	if (flags & texture_rgba) {
+		format = GL_RGBA;
+	} else if (flags & texture_mono) {
+		format = GL_RED;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, format,
+			w, h, 0, format,
 			GL_UNSIGNED_BYTE, dst);
 
 	texture->width = w;
@@ -398,7 +422,7 @@ void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool fl
 	core_free(dst);
 }
 
-void update_texture(struct texture* texture, u8* data, u64 size) {
+void update_texture(struct texture* texture, u8* data, u64 size, u32 flags) {
 	assert(size > sizeof(struct bmp_header));
 
 	if (*data != 'B' && *(data + 1) != 'M') {
@@ -409,15 +433,22 @@ void update_texture(struct texture* texture, u8* data, u64 size) {
 	struct bmp_header* header = (struct bmp_header*)data;
 	u8* src = data + header->bmp_offset;
 
-	update_texture_no_bmp(texture, src, header->w, header->h, true);
+	u32 mode = texture_rgba;
+	if (header->bits_per_pixel == 24) {
+		mode = texture_rgb;
+	} else if (header->bits_per_pixel == 8) {
+		mode = texture_mono;
+	}
+
+	update_texture_no_bmp(texture, src, header->w, header->h, flags | mode | texture_flip);
 }
 
-void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip) {
+void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 flags) {
 	glBindTexture(GL_TEXTURE_2D, texture->id);
 
 	struct color* colors = (struct color*)src;
 	struct color* dst = core_alloc(w * h * sizeof(struct color));
-	if (flip) {
+	if (flags & texture_flip) {
 		for (u32 y = 0; y < h; y++) {
 			for (u32 x = 0; x < w; x++) {
 				dst[(h - y - 1) * w + x] = colors[y * w + x];
@@ -434,13 +465,20 @@ void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool 
 	texture->width = w;
 	texture->height = h;
 
+	GLenum format = GL_RGB;
+	if (flags & texture_rgba) {
+		format = GL_RGBA;
+	} else if (flags & texture_mono) {
+		format = GL_RED;
+	}
+
 	if (texture->width == w && texture->height == h) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				w, h, 0, GL_RGBA,
+		glTexImage2D(GL_TEXTURE_2D, 0, format,
+				w, h, 0, format,
 				GL_UNSIGNED_BYTE, dst);
 	} else {
-		glTexSubImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				w, h, 0, GL_RGBA,
+		glTexSubImage2D(GL_TEXTURE_2D, 0, format,
+				w, h, 0, format,
 				GL_UNSIGNED_BYTE, dst);
 	}
 

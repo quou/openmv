@@ -452,11 +452,11 @@ struct animated_sprite anim_sprites[] = {
 
 void preload_sprites() {
 	for (u32 i = 0; i < sizeof(sprites) / sizeof(*sprites); i++) {
-		sprites[i].texture = load_texture(texture_paths[(u64)sprites[i].texture]);
+		sprites[i].texture = load_texture(texture_paths[(u64)sprites[i].texture], sprite_texture);
 	}
 
 	for (u32 i = 0; i < sizeof(anim_sprites) / sizeof(*anim_sprites); i++) {
-		anim_sprites[i].texture = load_texture(texture_paths[(u64)anim_sprites[i].texture]);
+		anim_sprites[i].texture = load_texture(texture_paths[(u64)anim_sprites[i].texture], sprite_texture);
 	}
 }
 
@@ -469,5 +469,5 @@ struct animated_sprite get_animated_sprite(u32 id) {
 }
 
 struct texture* get_texture(u32 id) {
-	return load_texture(texture_paths[id]);
+	return load_texture(texture_paths[id], sprite_texture);
 }

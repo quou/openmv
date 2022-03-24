@@ -147,7 +147,7 @@ static void on_projectile_create(struct world* world, entity e, void* component)
 entity new_player_entity(struct world* world) {
 	set_component_create_func(world, struct projectile, on_projectile_create);
 
-	struct texture* tex = load_texture("res/bmp/char.bmp");
+	struct texture* tex = load_texture("res/bmp/char.bmp", sprite_texture);
 
 	entity e = new_entity(world);
 	add_componentv(world, e, struct transform, .dimentions = { 64, 64 }, .z = 100);

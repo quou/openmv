@@ -395,7 +395,7 @@ retry:
 		pixels[i] = (struct color) {255, 255, 255, n};
 	}
 
-	init_texture_no_bmp(&set->atlas, (u8*)pixels, width, height, false);
+	init_texture_no_bmp(&set->atlas, (u8*)pixels, width, height, sprite_texture | texture_rgba);
 
 	core_free(pixels);
 

@@ -72,16 +72,29 @@ API void configure_vb(const struct vertex_buffer* vb, u32 index, u32 component_c
  	u32 stride, u32 offset);
 API void draw_vb(const struct vertex_buffer* vb);
 API void draw_vb_n(const struct vertex_buffer* vb, u32 count);
- 
+
+enum {
+	texture_filter_nearest = 1 << 0,
+	texture_filter_linear  = 1 << 2,
+	texture_repeat         = 1 << 3,
+	texture_clamp          = 1 << 4,
+	texture_mono           = 1 << 5,
+	texture_rgb            = 1 << 6,
+	texture_rgba           = 1 << 7,
+	texture_flip           = 1 << 8
+};
+
+#define sprite_texture (texture_filter_nearest | texture_clamp)
+
 struct texture {
 	u32 id;
 	u32 width, height;
 };
 
-API void init_texture(struct texture* texture, u8* src, u64 size);
-API void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
-API void update_texture(struct texture* texture, u8* data, u64 size);
-API void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, bool flip);
+API void init_texture(struct texture* texture, u8* src, u64 size, u32 flags);
+API void init_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 flags);
+API void update_texture(struct texture* texture, u8* data, u64 size, u32 flags);
+API void update_texture_no_bmp(struct texture* texture, u8* src, u32 w, u32 h, u32 flags);
 API void deinit_texture(struct texture* texture);
 API void bind_texture(const struct texture* texture, u32 unit);
 

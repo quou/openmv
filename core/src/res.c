@@ -213,7 +213,7 @@ static struct res _res_load(const char* path, u32 type, void* udata, u8* raw, u3
 			break;
 		case res_texture:
 			new_res.as.texture = core_calloc(1, sizeof(struct texture));
-			init_texture(new_res.as.texture, raw, raw_size);
+			init_texture(new_res.as.texture, raw, raw_size, *(u32*)udata);
 			core_free(raw);
 			break;
 		case res_font:
@@ -325,8 +325,8 @@ struct shader load_shader(const char* path) {
 	return res_load(path, res_shader, null)->as.shader;
 }
 
-struct texture* load_texture(const char* path) {
-	return res_load(path, res_texture, null)->as.texture;
+struct texture* load_texture(const char* path, u32 flags) {
+	return res_load(path, res_texture, &flags)->as.texture;
 }
 
 struct font* load_font(const char* path, f32 size) {
@@ -341,8 +341,8 @@ struct shader load_shader_no_pck(const char* path) {
 	return res_load_no_pck(path, res_shader, null)->as.shader;
 }
 
-struct texture* load_texture_no_pck(const char* path) {
-	return res_load_no_pck(path, res_texture, null)->as.texture;
+struct texture* load_texture_no_pck(const char* path, u32 flags) {
+	return res_load_no_pck(path, res_texture, &flags)->as.texture;
 }
 
 struct font* load_font_no_pck(const char* path, f32 size) {

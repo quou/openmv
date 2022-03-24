@@ -104,7 +104,7 @@ struct tiled_map* load_map(const char* filename) {
 		current->name = read_string(&file);
 
 		char* path = read_string(&file);
-		current->image = load_texture(path);
+		current->image = load_texture(path, sprite_texture);
 		core_free(path);
 
 		current->tile_count = read_u32(&file);

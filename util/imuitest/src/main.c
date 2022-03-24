@@ -29,8 +29,8 @@ i32 main() {
 
 	struct font* big_font = load_font("res/CourierPrime.ttf", 25.0f);
 
-	struct texture* player_texture = load_texture("res/bmp/char.bmp");
-	struct texture* logo_texture = load_texture_no_pck("util/imuitest/res/logo.bmp");
+	struct texture* player_texture = load_texture("res/bmp/char.bmp", sprite_texture);
+	struct texture* logo_texture = load_texture_no_pck("util/imuitest/res/logo.bmp", sprite_texture);
 
 	u64 now = get_time(), last = now; 
 	f64 timestep = 0.0;
