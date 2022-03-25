@@ -197,12 +197,12 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		logic_store->fps_timer = 0.0;
 	}
 
-	if (key_just_pressed(main_window, KEY_ESCAPE)) {
+	if (key_just_pressed(main_window, key_escape)) {
 		menu_reset_selection(logic_store->pause_menu);
 		logic_store->paused = !logic_store->paused;
 	}
 
-	if (key_just_pressed(main_window, KEY_F1)) {
+	if (key_just_pressed(main_window, key_f1)) {
 		if (logic_store->ui) {
 			logic_store->show_ui = !logic_store->show_ui;
 		} else {
@@ -211,7 +211,7 @@ EXPORT_SYM void C_DECL on_update(f64 ts) {
 		}
 	}
 
-	if (logic_store->show_ui && key_just_pressed(main_window, KEY_F2)) {
+	if (logic_store->show_ui && key_just_pressed(main_window, key_f2)) {
 		logic_store->show_components = !logic_store->show_components;
 	}
 

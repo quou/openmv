@@ -11,7 +11,7 @@ struct key_table_item {
 };
 
 struct key_table {
-	struct key_table_item elements[KEY_COUNT];
+	struct key_table_item elements[key_count];
 };
 
 API void init_key_table(struct key_table* table);

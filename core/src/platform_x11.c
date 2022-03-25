@@ -33,13 +33,13 @@ struct window {
 
 	v2i mouse_pos;
 
-	bool held_keys[KEY_COUNT];
-	bool pressed_keys[KEY_COUNT];
-	bool released_keys[KEY_COUNT];
+	bool held_keys[key_count];
+	bool pressed_keys[key_count];
+	bool released_keys[key_count];
 
-	bool held_btns[MOUSE_BTN_COUNT];
-	bool pressed_btns[MOUSE_BTN_COUNT];
-	bool released_btns[MOUSE_BTN_COUNT];
+	bool held_btns[mouse_btn_count];
+	bool pressed_btns[mouse_btn_count];
+	bool released_btns[mouse_btn_count];
 
 	i32 scroll;
 
@@ -162,98 +162,98 @@ struct window* new_window(v2i size, const char* title, bool resizable) {
 	window->open = true;
 
 	init_key_table(&window->keymap);
-	key_table_insert(&window->keymap, 0x00, KEY_UNKNOWN);
-	key_table_insert(&window->keymap, 0x61, KEY_A);
-	key_table_insert(&window->keymap, 0x62, KEY_B);
-	key_table_insert(&window->keymap, 0x63, KEY_C);
-	key_table_insert(&window->keymap, 0x64, KEY_D);
-	key_table_insert(&window->keymap, 0x65, KEY_E);
-	key_table_insert(&window->keymap, 0x66, KEY_F);
-	key_table_insert(&window->keymap, 0x67, KEY_G);
-	key_table_insert(&window->keymap, 0x68, KEY_H);
-	key_table_insert(&window->keymap, 0x69, KEY_I);
-	key_table_insert(&window->keymap, 0x6A, KEY_J);
-	key_table_insert(&window->keymap, 0x6B, KEY_K);
-	key_table_insert(&window->keymap, 0x6C, KEY_L);
-	key_table_insert(&window->keymap, 0x6D, KEY_M);
-	key_table_insert(&window->keymap, 0x6E, KEY_N);
-	key_table_insert(&window->keymap, 0x6F, KEY_O);
-	key_table_insert(&window->keymap, 0x70, KEY_P);
-	key_table_insert(&window->keymap, 0x71, KEY_Q);
-	key_table_insert(&window->keymap, 0x72, KEY_R);
-	key_table_insert(&window->keymap, 0x73, KEY_S);
-	key_table_insert(&window->keymap, 0x74, KEY_T);
-	key_table_insert(&window->keymap, 0x75, KEY_U);
-	key_table_insert(&window->keymap, 0x76, KEY_V);
-	key_table_insert(&window->keymap, 0x77, KEY_W);
-	key_table_insert(&window->keymap, 0x78, KEY_X);
-	key_table_insert(&window->keymap, 0x79, KEY_Y);
-	key_table_insert(&window->keymap, 0x7A, KEY_Z);
-	key_table_insert(&window->keymap, XK_F1, KEY_F1);
-	key_table_insert(&window->keymap, XK_F2, KEY_F2);
-	key_table_insert(&window->keymap, XK_F3, KEY_F3);
-	key_table_insert(&window->keymap, XK_F4, KEY_F4);
-	key_table_insert(&window->keymap, XK_F5, KEY_F5);
-	key_table_insert(&window->keymap, XK_F6, KEY_F6);
-	key_table_insert(&window->keymap, XK_F7, KEY_F7);
-	key_table_insert(&window->keymap, XK_F8, KEY_F8);
-	key_table_insert(&window->keymap, XK_F9, KEY_F9);
-	key_table_insert(&window->keymap, XK_F10, KEY_F10);
-	key_table_insert(&window->keymap, XK_F11, KEY_F11);
-	key_table_insert(&window->keymap, XK_F12, KEY_F12);
-	key_table_insert(&window->keymap, XK_Down, KEY_DOWN);
-	key_table_insert(&window->keymap, XK_Left, KEY_LEFT);
-	key_table_insert(&window->keymap, XK_Right, KEY_RIGHT);
-	key_table_insert(&window->keymap, XK_Up, KEY_UP);
-	key_table_insert(&window->keymap, XK_Escape, KEY_ESCAPE);
-	key_table_insert(&window->keymap, XK_Return, KEY_RETURN);
-	key_table_insert(&window->keymap, XK_BackSpace, KEY_BACKSPACE);
-	key_table_insert(&window->keymap, XK_Linefeed, KEY_RETURN);
-	key_table_insert(&window->keymap, XK_Tab, KEY_TAB);
-	key_table_insert(&window->keymap, XK_Delete, KEY_DELETE);
-	key_table_insert(&window->keymap, XK_Home, KEY_HOME);
-	key_table_insert(&window->keymap, XK_End, KEY_END);
-	key_table_insert(&window->keymap, XK_Page_Up, KEY_PAGE_UP);
-	key_table_insert(&window->keymap, XK_Page_Down, KEY_PAGE_DOWN);
-	key_table_insert(&window->keymap, XK_Insert, KEY_INSERT);
-	key_table_insert(&window->keymap, XK_Shift_L, KEY_SHIFT);
-	key_table_insert(&window->keymap, XK_Shift_R, KEY_SHIFT);
-	key_table_insert(&window->keymap, XK_Control_L, KEY_CONTROL);
-	key_table_insert(&window->keymap, XK_Control_R, KEY_CONTROL);
-	key_table_insert(&window->keymap, XK_Super_L, KEY_SUPER);
-	key_table_insert(&window->keymap, XK_Super_R, KEY_SUPER);
-	key_table_insert(&window->keymap, XK_Alt_L, KEY_ALT);
-	key_table_insert(&window->keymap, XK_Alt_R, KEY_ALT);
-	key_table_insert(&window->keymap, XK_space, KEY_SPACE);
-	key_table_insert(&window->keymap, XK_period, KEY_PERIOD);
-	key_table_insert(&window->keymap, XK_0, KEY_0);
-	key_table_insert(&window->keymap, XK_1, KEY_1);
-	key_table_insert(&window->keymap, XK_2, KEY_2);
-	key_table_insert(&window->keymap, XK_3, KEY_3);
-	key_table_insert(&window->keymap, XK_4, KEY_4);
-	key_table_insert(&window->keymap, XK_5, KEY_5);
-	key_table_insert(&window->keymap, XK_6, KEY_6);
-	key_table_insert(&window->keymap, XK_7, KEY_7);
-	key_table_insert(&window->keymap, XK_8, KEY_8);
-	key_table_insert(&window->keymap, XK_9, KEY_9);
-	key_table_insert(&window->keymap, XK_apostrophe, KEY_APOSTROPHE);
-	key_table_insert(&window->keymap, XK_comma, KEY_COMMA);
-	key_table_insert(&window->keymap, XK_minus, KEY_MINUS);
-	key_table_insert(&window->keymap, XK_slash, KEY_SLASH);
-	key_table_insert(&window->keymap, XK_semicolon, KEY_SEMICOLON);
-	key_table_insert(&window->keymap, XK_equal, KEY_EQUAL);
-	key_table_insert(&window->keymap, XK_backslash, KEY_BACKSLASH);
-	key_table_insert(&window->keymap, XK_grave, KEY_GRAVE_ACCENT);
+	key_table_insert(&window->keymap, 0x00, key_unknown);
+	key_table_insert(&window->keymap, 0x61, key_A);
+	key_table_insert(&window->keymap, 0x62, key_B);
+	key_table_insert(&window->keymap, 0x63, key_C);
+	key_table_insert(&window->keymap, 0x64, key_D);
+	key_table_insert(&window->keymap, 0x65, key_E);
+	key_table_insert(&window->keymap, 0x66, key_F);
+	key_table_insert(&window->keymap, 0x67, key_G);
+	key_table_insert(&window->keymap, 0x68, key_H);
+	key_table_insert(&window->keymap, 0x69, key_I);
+	key_table_insert(&window->keymap, 0x6A, key_J);
+	key_table_insert(&window->keymap, 0x6B, key_K);
+	key_table_insert(&window->keymap, 0x6C, key_L);
+	key_table_insert(&window->keymap, 0x6D, key_M);
+	key_table_insert(&window->keymap, 0x6E, key_N);
+	key_table_insert(&window->keymap, 0x6F, key_O);
+	key_table_insert(&window->keymap, 0x70, key_P);
+	key_table_insert(&window->keymap, 0x71, key_Q);
+	key_table_insert(&window->keymap, 0x72, key_R);
+	key_table_insert(&window->keymap, 0x73, key_S);
+	key_table_insert(&window->keymap, 0x74, key_T);
+	key_table_insert(&window->keymap, 0x75, key_U);
+	key_table_insert(&window->keymap, 0x76, key_V);
+	key_table_insert(&window->keymap, 0x77, key_W);
+	key_table_insert(&window->keymap, 0x78, key_X);
+	key_table_insert(&window->keymap, 0x79, key_Y);
+	key_table_insert(&window->keymap, 0x7A, key_Z);
+	key_table_insert(&window->keymap, XK_F1, key_f1);
+	key_table_insert(&window->keymap, XK_F2, key_f2);
+	key_table_insert(&window->keymap, XK_F3, key_f3);
+	key_table_insert(&window->keymap, XK_F4, key_f4);
+	key_table_insert(&window->keymap, XK_F5, key_f5);
+	key_table_insert(&window->keymap, XK_F6, key_f6);
+	key_table_insert(&window->keymap, XK_F7, key_f7);
+	key_table_insert(&window->keymap, XK_F8, key_f8);
+	key_table_insert(&window->keymap, XK_F9, key_f9);
+	key_table_insert(&window->keymap, XK_F10, key_f10);
+	key_table_insert(&window->keymap, XK_F11, key_f11);
+	key_table_insert(&window->keymap, XK_F12, key_f12);
+	key_table_insert(&window->keymap, XK_Down, key_down);
+	key_table_insert(&window->keymap, XK_Left, key_left);
+	key_table_insert(&window->keymap, XK_Right, key_right);
+	key_table_insert(&window->keymap, XK_Up, key_up);
+	key_table_insert(&window->keymap, XK_Escape, key_escape);
+	key_table_insert(&window->keymap, XK_Return, key_return);
+	key_table_insert(&window->keymap, XK_BackSpace, key_backspace);
+	key_table_insert(&window->keymap, XK_Linefeed, key_return);
+	key_table_insert(&window->keymap, XK_Tab, key_tab);
+	key_table_insert(&window->keymap, XK_Delete, key_delete);
+	key_table_insert(&window->keymap, XK_Home, key_home);
+	key_table_insert(&window->keymap, XK_End, key_end);
+	key_table_insert(&window->keymap, XK_Page_Up, key_page_up);
+	key_table_insert(&window->keymap, XK_Page_Down, key_page_down);
+	key_table_insert(&window->keymap, XK_Insert, key_insert);
+	key_table_insert(&window->keymap, XK_Shift_L, key_shift);
+	key_table_insert(&window->keymap, XK_Shift_R, key_shift);
+	key_table_insert(&window->keymap, XK_Control_L, key_control);
+	key_table_insert(&window->keymap, XK_Control_R, key_control);
+	key_table_insert(&window->keymap, XK_Super_L, key_super);
+	key_table_insert(&window->keymap, XK_Super_R, key_super);
+	key_table_insert(&window->keymap, XK_Alt_L, key_alt);
+	key_table_insert(&window->keymap, XK_Alt_R, key_alt);
+	key_table_insert(&window->keymap, XK_space, key_space);
+	key_table_insert(&window->keymap, XK_period, key_period);
+	key_table_insert(&window->keymap, XK_0, key_0);
+	key_table_insert(&window->keymap, XK_1, key_1);
+	key_table_insert(&window->keymap, XK_2, key_2);
+	key_table_insert(&window->keymap, XK_3, key_3);
+	key_table_insert(&window->keymap, XK_4, key_4);
+	key_table_insert(&window->keymap, XK_5, key_5);
+	key_table_insert(&window->keymap, XK_6, key_6);
+	key_table_insert(&window->keymap, XK_7, key_7);
+	key_table_insert(&window->keymap, XK_8, key_8);
+	key_table_insert(&window->keymap, XK_9, key_9);
+	key_table_insert(&window->keymap, XK_apostrophe, key_apostrophe);
+	key_table_insert(&window->keymap, XK_comma, key_comma);
+	key_table_insert(&window->keymap, XK_minus, key_minus);
+	key_table_insert(&window->keymap, XK_slash, key_slash);
+	key_table_insert(&window->keymap, XK_semicolon, key_semicolon);
+	key_table_insert(&window->keymap, XK_equal, key_equal);
+	key_table_insert(&window->keymap, XK_backslash, key_backslash);
+	key_table_insert(&window->keymap, XK_grave, key_grave_accent);
 
 	window->mouse_pos = make_v2i(0, 0);
 
-	memset(window->held_keys, 0, KEY_COUNT * sizeof(bool));
-	memset(window->pressed_keys, 0, KEY_COUNT * sizeof(bool));
-	memset(window->released_keys, 0, KEY_COUNT * sizeof(bool));
+	memset(window->held_keys, 0, key_count * sizeof(bool));
+	memset(window->pressed_keys, 0, key_count * sizeof(bool));
+	memset(window->released_keys, 0, key_count * sizeof(bool));
 	
-	memset(window->held_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
-	memset(window->pressed_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
-	memset(window->released_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
+	memset(window->held_btns, 0, mouse_btn_count * sizeof(bool));
+	memset(window->pressed_btns, 0, mouse_btn_count * sizeof(bool));
+	memset(window->released_btns, 0, mouse_btn_count * sizeof(bool));
 
 	return window;
 }
@@ -272,10 +272,10 @@ void free_window(struct window* window) {
 }
 
 void swap_window(struct window* window) {
-	memset(window->pressed_keys, 0, KEY_COUNT * sizeof(bool));
-	memset(window->released_keys, 0, KEY_COUNT * sizeof(bool));
-	memset(window->pressed_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
-	memset(window->released_btns, 0, MOUSE_BTN_COUNT * sizeof(bool));
+	memset(window->pressed_keys, 0, key_count * sizeof(bool));
+	memset(window->released_keys, 0, key_count * sizeof(bool));
+	memset(window->pressed_btns, 0, mouse_btn_count * sizeof(bool));
+	memset(window->released_btns, 0, mouse_btn_count * sizeof(bool));
 
 	window->scroll = 0;
 
@@ -498,16 +498,16 @@ void set_window_cursor(struct window* window, u32 id) {
 	Cursor c;
 	
 	switch (id) {
-		case CURSOR_HAND:
+		case cursor_hand:
 			c = XcursorLibraryLoadCursor(window->display, "hand2");
 			break;
-		case CURSOR_RESIZE:
+		case cursor_resize:
 			c = XcursorLibraryLoadCursor(window->display, "bottom_right_corner");
 			break;
-		case CURSOR_MOVE:
+		case cursor_move:
 			c = XcursorLibraryLoadCursor(window->display, "fleur");
 			break;
-		case CURSOR_POINTER:
+		case cursor_pointer:
 		default:
 			c = XcursorLibraryLoadCursor(window->display, "left_ptr");
 			break;

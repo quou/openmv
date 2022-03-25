@@ -31,15 +31,15 @@ void keymap_deinit() {
 void default_keymap() {
 	struct table* keymap = (struct table*)logic_store->keymap;
 
-	key_table_set("jump",     KEY_Z);
-	key_table_set("fire",     KEY_X);
-	key_table_set("dash",     KEY_C);
-	key_table_set("left",     KEY_LEFT);
-	key_table_set("right",    KEY_RIGHT);
-	key_table_set("up",       KEY_UP);
-	key_table_set("down",     KEY_DOWN);
-	key_table_set("interact", KEY_DOWN);
-	key_table_set("submit",   KEY_RETURN);
+	key_table_set("jump",     key_Z);
+	key_table_set("fire",     key_X);
+	key_table_set("dash",     key_C);
+	key_table_set("left",     key_left);
+	key_table_set("right",    key_right);
+	key_table_set("up",       key_up);
+	key_table_set("down",     key_down);
+	key_table_set("interact", key_down);
+	key_table_set("submit",   key_return);
 }
 
 void save_keymap() {

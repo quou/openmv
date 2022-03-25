@@ -277,11 +277,11 @@ static bool mouse_over_rect(struct ui_context* ui, struct rect r) {
 }
 
 static bool clicked(struct ui_context* ui) {
-	return mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT);
+	return mouse_btn_just_released(ui->window, mouse_btn_left);
 }
 
 static bool held(struct ui_context* ui) {
-	return mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT);
+	return mouse_btn_pressed(ui->window, mouse_btn_left);
 }
 
 static struct ui_element* ui_window_add_item(struct ui_context* ui, struct ui_window* w, struct ui_element el) {
@@ -517,7 +517,7 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		if (ui->input_cursor > 0) {
-			if (key_just_pressed(ui->window, KEY_BACKSPACE)) {
+			if (key_just_pressed(ui->window, key_backspace)) {
 				for (u32 i = ui->input_cursor - 1; i < buf_len - 1; i++) {
 					ui->input_buf[i] = ui->input_buf[i + 1];
 				}
@@ -526,17 +526,17 @@ void ui_end_frame(struct ui_context* ui) {
 				ui->input_cursor--;
 			}
 
-			if (key_just_pressed(ui->window, KEY_LEFT)) {
+			if (key_just_pressed(ui->window, key_left)) {
 				ui->input_cursor--;
 			}
 		}
 
 		if (ui->input_cursor < buf_len) {
-			if (key_just_pressed(ui->window, KEY_RIGHT)) {
+			if (key_just_pressed(ui->window, key_right)) {
 				ui->input_cursor++;
 			}
 
-			if (buf_len > 0 && key_just_pressed(ui->window, KEY_DELETE)) {
+			if (buf_len > 0 && key_just_pressed(ui->window, key_delete)) {
 				for (u32 i = ui->input_cursor; i < buf_len - 1; i++) {
 					ui->input_buf[i] = ui->input_buf[i + 1];
 				}
@@ -565,9 +565,9 @@ void ui_end_frame(struct ui_context* ui) {
 		i32 dist = v2i_magnitude(v2i_sub(get_mouse_position(ui->window), corner));
 
 		if (dist < 20) {
-			set_window_cursor(ui->window, CURSOR_RESIZE);
+			set_window_cursor(ui->window, cursor_resize);
 		} else if (!ui->dragging) {
-			set_window_cursor(ui->window, CURSOR_POINTER);
+			set_window_cursor(ui->window, cursor_pointer);
 		}
 
 		if (meta) {
@@ -582,7 +582,7 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		}
 
-		if (mouse_btn_just_pressed(ui->window, MOUSE_BTN_LEFT)) {
+		if (mouse_btn_just_pressed(ui->window, mouse_btn_left)) {
 			ui->drag_start = get_mouse_position(ui->window);
 			ui->drag_offset = v2i_sub(ui->drag_start, window->position);
 
@@ -605,12 +605,12 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(ui->window)));
-		if (!ui->resizing && !ui->scrolling && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT)) {
-			set_window_cursor(ui->window, CURSOR_MOVE);
+		if (!ui->resizing && !ui->scrolling && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, mouse_btn_left)) {
+			set_window_cursor(ui->window, cursor_move);
 			ui->dragging = window;
 		}
 	} else if (hovered_count == 0) {
-		set_window_cursor(ui->window, CURSOR_POINTER);
+		set_window_cursor(ui->window, cursor_pointer);
 	}
 
 	/* Draw floating buttons. */
@@ -687,7 +687,7 @@ void ui_end_frame(struct ui_context* ui) {
 				scroll_col = ui_col_hovered;
 				meta->scroll += get_scroll(ui->window) * (text_height(ui->font, window->title) + ui->padding);
 
-				if (mouse_btn_just_pressed(ui->window, MOUSE_BTN_LEFT)) {
+				if (mouse_btn_just_pressed(ui->window, mouse_btn_left)) {
 					ui->scrolling = window;
 				}
 
@@ -748,11 +748,11 @@ void ui_end_frame(struct ui_context* ui) {
 			if (mouse_over_rect(ui, close_rect)) {
 				close_col = ui_col_close_hover;
 
-				if (mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT)) {
+				if (mouse_btn_pressed(ui->window, mouse_btn_left)) {
 					close_col = ui_col_close_active;
 				}
 
-				if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+				if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 					*window->open = false;
 
 					if (meta && meta->dock) {
@@ -983,7 +983,7 @@ void ui_end_frame(struct ui_context* ui) {
 				.h = current_dockspace_rect.h
 			};
 
-			if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+			if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
 
 				ui->current_dockspace->rect.w /= 2;
@@ -1005,7 +1005,7 @@ void ui_end_frame(struct ui_context* ui) {
 				.h = current_dockspace_rect.h
 			};
 
-			if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+			if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
 
 				ui->current_dockspace->rect.w /= 2;
@@ -1026,7 +1026,7 @@ void ui_end_frame(struct ui_context* ui) {
 				.h = current_dockspace_rect.h / 2,
 			};
 
-			if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+			if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
 
 				ui->current_dockspace->rect.h /= 2;
@@ -1048,7 +1048,7 @@ void ui_end_frame(struct ui_context* ui) {
 				.h = current_dockspace_rect.h / 2,
 			};
 
-			if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+			if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 				struct ui_dockspace* new_dock = ui->dockspaces + ui->dockspace_count++;
 
 				ui->current_dockspace->rect.h /= 2;
@@ -1064,7 +1064,7 @@ void ui_end_frame(struct ui_context* ui) {
 		} else if (mouse_over_rect(ui, middle) && !ui->current_dockspace->occupied) {
 			split_preview = current_dockspace_rect;
 
-			if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+			if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 				ui_window_change_dock(ui, meta, ui->current_dockspace);
 			}
 		} else {
@@ -1074,7 +1074,7 @@ void ui_end_frame(struct ui_context* ui) {
 		ui_draw_rect(ui, split_preview, ui_col_dock);
 	}
 
-	if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+	if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 		if (ui->dragging && !docking) {
 			struct window_meta* meta = table_get(ui->window_meta, ui->dragging->title);
 			ui_window_change_dock(ui, meta, null);
@@ -1083,7 +1083,7 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->dragging = null;
 		ui->resizing = null;
 		ui->scrolling = null;
-		set_window_cursor(ui->window, CURSOR_POINTER);
+		set_window_cursor(ui->window, cursor_pointer);
 	}
 
 	if (ui->loading) {
@@ -1475,7 +1475,7 @@ bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 		}
 	}
 
-	if (ui->active == e && key_just_released(ui->window, KEY_RETURN)) {
+	if (ui->active == e && key_just_released(ui->window, key_return)) {
 		ui->active = null;
 		ui->input_buf = null;
 		return true;
@@ -1579,11 +1579,11 @@ bool ui_floating_button(struct ui_context* ui, const char* text) {
 	if (mouse_over_rect(ui, rect)) {
 		btn->color = ui_col_floating_btn_hover;
 
-		if (mouse_btn_pressed(ui->window, MOUSE_BTN_LEFT)) {
+		if (mouse_btn_pressed(ui->window, mouse_btn_left)) {
 			btn->color = ui_col_floating_btn_active;
 		}
 
-		if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+		if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 			return true;
 		}
 	}
@@ -1616,7 +1616,7 @@ bool ui_floating_image(struct ui_context* ui, struct texture* texture, struct re
 	}
 
 	if (mouse_over_rect(ui, s_rect)) {
-		if (mouse_btn_just_released(ui->window, MOUSE_BTN_LEFT)) {
+		if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 			return true;
 		}
 	}
