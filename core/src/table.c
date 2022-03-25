@@ -88,7 +88,7 @@ static i32 table_data_add(struct table* table) {
 		u32 old_cap = table->capacity;
 		table->data_capacity = table->data_capacity < 8 ? 8 : table->data_capacity * 2;
 		table->data = core_realloc(table->data, table->data_capacity * (table->element_size + 1));
-		memset(table->data + old_cap, 0, (table->data_capacity - old_cap) * (table->element_size + 1));
+		memset(((u8*)table->data) + old_cap, 0, (table->data_capacity - old_cap) * (table->element_size + 1));
 	}
 
 	i32 idx = table->data_count++;

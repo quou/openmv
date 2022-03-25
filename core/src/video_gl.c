@@ -37,6 +37,10 @@ static u32 get_gl_thing(u32 thing) {
 		case vt_clip:       return GL_SCISSOR_TEST;
 		case vt_depth_test: return GL_DEPTH_TEST;
 	}
+
+	fprintf(stderr, "warning: Invalid enum passed to get_gl_thing.\n");
+
+	return 0;
 }
 
 void video_enable(u32 thing) {
