@@ -44,6 +44,7 @@ struct window {
 	bool open;
 	bool resizable;
 	bool repeat;
+	bool mouse_locked;
 
 	HWND hwnd;
 	HDC device_context;
@@ -52,6 +53,8 @@ struct window {
 	struct key_table keymap;
 
 	v2i mouse_pos;
+	v2i mouse_delta;
+	v2i last_mouse;
 
 	bool held_keys[key_count];
 	bool pressed_keys[key_count];
@@ -132,6 +135,8 @@ static LRESULT CALLBACK win32_event_callback(HWND hwnd, UINT msg, WPARAM wparam,
 		u32 y = (lparam >> 16) & 0xFFFF;
 
 		window->mouse_pos = make_v2i((i32)x, (i32)y);
+		window->mouse_delta = v2i_sub(window->last_mouse, window->mouse_pos);
+		window->last_mouse = window->mouse_pos;
 		return 0;
 	}
 	case WM_LBUTTONDOWN: {
@@ -362,6 +367,13 @@ void update_events(struct window* window) {
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 	}
+
+	if (window->mouse_locked) {
+		i32 w, h;
+		query_window(window, &w, &h);
+
+		SetCursorPos(w / 2, h / 2);
+	}
 }
 
 void query_window(struct window* window, i32* width, i32* height) {
@@ -405,6 +417,10 @@ bool mouse_btn_just_released(struct window* window, i32 btn) {
 
 v2i get_mouse_position(struct window* window) {
 	return window->mouse_pos;
+}
+
+v2i get_mouse_delta(struct window* window) {
+	return window->mouse_delta;
 }
 
 void set_on_text_input(struct window* window, on_text_input_func func) {
@@ -585,19 +601,19 @@ void set_window_cursor(struct window* window, u32 id) {
 	HCURSOR c;
 
 	switch (id) {
-		case cursor_hand:
-			c = LoadCursor(null, IDC_HAND);
-			break;
-		case cursor_move:
-			c = LoadCursor(null, IDC_SIZEALL);
-			break;
-		case cursor_resize:
-			c = LoadCursor(null, IDC_SIZENESW);
-			break;
-		case cursor_pointer:
-		default:
-			c = LoadCursor(null, IDC_ARROW);
-			break;
+	case cursor_hand:
+		c = LoadCursor(null, IDC_HAND);
+		break;
+	case cursor_move:
+		c = LoadCursor(null, IDC_SIZEALL);
+		break;
+	case cursor_resize:
+		c = LoadCursor(null, IDC_SIZENESW);
+		break;
+	case cursor_pointer:
+	default:
+		c = LoadCursor(null, IDC_ARROW);
+		break;
 	}
 
 	SetCursor(c);
@@ -605,6 +621,20 @@ void set_window_cursor(struct window* window, u32 id) {
 
 void window_enable_repeat(struct window* window, bool enable) {
 	window->repeat = enable;
+}
+
+void lock_mouse(struct window* window) {
+	window->mouse_locked = true;
+	ShowCursor(false);
+}
+
+void unlock_mouse(struct window* window) {
+	window->mouse_locked = false;
+	ShowCursor(true);
+}
+
+bool is_mouse_locked(struct window* window) {
+	return window->mouse_locked;
 }
 
 char* get_file_path(const char* name) {
