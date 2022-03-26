@@ -32,6 +32,10 @@ struct window {
 	struct key_table keymap;
 
 	v2i mouse_pos;
+	v2i last_mouse;
+	v2i mouse_delta;
+
+	bool mouse_locked;
 
 	bool held_keys[key_count];
 	bool pressed_keys[key_count];
@@ -291,6 +295,8 @@ i32 get_scroll(struct window* window) {
 }
 
 void update_events(struct window* window) {
+	window->mouse_delta = make_v2i(0, 0);
+
 	KeySym sym;
 
 	while (XPending(window->display)) {
@@ -358,6 +364,9 @@ void update_events(struct window* window) {
 			}
 			case MotionNotify: {
 				window->mouse_pos = make_v2i(e.xmotion.x, e.xmotion.y);
+				window->mouse_delta = v2i_sub(window->last_mouse, window->mouse_pos);
+				window->last_mouse = window->mouse_pos;
+
 				break;
 			}
 			case ButtonPress: {
@@ -389,6 +398,14 @@ void update_events(struct window* window) {
 				break;
 			}
 		}
+	}
+
+	if (window->mouse_locked) {
+		i32 w, h;
+		query_window(window, &w, &h);
+
+		XWarpPointer(window->display, None, window->window, 0, 0, 0, 0, w / 2, h / 2);
+		XSync(window->display, False);
 	}
 }
 
@@ -476,6 +493,10 @@ v2i get_mouse_position(struct window* window) {
 	return window->mouse_pos;
 }
 
+v2i get_mouse_delta(struct window* window) {
+	return window->mouse_delta;
+}
+
 void set_on_text_input(struct window* window, on_text_input_func func) {
 	window->on_text_input = func;
 }
@@ -486,6 +507,27 @@ void set_window_uptr(struct window* window, void* uptr) {
 
 void set_window_should_close(struct window* window, bool close) {
 	window->open = !close;
+}
+
+void lock_mouse(struct window* window) {
+	window->mouse_locked = true;
+
+	XColor col;
+	char data[1] = {0X00};
+	Pixmap blank = XCreateBitmapFromData(window->display, window->window, data, 1, 1);
+	Cursor cursor = XCreatePixmapCursor(window->display, blank, blank, &col, &col, 0, 0);
+	XDefineCursor(window->display, window->window, cursor);
+	XFreePixmap(window->display, blank);
+}
+
+void unlock_mouse(struct window* window) {
+	window->mouse_locked = false;
+
+	XUndefineCursor(window->display, window->window);
+}
+
+bool is_mouse_locked(struct window* window) {
+	return window->mouse_locked;
 }
 
 u32 get_window_cursor(struct window* window) {

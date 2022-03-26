@@ -38,11 +38,16 @@ API bool mouse_btn_pressed(struct window* window, i32 key);
 API bool mouse_btn_just_pressed(struct window* window, i32 key);
 API bool mouse_btn_just_released(struct window* window, i32 key);
 API v2i get_mouse_position(struct window* window);
+API v2i get_mouse_delta(struct window* window);
 
 API u32 get_window_cursor(struct window* window);
 API void set_window_cursor(struct window* window, u32 id);
 
 API void window_enable_repeat(struct window* window, bool enable);
+
+API void lock_mouse(struct window* window);
+API void unlock_mouse(struct window* window);
+API bool is_mouse_locked(struct window* window);
 
 enum {
 	key_unknown = 0,
