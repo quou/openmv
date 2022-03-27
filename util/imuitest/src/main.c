@@ -142,9 +142,24 @@ i32 main() {
 
 			ui_columns(ui, 1, 100);
 
+			struct font* ori_font = ui_get_font(ui);
 			for (u32 i = 0; i < 25; i++) {
+				if (i % 3 == 0) {
+					ui_color(ui, make_color(0xff0000, 255));
+				} else {
+					ui_reset_color(ui);
+				}
+
+				if (i % 5 == 0) {
+					ui_set_font(ui, big_font);
+				} else {
+					ui_set_font(ui, ori_font);
+				}
+
 				ui_button(ui, "Button");
 			}
+			ui_set_font(ui, ori_font);
+			ui_reset_color(ui);
 
 			ui_end_window(ui);
 		}
