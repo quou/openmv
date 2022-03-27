@@ -46,6 +46,8 @@ i32 main() {
 	bool a_open = false;
 	bool b_open = false;
 
+	f64 slider_val = 0.0;
+
 	while (!window_should_close(main_window)) {
 		update_events(main_window);
 
@@ -132,7 +134,13 @@ i32 main() {
 
 			ui_image(ui, player_texture, make_rect(0, 0, 16, 16), make_v2i(100, 100));
 			ui_image_button(ui, player_texture, make_rect(0, 16, 16, 16), make_v2i(100, 100));
-			ui_columns(ui, 1, 0);
+			ui_columns(ui, 3, 100);
+
+			ui_text(ui, "Slider");
+			ui_slider(ui, &slider_val, -64.0, 23.0);
+			ui_textf(ui, "%g", slider_val);
+
+			ui_columns(ui, 1, 100);
 
 			for (u32 i = 0; i < 25; i++) {
 				ui_button(ui, "Button");

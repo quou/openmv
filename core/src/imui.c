@@ -30,6 +30,7 @@ enum {
 	ui_el_text_wrapped,
 	ui_el_button,
 	ui_el_text_input,
+	ui_el_slider,
 	ui_el_image,
 	ui_el_toggle,
 	ui_el_rect
@@ -73,6 +74,11 @@ struct ui_element {
 			v2i input_dimentions;
 			v2i input_pos;
 		} text_input;
+
+		struct {
+			struct rect track;
+			struct rect handle;
+		} slider;
 
 		struct {
 			struct texture* texture;
@@ -177,6 +183,7 @@ struct ui_context {
 
 	struct ui_window* resizing;
 	struct ui_window* scrolling;
+	struct ui_element* sliding;
 
 	struct window* window;
 	struct font* font;
@@ -605,7 +612,8 @@ void ui_end_frame(struct ui_context* ui) {
 		}
 
 		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(ui->window)));
-		if (!ui->resizing && !ui->scrolling && dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, mouse_btn_left)) {
+		if (!ui->sliding && !ui->resizing && !ui->scrolling &&
+			dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, mouse_btn_left)) {
 			set_window_cursor(ui->window, cursor_move);
 			ui->dragging = window;
 		}
@@ -806,6 +814,19 @@ void ui_end_frame(struct ui_context* ui) {
 						el->position.x + ui->padding,
 						el->position.y + ui->padding,
 						el->color);
+				} break;
+				case ui_el_slider: {
+					u32 c = ui_col_background;
+					if (ui->hovered == el) {
+						c = ui_col_hovered;
+					}
+
+					if (ui->hot == el || ui->sliding == el) {
+						c = ui_col_hot;
+					}
+
+					ui_draw_rect(ui, el->as.slider.track, ui_col_background2);
+					ui_draw_rect(ui, el->as.slider.handle, c);
 				} break;
 				case ui_el_toggle: {
 					u32 c = ui_col_background;
@@ -1083,6 +1104,7 @@ void ui_end_frame(struct ui_context* ui) {
 		ui->dragging = null;
 		ui->resizing = null;
 		ui->scrolling = null;
+		ui->sliding = null;
 		set_window_cursor(ui->window, cursor_pointer);
 	}
 
@@ -1155,6 +1177,10 @@ void ui_set_root_dockspace(struct ui_context* ui, struct float_rect rect) {
 
 v2i ui_get_cursor_pos(struct ui_context* ui) {
 	return ui->cursor_pos;
+}
+
+void ui_set_cursor_pos(struct ui_context* ui, v2i pos) {
+	ui->cursor_pos = pos;
 }
 
 i32 ui_max_column_size(struct ui_context* ui) {
@@ -1416,7 +1442,7 @@ bool ui_button(struct ui_context* ui, const char* text) {
 
 	ui_advance(ui, text_height(ui->font, text) + ui->padding * 3);
 
-	if (ui->top_window == ui->current_window &&
+	if (ui->top_window == ui->current_window && !ui->sliding &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(ui, r)) {
 			ui->hovered = e;
@@ -1484,6 +1510,65 @@ bool ui_text_input(struct ui_context* ui, char* buf, u32 buf_size) {
 	return false;
 }
 
+bool ui_slider(struct ui_context* ui, f64* val, f64 min, f64 max) {
+	const v2i handle_size = { 10, 15 };
+	const i32 track_h = 3;
+
+	struct rect r = {
+		ui->cursor_pos.x,
+		ui->cursor_pos.y,
+		ui->column_size - ui->padding * 2,
+		handle_size.y
+	};
+
+	struct rect handle = {
+		r.x + (i32)((*val - min) * (f64)(r.w - handle_size.x) / (max - min)),
+		r.y,
+		handle_size.x, handle_size.y
+	};
+
+	struct ui_element* e = ui_window_add_item(ui, ui->current_window, (struct ui_element) {
+		.type = ui_el_slider,
+		.position = ui->cursor_pos,
+		.dimentions = make_v2i(r.w, r.h),
+		.as.slider = {
+			.track = {
+				r.x, r.y + ((r.h / 2) + (track_h / 2)) - 1, r.w, track_h
+			},
+			.handle = handle
+		}
+	});
+
+	ui_advance(ui, r.h + ui->padding);
+
+	if (ui->top_window == ui->current_window &&
+			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
+		if (mouse_over_rect(ui, handle)) {
+			ui->hovered = e;
+
+			if (held(ui)) {
+				ui->hot = e;
+				ui->sliding = e;
+			}
+		}
+	}
+
+	if (ui->sliding == e) {
+		f64 new_val = *val;
+		new_val = min + (get_mouse_position(ui->window).x - r.x) * (max - min) / r.w;
+
+		if (new_val < min) { new_val = min; }
+		if (new_val > max) { new_val = max; }
+
+		if (*val != new_val) {
+			*val = new_val;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void ui_image(struct ui_context* ui, struct texture* texture, struct rect rect, v2i dimentions) {
 	struct rect r = make_rect(ui->cursor_pos.x, ui->cursor_pos.y, dimentions.x, dimentions.y);
 
@@ -1515,7 +1600,7 @@ bool ui_image_button(struct ui_context* ui, struct texture* texture, struct rect
 
 	ui_advance(ui, e->dimentions.y + ui->padding);
 
-	if (ui->top_window == ui->current_window &&
+	if (ui->top_window == ui->current_window && !ui->sliding &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(ui, r)) {
 			ui->hovered = e;
@@ -1576,7 +1661,7 @@ bool ui_floating_button(struct ui_context* ui, const char* text) {
 		return false;
 	}
 
-	if (mouse_over_rect(ui, rect)) {
+	if (mouse_over_rect(ui, rect) && !ui->sliding) {
 		btn->color = ui_col_floating_btn_hover;
 
 		if (mouse_btn_pressed(ui->window, mouse_btn_left)) {
@@ -1615,7 +1700,7 @@ bool ui_floating_image(struct ui_context* ui, struct texture* texture, struct re
 		return false;
 	}
 
-	if (mouse_over_rect(ui, s_rect)) {
+	if (mouse_over_rect(ui, s_rect) && !ui->sliding) {
 		if (mouse_btn_just_released(ui->window, mouse_btn_left)) {
 			return true;
 		}
@@ -1639,7 +1724,7 @@ bool ui_toggle(struct ui_context* ui, bool* value) {
 
 	ui_advance(ui, e->dimentions.y + ui->padding);
 
-	if (ui->top_window == ui->current_window &&
+	if (ui->top_window == ui->current_window && !ui->sliding &&
 			e->position.y < ui->current_window->position.y + ui->current_window->dimentions.y) {
 		if (mouse_over_rect(ui, r)) {
 			ui->hovered = e;
