@@ -15,9 +15,9 @@ syn keyword CType entity
 syn keyword CType entity_version
 syn keyword CType entity_id
 
-syn keyword CType v2f v2i v2u
-syn keyword CType v3f v3i v3u
-syn keyword CType v4f v4i v4u
+syn keyword CType v2f v2i v2u v2d
+syn keyword CType v3f v3i v3u v3d
+syn keyword CType v4f v4i v4u v4d
 syn keyword CType m2f m2i m2u
 syn keyword CType m3f m3i m3u
 syn keyword CType m4f m4i m4u

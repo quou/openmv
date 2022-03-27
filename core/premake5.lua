@@ -29,6 +29,7 @@ project "core"
 		"src/keytable.h",
 		"src/lsp.c",
 		"src/lsp.h",
+		"src/maths.c",
 		"src/maths.h",
 		"src/physics.c",
 		"src/physics.h",
