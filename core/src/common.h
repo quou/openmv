@@ -49,3 +49,14 @@ typedef double f64;
 #else
 	#define C_DECL
 #endif
+
+#if defined(__clang__) || defined(__gcc__)
+	#define force_inline __attribute__((always_inline)) inline
+	#define dont_inline __attribute__((noinline))
+#elif defined(_MSC_VER)
+	#define force_inline __forceinline
+	#define dont_inline __declspec(noinline)
+#else
+	#define force_inline static inline
+	#define dont_inline
+#endif

@@ -37,3 +37,6 @@ project "test"
 		defines { "RELEASE" }
 		optimize "on"
 		runtime "release"
+
+	filter "system:linux"
+		links { "m" }

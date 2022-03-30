@@ -5,6 +5,7 @@
 #include "core.h"
 #include "coroutine.h"
 #include "lsp.h"
+#include "maths.h"
 #include "test.h"
 
 static coroutine_decl(test_coroutine)
@@ -277,6 +278,69 @@ bool lsp_while() {
 
 	return good;
 }
+
+bool m_make_v2f() {
+	v2f a = make_v2f(12.0f, 10.0f);
+	return a.x == 12.0f && a.y == 10.0f;
+}
+
+bool m_v2f_zero() {
+	v2f a = v2f_zero();
+	return a.x == 0.0f && a.y == 0.0f;
+}
+
+bool m_v2f_add() {
+	v2f a = make_v2f(2.0f, 4.0f);
+	v2f b = make_v2f(10.0f, 12.0f);
+	v2f c = v2f_add(a, b);
+	return c.x == 12.0f && c.y == 16.0f;
+}
+
+bool m_v2f_sub() {
+	v2f a = make_v2f(10.0f, 12.0f);
+	v2f b = make_v2f(3.0f, 4.0f);
+	v2f c = v2f_sub(a, b);
+	return c.x == 7.0f && c.y == 8.0f;
+}
+
+bool m_v2f_mul() {
+	v2f a = make_v2f(10.0f, 12.0f);
+	v2f b = make_v2f(3.0f, 4.0f);
+	v2f c = v2f_mul(a, b);
+	return c.x == 30.0f && c.y == 48.0f;
+}
+
+bool m_v2f_div() {
+	v2f a = make_v2f(10.0f, 8.0f);
+	v2f b = make_v2f(2.0f, 4.0f);
+	v2f c = v2f_div(a, b);
+	return c.x == 5.0f && c.y == 2.0f;
+}
+
+bool m_v2f_mag_sqrd() {
+	f32 m = v2f_mag_sqrd(make_v2f(4.0f, 7.0f));
+	return m == 65.0f;
+}
+
+bool m_v2f_mag() {
+	f32 m = v2f_mag(make_v2f(4.0f, 7.0f));
+	return m == sqrtf(65.0f);
+}
+
+bool m_v2f_normalised() {
+	v2f a = v2f_normalised(make_v2f(0.0f, 10.0f));
+	return a.x == 0.0f && a.y == 1.0f;
+}
+
+bool m_v2f_eq() {
+	v2f a = v2f_normalised(make_v2f(10.0f, 10.0f));
+	v2f b = v2f_normalised(make_v2f(10.0f, 10.0f));
+	v2f c = v2f_normalised(make_v2f(10.0f, 10.0f));
+	v2f d = v2f_normalised(make_v2f(13.0f, 11.0f));
+
+	return v2f_eq(a, b) && !v2f_eq(c, d);
+}
+
 #include "platform.h"
 
 i32 main() {
@@ -299,6 +363,16 @@ i32 main() {
 		make_test_func(lsp_eq),
 		make_test_func(lsp_while),
 		make_test_func(lsp),
+		make_test_func(m_make_v2f),
+		make_test_func(m_v2f_zero),
+		make_test_func(m_v2f_add),
+		make_test_func(m_v2f_sub),
+		make_test_func(m_v2f_mul),
+		make_test_func(m_v2f_div),
+		make_test_func(m_v2f_mag_sqrd),
+		make_test_func(m_v2f_mag),
+		make_test_func(m_v2f_normalised),
+		make_test_func(m_v2f_eq),
 	};
 
 	run_tests(funcs, sizeof(funcs) / sizeof(*funcs));

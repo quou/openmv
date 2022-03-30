@@ -569,7 +569,7 @@ void ui_end_frame(struct ui_context* ui) {
 		struct window_meta* meta = table_get(ui->window_meta, window->title);
 
 		v2i corner = v2i_add(window->position, window->dimentions);
-		i32 dist = v2i_magnitude(v2i_sub(get_mouse_position(ui->window), corner));
+		i32 dist = v2i_mag(v2i_sub(get_mouse_position(ui->window), corner));
 
 		if (dist < 20) {
 			set_window_cursor(ui->window, cursor_resize);
@@ -611,7 +611,7 @@ void ui_end_frame(struct ui_context* ui) {
 			}
 		}
 
-		i32 drag_start_dist = v2i_magnitude(v2i_sub(ui->drag_start, get_mouse_position(ui->window)));
+		i32 drag_start_dist = v2i_mag(v2i_sub(ui->drag_start, get_mouse_position(ui->window)));
 		if (!ui->sliding && !ui->resizing && !ui->scrolling &&
 			dist > 20 && drag_start_dist > 10 && mouse_btn_pressed(ui->window, mouse_btn_left)) {
 			set_window_cursor(ui->window, cursor_move);

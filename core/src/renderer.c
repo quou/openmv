@@ -195,7 +195,7 @@ void renderer_push(struct renderer* renderer, struct textured_quad* quad) {
 	transform = use_origin ? m4f_translate(transform, (v3f) { quad->origin.x, quad->origin.y, 0.0f }) : transform;
 
 	if (quad->rotation != 0.0f) {
-		transform = m4f_rotate(transform, (f32)torad((f32)quad->rotation), (v3f) { 0.0f, 0.0f, 1.0f });
+		transform = m4f_rotate(transform, toradf(quad->rotation), (v3f) { 0.0f, 0.0f, 1.0f });
 	}
 
 	transform = m4f_scale(transform, (v3f) { (f32)quad->dimentions.x, (f32)quad->dimentions.y, 0.0f });
