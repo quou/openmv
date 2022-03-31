@@ -80,7 +80,7 @@ force_inline v2i make_v2i(i32 x, i32 y) {
 }
 
 force_inline v2i v2i_zero() {
-	return (v2i) { 0.0f, 0.0f };
+	return (v2i) { 0, 0 };
 }
 
 force_inline v2i v2i_add(v2i a, v2i b) {
@@ -386,9 +386,9 @@ force_inline m4f m4f_mul(m4f a, m4f b) {
 force_inline m4f m4f_translate(m4f m, v3f v) {
 	m4f r = m4f_identity();
 
-	r.m[3][0] = v.x;
-	r.m[3][1] = v.y;
-	r.m[3][2] = v.z;
+	r.m[3][0] += v.x;
+	r.m[3][1] += v.y;
+	r.m[3][2] += v.z;
 
 	return m4f_mul(m, r);
 }
@@ -571,7 +571,3 @@ force_inline m4f m4f_transpose(m4f m) {
 
     return r;
 }
-
-typedef struct {
-	f32 m[4][4];
-} m3f;

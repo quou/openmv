@@ -333,12 +333,113 @@ bool m_v2f_normalised() {
 }
 
 bool m_v2f_eq() {
-	v2f a = v2f_normalised(make_v2f(10.0f, 10.0f));
-	v2f b = v2f_normalised(make_v2f(10.0f, 10.0f));
-	v2f c = v2f_normalised(make_v2f(10.0f, 10.0f));
-	v2f d = v2f_normalised(make_v2f(13.0f, 11.0f));
+	v2f a = make_v2f(10.0f, 10.0f);
+	v2f b = make_v2f(10.0f, 10.0f);
+	v2f c = make_v2f(10.0f, 10.0f);
+	v2f d = make_v2f(13.0f, 11.0f);
 
 	return v2f_eq(a, b) && !v2f_eq(c, d);
+}
+
+bool m_make_v2i() {
+	v2i a = make_v2i(20, 4);
+	return a.x == 20 && a.y == 4;
+}
+
+bool m_v2i_zero() {
+	v2i a = v2i_zero();
+	return a.x == 0 && a.y == 0;
+}
+
+bool m_v2i_add() {
+	v2i a = make_v2i(10, 3);
+	v2i b = make_v2i(3, 2);
+	v2i c = v2i_add(a, b);
+	return c.x == 13 && c.y == 5;
+}
+
+bool m_v2i_sub() {
+	v2i a = make_v2i(10, 3);
+	v2i b = make_v2i(3, 2);
+	v2i c = v2i_sub(a, b);
+	return c.x == 7 && c.y == 1;
+}
+
+bool m_v2i_mul() {
+	v2i a = make_v2i(10, 3);
+	v2i b = make_v2i(3, 2);
+	v2i c = v2i_mul(a, b);
+	return c.x == 30 && c.y == 6;
+}
+
+bool m_v2i_div() {
+	v2i a = make_v2i(10, 15);
+	v2i b = make_v2i(3, 2);
+	v2i c = v2i_div(a, b);
+	return c.x == 3 && c.y == 7;
+}
+
+bool m_v2i_eq() {
+	v2i a = make_v2i(10.0f, 10.0f);
+	v2i b = make_v2i(10.0f, 10.0f);
+	v2i c = make_v2i(10.0f, 10.0f);
+	v2i d = make_v2i(13.0f, 11.0f);
+
+	return v2i_eq(a, b) && !v2i_eq(c, d);
+}
+
+bool m_v2i_mag_sqrd() {
+	i32 m = v2i_mag_sqrd(make_v2i(4, 7));
+	return m == 65;
+}
+
+bool m_v2i_mag() {
+	i32 m = v2i_mag(make_v2i(4, 7));
+	return m == (i32)sqrtf(65.0f);
+}
+
+bool m_make_m4f() {
+	m4f a = make_m4f(3.0f);
+
+	return
+		a.m[0][0] == 3.0f &&
+		a.m[0][1] == 0.0f &&
+		a.m[0][2] == 0.0f &&
+		a.m[0][3] == 0.0f &&
+		a.m[1][0] == 0.0f &&
+		a.m[1][1] == 3.0f &&
+		a.m[1][2] == 0.0f &&
+		a.m[1][3] == 0.0f &&
+		a.m[2][0] == 0.0f &&
+		a.m[2][1] == 0.0f &&
+		a.m[2][2] == 3.0f &&
+		a.m[2][3] == 0.0f &&
+		a.m[3][0] == 0.0f &&
+		a.m[3][1] == 0.0f &&
+		a.m[3][2] == 0.0f &&
+		a.m[3][3] == 3.0f;
+}
+
+bool m_m4f_identity() {
+	m4f a = m4f_identity();
+
+	return
+		a.m[0][0] == 1.0f &&
+		a.m[0][1] == 0.0f &&
+		a.m[0][2] == 0.0f &&
+		a.m[0][3] == 0.0f &&
+		a.m[1][0] == 0.0f &&
+		a.m[1][1] == 1.0f &&
+		a.m[1][2] == 0.0f &&
+		a.m[1][3] == 0.0f &&
+		a.m[2][0] == 0.0f &&
+		a.m[2][1] == 0.0f &&
+		a.m[2][2] == 1.0f &&
+		a.m[2][3] == 0.0f &&
+		a.m[3][0] == 0.0f &&
+		a.m[3][1] == 0.0f &&
+		a.m[3][2] == 0.0f &&
+		a.m[3][3] == 1.0f;
 }
 
 #include "platform.h"
@@ -373,6 +474,17 @@ i32 main() {
 		make_test_func(m_v2f_mag),
 		make_test_func(m_v2f_normalised),
 		make_test_func(m_v2f_eq),
+		make_test_func(m_make_v2i),
+		make_test_func(m_v2i_zero),
+		make_test_func(m_v2i_add),
+		make_test_func(m_v2i_sub),
+		make_test_func(m_v2i_mul),
+		make_test_func(m_v2i_div),
+		make_test_func(m_v2i_eq),
+		make_test_func(m_v2i_mag_sqrd),
+		make_test_func(m_v2i_mag),
+		make_test_func(m_make_m4f),
+		make_test_func(m_m4f_identity),
 	};
 
 	run_tests(funcs, sizeof(funcs) / sizeof(*funcs));
