@@ -668,7 +668,7 @@ void ui_end_frame(struct ui_context* ui) {
 
 		struct rect window_border_rect = {
 			window_rect.x - 1, window_rect.y - 1,
-			window_rect.w + 2, window_rect.h + 2
+			window_rect.w + 3, window_rect.h + 3
 		};
 
 		struct rect scrollbar_rect = {
