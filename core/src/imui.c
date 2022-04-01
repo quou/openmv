@@ -218,6 +218,8 @@ struct ui_context {
 	struct color color_override;
 	bool override_color;
 
+	bool docking;
+
 	i32 floating_padding;
 	v2i floating_cursor;
 
@@ -1193,6 +1195,10 @@ i32 ui_max_column_size(struct ui_context* ui) {
 	return dim - ui->padding * 2;
 }
 
+void ui_enable_docking(struct ui_context* ui, bool enable) {
+	ui->docking = enable;
+}
+
 bool ui_any_window_hovered(struct ui_context* ui) {
 	u32 count = ui_get_hovered_windows(ui, null, 1);
 
@@ -1296,10 +1302,12 @@ void ui_end_window(struct ui_context* ui) {
 			meta->position = v2i_sub(get_mouse_position(ui->window), ui->drag_offset);
 
 			ui->current_dockspace = null;
-			for (u32 i = 0; i < ui->dockspace_count; i++) {
-				if (mouse_over_rect(ui, get_dock_rect_screen(ui, ui->dockspaces[i].rect))) {
-					ui->current_dockspace = ui->dockspaces + i;
-					break;
+			if (ui->docking) {
+				for (u32 i = 0; i < ui->dockspace_count; i++) {
+					if (mouse_over_rect(ui, get_dock_rect_screen(ui, ui->dockspaces[i].rect))) {
+						ui->current_dockspace = ui->dockspaces + i;
+						break;
+					}
 				}
 			}
 		}

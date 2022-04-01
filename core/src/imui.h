@@ -48,6 +48,8 @@ API void ui_set_cursor_pos(struct ui_context* ui, v2i pos);
 
 API i32 ui_max_column_size(struct ui_context* ui);
 
+API void ui_enable_docking(struct ui_context* ui, bool enable);
+
 API bool ui_any_window_hovered(struct ui_context* ui);
 API bool ui_any_item_hovered(struct ui_context* ui);
 API bool ui_anything_hovered(struct ui_context* ui);

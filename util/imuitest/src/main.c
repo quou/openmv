@@ -27,6 +27,8 @@ i32 main() {
 	set_window_uptr(main_window, ui);
 	set_on_text_input(main_window, on_text_input);
 
+	ui_enable_docking(ui, true);
+
 	struct font* big_font = load_font("res/CourierPrime.ttf", 25.0f);
 
 	struct texture* player_texture = load_texture("res/bmp/char.bmp", sprite_texture);
