@@ -120,6 +120,14 @@ static struct lsp_val command_fullscreen(struct lsp_state* ctx, u32 argc, struct
 	return lsp_make_nil();
 }
 
+static struct lsp_val command_give_coins(struct lsp_state* ctx, u32 argc, struct lsp_val* args) {
+	lsp_arg_assert(ctx, args[0], lsp_val_num, "Argument 0 to `give_coins' must be a number.");
+
+	get_component(logic_store->world, logic_store->player, struct player)->money += (i32)lsp_as_num(args[0]);
+
+	return lsp_make_nil();
+}
+
 EXPORT_SYM void C_DECL on_init() {
 	logic_store->lsp_out = fopen("command.log", "w");
 	if (!logic_store->lsp_out) {
@@ -130,6 +138,7 @@ EXPORT_SYM void C_DECL on_init() {
 	lsp_register_std(logic_store->lsp);
 	lsp_register(logic_store->lsp, "window_size", 2, command_window_size);
 	lsp_register(logic_store->lsp, "fullscreen", 1, command_fullscreen);
+	lsp_register(logic_store->lsp, "give_coins", 1, command_give_coins);
 
 	FILE* autoexec_file = fopen("autoexec.lsp", "rb");
 	if (autoexec_file) {
